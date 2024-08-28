@@ -1,0 +1,190 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@4.10.3">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>ssh://lciadm100@gerritmirror-ha.lmera.ericsson.se:29418/OSS/com.ericsson.oss.containerisation/enm-containerisation-ci-pipeline</url>
+        <credentialsId>lciadm100_private_key</credentialsId>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>dTORF-401748</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <submoduleCfg class="list"/>
+    <extensions/>
+  </scm>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <javaposse.jobdsl.plugin.ExecuteDslScripts plugin="job-dsl@1.78.3">
+      <scriptText>import groovy.json.JsonSlurper;
+ 
+def jsonSlurper = new JsonSlurper()
+ 
+File project_fle = new File(WORKSPACE + &quot;/workspace/&quot; + JOB_NAME + &apos;/jenkins/project_file.json&apos;) 
+def project_file_parsed = jsonSlurper.parse(project_fle)
+project_file_parsed.each { entry -&gt;
+    project_details_map = [:]
+    entry.each { key,value -&gt;
+        project_details_map[key] = value
+    }
+  if (project_details_map[&quot;repo&quot;] == REPO) {
+     project_details_map[&quot;E2E_enable&quot;] = val
+     project_details_map[&quot;E2E_enable&quot;] = val1
+    }
+}</scriptText>
+      <usingScriptText>true</usingScriptText>
+      <sandbox>false</sandbox>
+      <ignoreExisting>false</ignoreExisting>
+      <ignoreMissingFiles>false</ignoreMissingFiles>
+      <failOnMissingPlugin>false</failOnMissingPlugin>
+      <failOnSeedCollision>false</failOnSeedCollision>
+      <unstableOnDeprecation>false</unstableOnDeprecation>
+      <removedJobAction>IGNORE</removedJobAction>
+      <removedViewAction>IGNORE</removedViewAction>
+      <removedConfigFilesAction>IGNORE</removedConfigFilesAction>
+      <lookupStrategy>JENKINS_ROOT</lookupStrategy>
+    </javaposse.jobdsl.plugin.ExecuteDslScripts>
+    <hudson.tasks.Shell>
+      <command>COMMIT_MESSAGE=&quot;enabling the repo&quot;
+git add --all
+git commit -m &quot;${COMMIT_MESSAGE}&quot;
+git remote set-url origin --push ${GERRIT_CENTRAL}/${CI_REPO}
+    
+git push origin HEAD:refs/for/dTORF-401748/VALIDATION &gt; review_message.txt 2&gt;&amp;1
+cat review_message.txt
+
+REVIEW_DETAILS=$(grep -F &quot;${COMMIT_MESSAGE}&quot; review_message.txt | tr -s &quot; &quot;)
+REVIEW_LINK=$(cut -d&apos; &apos; -f2 &lt;&lt;&lt;&quot;${REVIEW_DETAILS}&quot;)
+
+echo REVIEW_DATE=$(date &quot;+%d-%m-%Y&quot;) &gt;&gt; ${WORKSPACE}/env.properties
+echo REVIEW_LINK=${REVIEW_LINK} &gt;&gt; ${WORKSPACE}/env.properties</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <EnvInjectBuilder plugin="envinject@2.4.0">
+      <info>
+        <propertiesFilePath>${WORKSPACE}/env.properties</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+  </builders>
+  <publishers>
+    <org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher plugin="flexible-publish@0.16.1">
+      <publishers>
+        <org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
+          <condition class="org.jenkins_ci.plugins.run_condition.core.StatusCondition" plugin="run-condition@1.5">
+            <worstResult>
+              <name>SUCCESS</name>
+              <ordinal>0</ordinal>
+              <color>BLUE</color>
+              <completeBuild>true</completeBuild>
+            </worstResult>
+            <bestResult>
+              <name>SUCCESS</name>
+              <ordinal>0</ordinal>
+              <color>BLUE</color>
+              <completeBuild>true</completeBuild>
+            </bestResult>
+          </condition>
+          <publisherList>
+            <com.myyearbook.hudson.plugins.confluence.ConfluencePublisher plugin="confluence-publisher@2.0.6">
+              <siteName>confluence-oss.seli.wh.rnd.internal.ericsson.com</siteName>
+              <spaceName>ECN</spaceName>
+              <pageName>cENM DQ sprint 21.07</pageName>
+              <attachArchivedArtifacts>true</attachArchivedArtifacts>
+              <buildIfUnstable>false</buildIfUnstable>
+              <replaceAttachments>false</replaceAttachments>
+              <parentId>0</parentId>
+              <editors>
+                <com.myyearbook.hudson.plugins.confluence.wiki.editors.BeforeTokenEditor>
+                  <generator class="com.myyearbook.hudson.plugins.confluence.wiki.generators.PlainTextGenerator">
+                    <text>&lt;tr&gt;
+&lt;td colspan=&quot;1&quot;&gt;n&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;${JIRA_TICKET}&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;Review&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;${REVIEW_DATE}&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;Chakras&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;NA&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;a href=&quot;${REVIEW_LINK}&quot; rel=&quot;nofollow&quot; style=&quot;text-decoration: none;text-align: left;&quot;&gt;${REVIEW_LINK}&lt;/a&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;linked to the corresponding newly created pointfix job for new repo added&lt;/td&gt;
+    &lt;/tr&gt;</text>
+                  </generator>
+                  <markerToken>&lt;/tbody&gt;&lt;/table&gt;</markerToken>
+                </com.myyearbook.hudson.plugins.confluence.wiki.editors.BeforeTokenEditor>
+              </editors>
+            </com.myyearbook.hudson.plugins.confluence.ConfluencePublisher>
+          </publisherList>
+          <runner class="org.jenkins_ci.plugins.run_condition.BuildStepRunner$Fail" plugin="run-condition@1.5"/>
+          <executionStrategy class="org.jenkins_ci.plugins.flexible_publish.strategy.FailAtEndExecutionStrategy"/>
+        </org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
+      </publishers>
+    </org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher>
+  </publishers>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.40">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+    <EnvInjectBuildWrapper plugin="envinject@2.4.0">
+      <info>
+        <propertiesContent>REPO=&quot;OSS/com.ericsson.oss.containerisation/eric-enm-rwxpvc&quot;
+val=&quot;True&quot;
+val1=&quot;True&quot;</propertiesContent>
+        <secureGroovyScript plugin="script-security@1138.v8e727069a_025">
+          <script></script>
+          <sandbox>false</sandbox>
+        </secureGroovyScript>
+        <loadFilesFromMaster>false</loadFilesFromMaster>
+      </info>
+    </EnvInjectBuildWrapper>
+  </buildWrappers>
+</project>

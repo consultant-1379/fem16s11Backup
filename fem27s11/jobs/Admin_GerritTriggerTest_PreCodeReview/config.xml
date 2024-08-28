@@ -1,0 +1,67 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>&lt;b&gt;&lt;font color=&quot;red&quot;&gt;&#xd;
+  DO NOT CLICK &quot;BUILD NOW&quot;, IT WON&apos;T WORK! INSTEAD CLICK &quot;RETRIGGER&quot; ON THE PATCH YOU WANT TO BUILD.&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&#xd;
+&lt;a href=&quot;https://confluence-oss.lmera.ericsson.se/display/CIE/Retriggering+a+parameterised%28preCodeReview%29+Jenkins+job&quot;&gt;How to &quot;RETRIGGER&quot; a job&lt;/a&gt;&lt;br&gt;&#xd;
+This job is triggered by a &quot;git push origin HEAD:refs/for/master&quot;.&lt;br&gt;&#xd;
+It will build the artifact. If the build is successful the code is sent for code review.&lt;br&gt;&lt;br&gt;&#xd;
+&#xd;
+&lt;b&gt;TEAM NAME:&lt;/b&gt; -de&lt;br&gt;&#xd;
+&lt;b&gt;ERIC DELIVERABLE:&lt;/b&gt; ERICexample_CXPXXXXXX&lt;br&gt;&#xd;
+&#xd;
+</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@70.0.5">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>20</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@70.0.5">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@70.0.5">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@70.0.5">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@70.0.5">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>GridEngine_RHEL7</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Maven>
+      <targets>-V -U clean install </targets>
+      <mavenName>Maven 3.5.3</mavenName>
+      <usePrivateRepository>false</usePrivateRepository>
+      <settings class="jenkins.mvn.DefaultSettingsProvider"/>
+      <globalSettings class="jenkins.mvn.DefaultGlobalSettingsProvider"/>
+      <injectBuildVariables>false</injectBuildVariables>
+    </hudson.tasks.Maven>
+    <hudson.tasks.Shell>
+      <command>#CI Common post step script
+/proj/ciexadm200/tools/utils/scripts/common_pre_post_jenkins_scripts/post_step/preCodeReview_post_step.sh</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

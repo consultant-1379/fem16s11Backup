@@ -1,0 +1,327 @@
+<flow-definition plugin="workflow-job@2.25">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.3.2"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.3.2">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>ENVIR_NO</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>ENVIR_NO</name>
+          <description>Enter to environment here</description>
+          <defaultValue>32</defaultValue>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@65.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.19.2">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@65.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.57.2">
+    <script>
+import java.io.File
+
+
+def kubectlGetResource(type, NAMESPACE){
+    return sh(script : "${kubectl} get ${type} -n ${NAMESPACE} | grep -v \'NAME\' |  awk -F\' \' \'{print \$1}\'", returnStdout: true).split()
+}
+
+def checkHealthyPods(NAMESPACE) {
+    desiredStatefulset = sh ( script: "${kubectl} -n ${NAMESPACE} get sts    | grep -v 'NAME' | awk -F' ' '{stssum += \$2} END {print stssum}'", returnStdout: true ).trim()
+    echo "${desiredStatefulset}"
+    desiredDeployment  = sh ( script: "${kubectl} -n ${NAMESPACE} get deploy | grep -v 'NAME' | awk -F' ' '{depsum += \$2} END {print depsum}'", returnStdout: true ).trim()
+    echo "${desiredDeployment}"
+    currentHealthyPods = sh ( script: "${kubectl} -n ${NAMESPACE} get pods   | grep -v 'NAME' | grep 'Running' | awk -F' ' '{print \$2}' | awk -F'/' '{podsum += \$1} END {print podsum}'", returnStdout: true ).trim()
+    echo "${currentHealthyPods}"
+    desiredDeploy=desiredDeployment.toInteger()
+    currentHealthy=currentHealthyPods.toInteger()
+    desiredStateful=desiredStatefulset.toInteger()
+    
+    if ( desiredStateful + desiredDeploy &lt;= currentHealthy ) {
+        echo "Desired:Statefulset + Desired:Deployment is lesser than or equal to Current: Running Healthy Pods"
+    } else {
+        echo "Desired:Statefulset + Desired:Deployment is not matching Current: Running Healthy Pods"
+        sh "sleep 60"
+        sh "exit 1"
+    }
+}
+
+
+def smokeTest(NAMESPACE,LB_EXTERNAL_PORT) {
+    response = sh (script: "curl --insecure -X POST -d \"IDToken1=Administrator&amp;IDToken2=TestPassw0rd\" https://${ENM_LAUNCHER_HOSTNAME}/login -H \"Content-Type: application/x-www-form-urlencoded\" -H \"Accept-Encoding: gzip,deflate\" -H \"Accept: */*\" -L -H \'cache-control: no-cache\'", returnStdout: true ).trim()
+    echo response
+    if ( response.contains("Authentication Successful") ){
+       echo "Success! Can login to ENM"
+    } else {
+       echo "Failed! Can\'t login to ENM"
+       sh "exit 1"
+    } 
+}
+
+def updateIntegrationValues(NAMESPACE,NFS_STORAGE_CLASS,STORAGE_CLASS,ENM_LAUNCHER_HOSTNAME,LB_EXTERNAL_PORT,MODELSERV_LIVENESS_PROBE) {
+    try {
+	    filename = "${HOME_DIR}/eric-enm-integration-values-${INTEGRATION_VALUE_VERSION}.yaml"
+		values = readYaml file: filename
+        values.global.persistentVolumeClaim.storageClass = "${STORAGE_CLASS}"
+        values.global.ingress.enmHost = "${ENM_LAUNCHER_HOSTNAME}"
+        values.global.enmProperties.lb_external_port = "${LB_EXTERNAL_PORT}"
+        values.global.rwx.storageClass = "${NFS_STORAGE_CLASS}"
+        values.global.timezone="UTC"
+		values.global.modelserv.livenessProbe= "${MODELSERV_LIVENESS_PROBE}"
+		values."eric-data-graph-database-nj".persistentVolumeClaim.storageClass = "${STORAGE_CLASS}"
+		values."eric-data-graph-database-nj".persistentVolumeClaim.backup.storageClass = "${STORAGE_CLASS}"
+		values."eric-data-graph-database-nj".persistentVolumeClaim.logging.storageClass = "${STORAGE_CLASS}"
+		values."eric-data-document-database-pg".persistence.storageClassName = "${STORAGE_CLASS}"
+
+        sh "rm -f ${filename}"
+        writeYaml file: filename, data: values
+    } catch( err ) {
+        echo "$err"
+    }
+}
+
+def emailReport(content, emailList){
+    def DEFAULT_REPLYTO = 'peddinti.tarakesam@tcs.com'
+
+    def subject = "${env.JOB_NAME} - Build #${env.BUILD_NUMBER} - ${currentBuild.currentResult}!"
+
+    try {
+        emailext(body: content, mimeType: 'text/html', from: 'jenkins_monitoring@ericsson.com',
+            replyTo: DEFAULT_REPLYTO, subject: subject,
+            to: "${emailList}" )
+    } catch( err ){
+        echo "$err"
+    }
+}
+
+def reportHeading(status,NAMESPACE,LB_EXTERNAL_PORT){
+    
+    def deployResult
+    def color 
+    def investigation 
+    
+    if(status == 'Success'){
+        deployResult = "Success"
+        color = "#9ACD32"
+        investigation = "NA"
+    } else if(status == 'Failed'){
+        deployResult = "Failed"
+        color = "#DC143C"
+        investigation = "In progress, will be included in a follow up email"
+    } else if(status == 'Aborted'){
+        deployResult = "Aborted"
+        color = "#95A5A6"
+        investigation = "(If applicable), will be included in a follow up email"
+    }
+
+    def report = "Hi All,\n\n &lt;h2&gt;${NAMESPACE} Deployment Result: &lt;span style=\"background-color:${color};\"&gt;${status}&lt;/span&gt;&lt;/h2&gt;"
+    def InfrachartVersion = sh (script : "${helm} list --namespace ${NAMESPACE} | grep infra-integration-${NAMESPACE} | awk \'{print \$(NF-2)}\'", returnStdout: true)
+	def StatelesschartVersion = sh (script : "${helm} list --namespace ${NAMESPACE} | grep stateless-integration-${NAMESPACE} | awk \'{print \$(NF-2)}\'", returnStdout: true)
+    report += " &lt;ul&gt;&lt;li&gt;&lt;strong&gt;Login URL :&lt;/strong&gt; https://${NAMESPACE}-phase-1.hoff031.rnd.gic.ericsson.se&lt;/li&gt;"
+    report += "&lt;li&gt;&lt;strong&gt;Infra Chart version :&lt;/strong&gt; ${InfrachartVersion}&lt;/li&gt;"
+	report += "&lt;li&gt;&lt;strong&gt;Steteless Chart version :&lt;/strong&gt; ${StatelesschartVersion}&lt;/li&gt;"
+    report += "&lt;li&gt;&lt;strong&gt;Please find the Phase 1 Deploy Job Details:&lt;/strong&gt;  &lt;a href=${BUILD_URL}&gt;${BUILD_URL}&lt;/a&gt;&lt;/li&gt;"
+    report += "&lt;li&gt;&lt;strong&gt;Investigation Results  :  ${investigation}&lt;/strong&gt;&lt;/li&gt;&lt;/ul&gt;"
+
+    report = report.replace("\n","&lt;/br&gt;")
+    return report
+}
+
+def printPods(NAMESPACE){
+    def failedState = sh (script : "${kubectl} -n ${NAMESPACE} get pods | egrep \'NAME|Running\' | egrep \'0/|NAME\'" , returnStdout: true)
+    def initState = sh (script : "${kubectl} -n ${NAMESPACE} get pods | grep -v Running || true", returnStdout: true)
+	def sidecarState= sh (script : "${kubectl} -n ${NAMESPACE} get pods | egrep \'NAME|Running\' | egrep \'1/2|NAME\'" , returnStdout: true)
+    def report = "#kubectl -n ${NAMESPACE} get pods | egrep \'NAME|Running\' | egrep \'0/|NAME\' \n&lt;pre&gt;${failedState}&lt;/pre&gt; \n\n\n #kubectl -n ${NAMESPACE} get pods | grep -v Running \n&lt;pre&gt;${initState}&lt;/pre&gt; \n\n\n #kubectl -n ${NAMESPACE} get pods | egrep \'NAME|Running\' | egrep \'1/2|NAME\' \n&lt;pre&gt;${sidecarState}&lt;/pre&gt;"
+    echo "${report}"
+    
+    report = report.replace("\n","&lt;/br&gt;")
+    report += "&lt;style&gt; pre {display: block;font-family: Lucida Console, Monaco, monospace; white-space: pre;} &lt;/style&gt;";
+
+    return report
+}
+
+
+def getKUBE_CRED(ENVIR_NO){
+	String creden_info = readFileFromWorkspace('jenkins/${ENVIR_NO}')
+
+	creden_info.eachLine {
+    name -&gt; if ( name =~ "^KUBE_CRED") {
+    splitKUBE_CRED=name.split("=")
+	return splitKUBE_CRED[1]
+    }
+	}
+}
+
+def getNAMESPACE(ENVIR_NO){
+    def filepath="jenkins/"+${ENVIR_NO}
+	String creden_info = readFileFromWorkspace(filepath)
+
+	creden_info.eachLine {
+    name -&gt; if ( name =~ "^NAMESPACE") {
+    splitNAMESPACE=name.split("=")
+	return splitNAMESPACE[1]
+    }
+	}
+}
+
+def getNFS_STORAGE_CLASS(ENVIR_NO){
+	def filepath="jenkins/"+${ENVIR_NO}
+	String creden_info = readFileFromWorkspace(filepath)
+	creden_info.eachLine {
+     
+    name -&gt; if ( name =~ "^NFS_STORAGE_CLASS") {
+    splitNFS_STORAGE_CLASS=name.split("=")
+	return splitNFS_STORAGE_CLASS[1]
+    }
+	}
+}
+
+def getSTORAGE_CLASS(ENVIR_NO){
+	def filepath="jenkins/"+${ENVIR_NO}
+	String creden_info = readFileFromWorkspace(filepath)
+	creden_info.eachLine {
+     
+    name -&gt; if ( name =~ "^STORAGE_CLASS") {
+    splitSTORAGE_CLASS=name.split("=")
+	return splitSTORAGE_CLASS[1]
+    }
+	} 
+}
+
+def getENM_LAUNCHER_HOSTNAME(ENVIR_NO){
+	def filepath="jenkins/"+${ENVIR_NO}
+	String creden_info = readFileFromWorkspace(filepath)
+	creden_info.eachLine {
+     
+    name -&gt; if ( name =~ "^ENM_LAUNCHER_HOSTNAME") {
+    splitENM_LAUNCHER_HOSTNAME=name.split("=")
+	return splitENM_LAUNCHER_HOSTNAME[1]
+    }
+	} 
+}
+
+def getLB_EXTERNAL_PORT(ENVIR_NO){
+	def filepath="jenkins/"+${ENVIR_NO}
+	String creden_info = readFileFromWorkspace(filepath)
+	creden_info.eachLine {
+     
+    name -&gt; if ( name =~ "^LB_EXTERNAL_PORT") {
+    splitLB_EXTERNAL_PORT=name.split("=")
+	return splitLB_EXTERNAL_PORT[1]
+    }
+	} 
+}
+
+def getFM_VIP_ADDRESS(ENVIR_NO){
+	def filepath="jenkins/"+${ENVIR_NO}
+	String creden_info = readFileFromWorkspace(filepath)
+	creden_info.eachLine {
+     
+    name -&gt; if ( name =~ "^FM_VIP_ADDRESS") {
+    splitFM_VIP_ADDRESS=name.split("=")
+	return splitFM_VIP_ADDRESS[1]
+    }
+	}
+}
+
+def getPM_VIP_ADDRESS(ENVIR_NO){
+	def filepath="jenkins/"+${ENVIR_NO}
+	String creden_info = readFileFromWorkspace(filepath)
+	creden_info.eachLine {
+     
+    name -&gt; if ( name =~ "^PM_VIP_ADDRESS") {
+    splitPM_VIP_ADDRESS=name.split("=")
+	return splitPM_VIP_ADDRESS[1]
+    }
+	}
+}
+
+def getCM_VIP_ADDRESS(ENVIR_NO){
+	def filepath="jenkins/"+${ENVIR_NO}
+	String creden_info = readFileFromWorkspace(filepath)
+	creden_info.eachLine {
+     
+    name -&gt; if ( name =~ "^CM_VIP_ADDRESS") {
+    splitCM_VIP_ADDRESS=name.split("=")
+	return splitCM_VIP_ADDRESS[1]
+    }
+	}
+}
+
+pipeline{
+    agent { label 'Cloud-Native-Template-version-002' }
+    options {  
+        timeout(time: 6, unit: 'HOURS') 
+    }
+    parameters {
+        string(defaultValue: '32', description: 'Enter to environment here',  name: 'ENVIR_NO')
+        
+	}
+
+    environment {
+		KUBE_CRED=getKUBE_CRED(ENVIR_NO)
+		NAMESPACE=getNAMESPACE(ENVIR_NO)
+		NFS_STORAGE_CLASS=getNFS_STORAGE_CLASS(ENVIR_NO)
+		
+		ENM_LAUNCHER_HOSTNAME=getENM_LAUNCHER_HOSTNAME(ENVIR_NO)
+		LB_EXTERNAL_PORT=getLB_EXTERNAL_PORT(ENVIR_NO)
+		FM_VIP_ADDRESS=getFM_VIP_ADDRESS(ENVIR_NO)
+		PM_VIP_ADDRESS=getPM_VIP_ADDRESS(ENVIR_NO)
+		CM_VIP_ADDRESS=getCM_VIP_ADDRESS(ENVIR_NO)
+        kubeConfig = "/home/lciadm100/.kube/${KUBE_CRED}"
+        HOME_DIR = "${WORKSPACE}"
+        kubectl = "kubectl --kubeconfig=${kubeConfig}"
+        helm = "KUBECONFIG=${kubeConfig} helm"
+        https_proxy = "http://www-proxy.lmera.ericsson.se:8080/"
+    }
+
+    stages{
+		
+        stage( 'Connect-K9s' ) {
+            steps {
+                echo "${ENM_LAUNCHER_HOSTNAME}"
+			
+                }
+            }
+        
+		stage( 'Connect-K8s' ) {
+            steps {
+                echo "${KUBE_CRED}"
+			
+                }
+            }
+        }
+        
+    }
+   </script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>true</disabled>
+</flow-definition>

@@ -1,0 +1,157 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>By using this Jenkins Job it&apos;s possible to find the desired builds by configuring a list of parameters, acting as search&apos;s filter.&lt;br&gt;&#xd;
+For further details please check the following Confluence page: &lt;a href=&quot;https://confluence-oss.seli.wh.rnd.internal.ericsson.com/pages/viewpage.action?pageId=337725352&quot;&gt;Search for build Job/Script&lt;/a&gt;</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>20</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <jp.ikedam.jenkins.plugins.extensible__choice__parameter.ExtensibleChoiceParameterDefinition plugin="extensible-choice-parameter@1.8.0">
+          <name>hour</name>
+          <description>the hour at which you want to control the builds.&lt;br&gt;
+You can also insert a list of hours to consider, by splitting hours with minus.&lt;br&gt;
+&lt;font color=&quot;green&quot;&gt;e.g. 10-11-12&lt;/font&gt;&lt;/font&gt;
+</description>
+          <editable>false</editable>
+          <choiceListProvider class="jp.ikedam.jenkins.plugins.extensible_choice_parameter.TextareaChoiceListProvider">
+            <choiceList>
+              <string>all_day</string>
+              <string>10</string>
+              <string>00-01-02-03-04-05-06-07-08-09-10-11-12-13-14-15-16-17-18-19-20-21-22-23-24</string>
+              <string>02-03-04-05</string>
+            </choiceList>
+          </choiceListProvider>
+        </jp.ikedam.jenkins.plugins.extensible__choice__parameter.ExtensibleChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>date</name>
+          <description>the date at which you want to control the builds.&lt;br&gt;
+Please, use this format: &lt;font color=&quot;green&quot;&gt;day-first 3 letters of the month-year&lt;/font&gt;&lt;/font&gt;&lt;br&gt;
+&lt;br&gt;
+If you want to consider a date range, please use the following format:&lt;br&gt;
+&lt;font color=&quot;green&quot;&gt;day-first 3 letters of the month-year;delta&lt;/font&gt;&lt;/font&gt;&lt;br&gt;
+&lt;font color=&quot;green&quot;&gt;e.g. 07-Aug-2017;12&lt;/font&gt;&lt;/font&gt;&lt;br&gt; it will consider from 27-Jul-2017 to 07-Aug-2017
+</description>
+          <defaultValue>22-Jan-2021</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>source</name>
+          <description>the jenkins instance at which you want to check the jobs.</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>fem16s11</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>job_to_search</name>
+          <description>the desired Jenkins job to search. It is possible to insert a list of Jenkins jobs separated by one space. Can be empty, to search all type of Jenkins jobs.&lt;br&gt;
+e.g.
+PCR
+Release
+DSL
+</description>
+          <defaultValue>PCR</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <jp.ikedam.jenkins.plugins.extensible__choice__parameter.ExtensibleChoiceParameterDefinition plugin="extensible-choice-parameter@1.8.0">
+          <name>slave_to_search</name>
+          <description>the desired Jenkins node to search. It is possible to insert a list of Jenkins node separated by one space. Select All option to search for all type of Jenkins node.&lt;br&gt;
+e.g.
+GridEngine
+Docker</description>
+          <editable>false</editable>
+          <choiceListProvider class="jp.ikedam.jenkins.plugins.extensible_choice_parameter.TextareaChoiceListProvider">
+            <choiceList>
+              <string>All</string>
+              <string>GridEngine</string>
+              <string>mesos</string>
+              <string>master</string>
+            </choiceList>
+          </choiceListProvider>
+        </jp.ikedam.jenkins.plugins.extensible__choice__parameter.ExtensibleChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>string_into_log</name>
+          <description>String to search into console log file. It is possible to insert a list of strings separated by semicolon. Can be empty. &lt;br&gt;
+e.g. git fetch;FAIL&lt;br&gt;
+&lt;font color=&quot;green&quot;&gt;IT&apos;S CASE SENSITIVE&lt;/font&gt;&lt;/font&gt;&lt;br&gt;</description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>GridEngine_RHEL7</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+
+echo &quot;DATE &amp; HOUR informations: ${date}, ${hour}&quot;
+echo &quot;In which Jenkins instance do you want to execute the analysis: ${source}&quot;
+echo &quot;Which type of Jenkins job you are looking for: ${job_to_search}&quot;
+echo &quot;Which type of node/slave you are looking for: ${slave_to_search}&quot;
+echo &quot;Are you searching for a specific string or a list of strings into console log: ${string_into_log}&quot;
+
+python /proj/cdsadm100/tools/utils/scripts/Monitoring_tools/Find_builds/Find_builds_e2c.py &quot;${source}&quot; &quot;${slave_to_search}&quot; &quot;${hour}&quot; &quot;${date}&quot; &quot;${string_into_log}&quot; &quot;${job_to_search}&quot;
+
+
+</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.40">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+  </buildWrappers>
+</project>

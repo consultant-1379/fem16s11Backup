@@ -1,0 +1,319 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>test_phase</name>
+          <description>The test phase being run</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>MTE</string>
+              <string>DROPBACK</string>
+              <string>PLM</string>
+              <string>RTD</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>drop</name>
+          <description>Drop for upgrade&lt;br&gt;
+Example: 18.02</description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>product_set_version</name>
+          <description>The Product Set version of vENM to upgrade to&lt;br&gt;
+Example: 18.02.19</description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>cluster_id</name>
+          <description>Deployment name of vENM Cloud Deployment to be upgraded</description>
+          <defaultValue>ieatenmc6a004</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <jp.ikedam.jenkins.plugins.extensible__choice__parameter.ExtensibleChoiceParameterDefinition plugin="extensible-choice-parameter@1.8.0">
+          <name>mt_utils_version</name>
+          <description>This is the version of the scripts available in Nexus&lt;br&gt;
+The version used will be printed in the console output&lt;br&gt;
+&lt;a href=&quot;https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/repositories/releases/com/ericsson/mtg/utils/&quot;&gt;Nexus Link&lt;/a&gt; </description>
+          <editable>false</editable>
+          <choiceListProvider class="jp.ikedam.jenkins.plugins.extensible_choice_parameter.TextareaChoiceListProvider">
+            <choiceList>
+              <string>RELEASE</string>
+              <string>20.4.1</string>
+              <string>20.5.14</string>
+              <string>20.6.3</string>
+              <string>20.7.4</string>
+              <string>20.7.5</string>
+            </choiceList>
+          </choiceListProvider>
+        </jp.ikedam.jenkins.plugins.extensible__choice__parameter.ExtensibleChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>tafVersion</name>
+          <description>Version of the TAF to use&lt;br&gt;
+AUTO will get the version mapped to Product Set&lt;br&gt;
+If you do not want to use mapped version, select a specific version to use</description>
+          <defaultValue>AUTO</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>centralCSVVersion</name>
+          <description>Version of the Central CSV to use&lt;br&gt;
+AUTO will get the version mapped to Product Set&lt;br&gt;
+If you do not want to use mapped version, then can select a specific version to use</description>
+          <defaultValue>AUTO</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>tafSchedulerVersion</name>
+          <description>Version of the TAF Scheduler to use&lt;br&gt;
+AUTO will get the version mapped to Product Set&lt;br&gt;
+If you do not want to use mapped version, then can select a specific version to use</description>
+          <defaultValue>AUTO</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>send_confidence_level</name>
+          <description>This parameter is used to send the confidence level to portal/radiator/auto build log</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>NO</string>
+              <string>YES</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>conf_level_for_this_job</name>
+          <description>The confidence level event to be sent to the portal/radiator/build log</description>
+          <defaultValue>RFA</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>dmt_id</name>
+          <description></description>
+          <defaultValue>ieatenmc6a004</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>enm_iso_version</name>
+          <description></description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    <EnvInjectJobProperty plugin="envinject@2.4.0">
+      <info>
+        <secureGroovyScript plugin="script-security@1138.v8e727069a_025">
+          <script></script>
+          <sandbox>true</sandbox>
+        </secureGroovyScript>
+        <loadFilesFromMaster>false</loadFilesFromMaster>
+      </info>
+      <on>true</on>
+      <keepJenkinsSystemVariables>true</keepJenkinsSystemVariables>
+      <keepBuildVariables>true</keepBuildVariables>
+      <overrideBuildParameters>true</overrideBuildParameters>
+    </EnvInjectJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>Jenkin_TAF_TE_Slave_4Node_MISTY</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <org.jenkinsci.plugins.exportparams.ExportParametersBuilder plugin="export-params@1.9">
+      <filePath>parameters</filePath>
+      <fileFormat>properties</fileFormat>
+      <keyPattern></keyPattern>
+      <useRegexp>false</useRegexp>
+    </org.jenkinsci.plugins.exportparams.ExportParametersBuilder>
+    <hudson.tasks.Shell>
+      <command>echo &quot;Retrieving Scripts from Nexus&quot;
+tarFileName=&quot;utils_${mt_utils_version}.tar.gz&quot;
+echo &quot;Downloading file - ${tarFileName} - to the workspace&quot;
+curl -s --noproxy \* -L &quot;https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/service/local/artifact/maven/redirect?r=releases&amp;g=com.ericsson.mtg&amp;a=utils&amp;p=tar.gz&amp;v=${mt_utils_version}&quot; -o ${tarFileName}
+tar -zxf ${tarFileName}
+
+sh MTELoopScripts/pipeline_scripts/rfa_250_setup.sh ${WORKSPACE}/parameters.properties
+
+
+
+
+cat &gt; taf.properties &lt;&lt; EOL
+taf.profiles=maintrack
+host.UiTestGrid.user.root.pass=shroot
+taf_ui.default_OS=LINUX
+host.UiTestGrid.port.ssh=22
+ENMUrl=ieatenmc31.athtem.eei.ericsson.se
+
+groups=RFA250,KGB,RFA
+host.haproxy_0.instance=ieatenmc31.athtem.eei.ericsson.se
+host.haproxy_0.ip=ieatenmc31.athtem.eei.ericsson.se
+host.haproxy_0.port.https=443
+host.haproxy_0.port.http=80
+
+
+taf_ui.default_browser=FIREFOX
+taf.scenario.debug.enabled=true
+MT_CSV_FILE_URI=https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/sites/tor/enm-maintrack-central-test-datasource/20.14.21/maintrack/csv/nodeToAdd_2K.csv
+host.UiTestGrid.ip=141.137.235.136 
+host.UiTestGrid.user.root.type=ADMIN
+host.UiTestGrid.type=SELENIUM_GRID
+host.UiTestGrid.port.http=4444
+dmt_id=ieatenmc31
+EOL
+
+cat taf.properties</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <EnvInjectBuilder plugin="envinject@2.4.0">
+      <info>
+        <propertiesFilePath>$WORKSPACE/build.properties</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+#This script is to find the accesible seleniumGrid IP of respective teams
+
+version=$(curl --silent &apos;https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/repositories/nss/com/ericsson/nss/Selenium3grid/uiTestGrid_healthcheck/maven-metadata.xml&apos; | sed -n &apos;s|&lt;release&gt;\(.*\)&lt;/release&gt;|\1|p&apos; | sed -e &apos;s/^[ \t]*//&apos; | tail -1)
+
+echo &quot;Downloading latest version $version of UI grid health check script &quot;
+
+curl --retry 5 -fsS &quot;https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/repositories/nss/com/ericsson/nss/Selenium3grid/uiTestGrid_healthcheck/${version}/uiTestGrid_healthcheck-${version}.sh&quot; -o uiTestGrid_healthcheck.sh
+
+curl --retry 5 -fsS &quot;https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/repositories/nss/com/ericsson/nss/Selenium3grid/uiTestGrid_healthcheck/${version}/uiTestGrid_healthcheck-${version}.sh&quot; -o uiTestGrid_healthcheck.sh
+
+WORKSPACE=$WORKSPACE
+
+
+
+sh uiTestGrid_healthcheck.sh ${WORKSPACE}
+</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <EnvInjectBuilder plugin="envinject@2.4.0">
+      <info>
+        <propertiesFilePath>$WORKSPACE/UiTestGridiP</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+    <EnvInjectBuilder plugin="envinject@2.4.0">
+      <info>
+        <propertiesFilePath>$WORKSPACE/build.properties</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+    <com.ericsson.oss.axis.BaselineDefinedMessageDispatcher plugin="taf-trigger@1.0.60">
+      <ciArtifacts>
+        <isoProduct>ENM</isoProduct>
+        <isoDrop>${drop}</isoDrop>
+        <isoVersion>${enm_iso_version}</isoVersion>
+        <jobType>Entry Loop</jobType>
+        <artifactsClassName>com.ericsson.oss.axis.BaselineDefinedMessageDispatcher$ArtifactAsISO$1</artifactsClassName>
+      </ciArtifacts>
+      <schedule>
+        <name>cenm/cenm_RFA250_svc_scp.xml</name>
+        <groupId>com.ericsson.cifwk</groupId>
+        <artifactId>enm-schedule-kvm</artifactId>
+        <version>20.09.18</version>
+        <testPropertiesAsString></testPropertiesAsString>
+        <scheduleClassName>com.ericsson.oss.axis.BaselineDefinedMessageDispatcher$ScheduleAsGav$1</scheduleClassName>
+      </schedule>
+      <testwarePropertiesFile>${WORKSPACE}/MTELoopScripts/libraries/rfa_250/taf.properties</testwarePropertiesFile>
+      <tunnellingOn>false</tunnellingOn>
+      <breakBuildOnTestsFailure>false</breakBuildOnTestsFailure>
+      <sutClusterId>000</sutClusterId>
+      <citeHostPropertiesFile></citeHostPropertiesFile>
+      <globalTestGroups></globalTestGroups>
+      <tafVersion>2.54.1</tafVersion>
+      <userDefinedGAVs></userDefinedGAVs>
+      <additionalTestProperties>
+        <property name="taf.config.dit.deployment.internal.nodes" value="fmalarmprocessing_1,fmalarmprocessing_2,fmalarmprocessing_3,fmalarmprocessing_4,fmx_1,fmx_2,jms_1"/>
+        <property name="dmt_id" value="ieatenmc31"/>
+        <property name="taf.config.dit.deployment.name" value="ieatenmc6a044"/>
+        <property name="host.UiTestGrid.ip" value="${UiTestGridIP}"/>
+      </additionalTestProperties>
+      <arm>
+        <id></id>
+        <description></description>
+        <httpString>https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/groups/public</httpString>
+        <credentials>
+          <username></username>
+          <password></password>
+        </credentials>
+      </arm>
+      <ciFwkHost>https://ci-portal.seli.wh.rnd.internal.ericsson.com/</ciFwkHost>
+      <tafTestExecutorHostname></tafTestExecutorHostname>
+      <tafTestExecutorPort>8080</tafTestExecutorPort>
+    </com.ericsson.oss.axis.BaselineDefinedMessageDispatcher>
+  </builders>
+  <publishers>
+    <hudson.tasks.Mailer plugin="mailer@408.vd726a_1130320">
+      <recipients></recipients>
+      <dontNotifyEveryUnstableBuild>true</dontNotifyEveryUnstableBuild>
+      <sendToIndividuals>false</sendToIndividuals>
+    </hudson.tasks.Mailer>
+  </publishers>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.40">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+    <EnvInjectBuildWrapper plugin="envinject@2.4.0">
+      <info>
+        <secureGroovyScript plugin="script-security@1138.v8e727069a_025">
+          <script></script>
+          <sandbox>true</sandbox>
+        </secureGroovyScript>
+        <loadFilesFromMaster>false</loadFilesFromMaster>
+      </info>
+    </EnvInjectBuildWrapper>
+    <org.jenkinsci.plugins.buildnamesetter.BuildNameSetter plugin="build-name-setter@2.2.0">
+      <template>CN RFA on ISO : ${enm_iso_version}</template>
+      <runAtStart>true</runAtStart>
+      <runAtEnd>true</runAtEnd>
+    </org.jenkinsci.plugins.buildnamesetter.BuildNameSetter>
+  </buildWrappers>
+</project>

@@ -1,0 +1,368 @@
+<flow-definition plugin="workflow-job@2.25">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.3.2"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.3.2">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>NAMESPACE</string>
+        <string>KUBE_CRED</string>
+        <string>STORAGE_CLASS</string>
+        <string>MODELSERV_LIVENESS_PROBE</string>
+        <string>emailList</string>
+        <string>NFS_STORAGE_CLASS</string>
+        <string>LB_EXTERNAL_PORT</string>
+        <string>ENM_LAUNCHER_HOSTNAME</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@65.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.19.2">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@65.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>KUBE_CRED</name>
+          <description>Kuberenetes Access Credentails</description>
+          <defaultValue>hoff_kube_config_2</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>NAMESPACE</name>
+          <description>Kubernetes Namespace Name</description>
+          <defaultValue>enm32</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>NFS_STORAGE_CLASS</name>
+          <description>NFS Storage Class Name</description>
+          <defaultValue>nfs</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>STORAGE_CLASS</name>
+          <description>Default Storage Class Name</description>
+          <defaultValue>erikube-rbd</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>ENM_LAUNCHER_HOSTNAME</name>
+          <description>ENM UI Hostname for Ingress</description>
+          <defaultValue>enm32-phase-1.hoff031.rnd.gic.ericsson.se</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>LB_EXTERNAL_PORT</name>
+          <description>External Loabalancer IP address</description>
+          <defaultValue>10.210.164.25</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>MODELSERV_LIVENESS_PROBE</name>
+          <description>modelserv liveness probe</description>
+          <defaultValue>16200</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>emailList</name>
+          <description>Semi colon separated list of Email Recipients</description>
+          <defaultValue>EricssonHyderabad.ENMMisty@tcs.com;EricssonHyderabad.ENMDewdrops@tcs.com</defaultValue>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.57.2">
+    <script>def kubectlGetResource(type, NAMESPACE){
+    return sh(script : "${kubectl} get ${type} -n ${NAMESPACE} | grep -v \'NAME\' |  awk -F\' \' \'{print \$1}\'", returnStdout: true).split()
+}
+
+def checkHealthyPods(NAMESPACE) {
+    desiredStatefulset = sh ( script: "${kubectl} -n ${NAMESPACE} get sts    | grep -v 'NAME' | awk -F' ' '{stssum += \$2} END {print stssum}'", returnStdout: true ).trim()
+    echo "${desiredStatefulset}"
+    desiredDeployment  = sh ( script: "${kubectl} -n ${NAMESPACE} get deploy | grep -v 'NAME' | awk -F' ' '{depsum += \$2} END {print depsum}'", returnStdout: true ).trim()
+    echo "${desiredDeployment}"
+    currentHealthyPods = sh ( script: "${kubectl} -n ${NAMESPACE} get pods   | grep -v 'NAME' | grep 'Running' | awk -F' ' '{print \$2}' | awk -F'/' '{podsum += \$1} END {print podsum}'", returnStdout: true ).trim()
+    echo "${currentHealthyPods}"
+    desiredDeploy=desiredDeployment.toInteger()
+    currentHealthy=currentHealthyPods.toInteger()
+    desiredStateful=desiredStatefulset.toInteger()
+    
+    if ( desiredStateful + desiredDeploy &lt;= currentHealthy ) {
+        echo "Desired:Statefulset + Desired:Deployment is lesser than or equal to Current: Running Healthy Pods"
+    } else {
+        echo "Desired:Statefulset + Desired:Deployment is not matching Current: Running Healthy Pods"
+        sh "sleep 60"
+        sh "exit 1"
+    }
+}
+
+
+def smokeTest(NAMESPACE,LB_EXTERNAL_PORT) {
+    response = sh (script: "curl --insecure -X POST -d \"IDToken1=Administrator&amp;IDToken2=TestPassw0rd\" https://${ENM_LAUNCHER_HOSTNAME}/login -H \"Content-Type: application/x-www-form-urlencoded\" -H \"Accept-Encoding: gzip,deflate\" -H \"Accept: */*\" -L -H \'cache-control: no-cache\'", returnStdout: true ).trim()
+    echo response
+    if ( response.contains("Authentication Successful") ){
+       echo "Success! Can login to ENM"
+    } else {
+       echo "Failed! Can\'t login to ENM"
+       sh "exit 1"
+    } 
+}
+
+def updateIntegrationValues(NAMESPACE,NFS_STORAGE_CLASS,STORAGE_CLASS,ENM_LAUNCHER_HOSTNAME,LB_EXTERNAL_PORT,MODELSERV_LIVENESS_PROBE) {
+    try {
+	    filename = "${HOME_DIR}/eric-enm-integration-values-${INTEGRATION_VALUE_VERSION}.yaml"
+		values = readYaml file: filename
+        values.global.persistentVolumeClaim.storageClass = "${STORAGE_CLASS}"
+        values.global.ingress.enmHost = "${ENM_LAUNCHER_HOSTNAME}"
+        values.global.enmProperties.lb_external_port = "${LB_EXTERNAL_PORT}"
+        values.global.rwx.storageClass = "${NFS_STORAGE_CLASS}"
+        values.global.storageClass.name= "${NFS_STORAGE_CLASS}"
+        values.global.timezone="UTC"
+		values.global.modelserv.livenessProbe= "${MODELSERV_LIVENESS_PROBE}"
+		values."eric-data-graph-database-nj".persistentVolumeClaim.storageClass = "${STORAGE_CLASS}"
+		values."eric-data-graph-database-nj".persistentVolumeClaim.backup.storageClass = "${STORAGE_CLASS}"
+		values."eric-data-graph-database-nj".persistentVolumeClaim.logging.storageClass = "${STORAGE_CLASS}"
+		values."eric-data-document-database-pg".persistence.storageClassName = "${STORAGE_CLASS}"
+
+        sh "rm -f ${filename}"
+        writeYaml file: filename, data: values
+    } catch( err ) {
+        echo "$err"
+    }
+}
+
+def emailReport(content, emailList){
+    def DEFAULT_REPLYTO = 'peddinti.tarakesam@tcs.com'
+
+    def subject = "${env.JOB_NAME} - Build #${env.BUILD_NUMBER} - ${currentBuild.currentResult}!"
+
+    try {
+        emailext(body: content, mimeType: 'text/html', from: 'jenkins_monitoring@ericsson.com',
+            replyTo: DEFAULT_REPLYTO, subject: subject,
+            to: "${emailList}" )
+    } catch( err ){
+        echo "$err"
+    }
+}
+
+def reportHeading(status,NAMESPACE,LB_EXTERNAL_PORT){
+    
+    def deployResult
+    def color 
+    def investigation 
+    
+    if(status == 'Success'){
+        deployResult = "Success"
+        color = "#9ACD32"
+        investigation = "NA"
+    } else if(status == 'Failed'){
+        deployResult = "Failed"
+        color = "#DC143C"
+        investigation = "In progress, will be included in a follow up email"
+    } else if(status == 'Aborted'){
+        deployResult = "Aborted"
+        color = "#95A5A6"
+        investigation = "(If applicable), will be included in a follow up email"
+    }
+
+    def report = "Hi All,\n\n &lt;h2&gt;${NAMESPACE} Deployment Result: &lt;span style=\"background-color:${color};\"&gt;${status}&lt;/span&gt;&lt;/h2&gt;"
+    def InfrachartVersion = sh (script : "${helm} list --namespace ${NAMESPACE} | grep infra-integration-${NAMESPACE} | awk \'{print \$(NF-2)}\'", returnStdout: true)
+	def StatelesschartVersion = sh (script : "${helm} list --namespace ${NAMESPACE} | grep stateless-integration-${NAMESPACE} | awk \'{print \$(NF-2)}\'", returnStdout: true)
+    report += " &lt;ul&gt;&lt;li&gt;&lt;strong&gt;Login URL :&lt;/strong&gt; https://${NAMESPACE}-phase-1.hoff031.rnd.gic.ericsson.se&lt;/li&gt;"
+    report += "&lt;li&gt;&lt;strong&gt;Infra Chart version :&lt;/strong&gt; ${InfrachartVersion}&lt;/li&gt;"
+	report += "&lt;li&gt;&lt;strong&gt;Steteless Chart version :&lt;/strong&gt; ${StatelesschartVersion}&lt;/li&gt;"
+    report += "&lt;li&gt;&lt;strong&gt;Please find the Phase 1 Deploy Job Details:&lt;/strong&gt;  &lt;a href=${BUILD_URL}&gt;${BUILD_URL}&lt;/a&gt;&lt;/li&gt;"
+    report += "&lt;li&gt;&lt;strong&gt;Investigation Results  :  ${investigation}&lt;/strong&gt;&lt;/li&gt;&lt;/ul&gt;"
+
+    report = report.replace("\n","&lt;/br&gt;")
+    return report
+}
+
+def printPods(NAMESPACE){
+    def failedState = sh (script : "${kubectl} -n ${NAMESPACE} get pods | egrep \'NAME|Running\' | egrep \'0/|NAME\'" , returnStdout: true)
+    def initState = sh (script : "${kubectl} -n ${NAMESPACE} get pods | grep -v Running || true", returnStdout: true)
+	def sidecarState= sh (script : "${kubectl} -n ${NAMESPACE} get pods | egrep \'NAME|Running\' | egrep \'1/2|NAME\'" , returnStdout: true)
+    def report = "#kubectl -n ${NAMESPACE} get pods | egrep \'NAME|Running\' | egrep \'0/|NAME\' \n&lt;pre&gt;${failedState}&lt;/pre&gt; \n\n\n #kubectl -n ${NAMESPACE} get pods | grep -v Running \n&lt;pre&gt;${initState}&lt;/pre&gt; \n\n\n #kubectl -n ${NAMESPACE} get pods | egrep \'NAME|Running\' | egrep \'1/2|NAME\' \n&lt;pre&gt;${sidecarState}&lt;/pre&gt;"
+    echo "${report}"
+    
+    report = report.replace("\n","&lt;/br&gt;")
+    report += "&lt;style&gt; pre {display: block;font-family: Lucida Console, Monaco, monospace; white-space: pre;} &lt;/style&gt;";
+
+    return report
+}
+
+pipeline{
+    agent { label 'Cloud-Native-Template-version-002' }
+    options {  
+        timeout(time: 6, unit: 'HOURS') 
+    }
+    parameters {
+        string(defaultValue: 'hoff_kube_config_2', description: 'Kuberenetes Access Credentails',  name: 'KUBE_CRED')
+        string(defaultValue: 'enm32', description: 'Kubernetes Namespace Name',  name: 'NAMESPACE')
+        string(defaultValue: 'nfs', description: 'NFS Storage Class Name',  name: 'NFS_STORAGE_CLASS')
+        string(defaultValue: 'erikube-rbd', description: 'Default Storage Class Name',  name: 'STORAGE_CLASS')
+        string(defaultValue: 'enm32-phase-1.hoff031.rnd.gic.ericsson.se', description: 'ENM UI Hostname for Ingress',  name: 'ENM_LAUNCHER_HOSTNAME')
+        string(defaultValue: '10.210.164.25', description: 'External Loabalancer IP address',  name: 'LB_EXTERNAL_PORT')
+		string(defaultValue: '16200', description: 'modelserv liveness probe',  name: 'MODELSERV_LIVENESS_PROBE')
+        string(defaultValue: 'EricssonHyderabad.ENMMisty@tcs.com;EricssonHyderabad.ENMDewdrops@tcs.com', description: 'Semi colon separated list of Email Recipients',  name: 'emailList')
+	}
+
+    environment {
+        kubeConfig = "/home/lciadm100/.kube/${KUBE_CRED}"
+        HOME_DIR = "${WORKSPACE}"
+        kubectl = "kubectl --kubeconfig=${kubeConfig}"
+        helm = "KUBECONFIG=${kubeConfig} helm"
+        https_proxy = "http://www-proxy.lmera.ericsson.se:8080/"
+    }
+
+    stages{
+        stage( 'Connect-K8s' ) {
+            steps {
+                sh 'rm -rf ~/.kube/config'
+                withCredentials([file(credentialsId: KUBE_CRED, variable: 'FILE')]) {
+                    sh 'mkdir -p ~/.kube &amp;&amp; chmod 775 ~/.kube &amp;&amp; cp -v $FILE ~/.kube/${KUBE_CRED} &amp;&amp; chmod 664 ~/.kube/${KUBE_CRED}'
+                }
+            }
+        }
+        stage( 'Pre Build' ) {
+            parallel {
+                stage('Prepare K8s context'){
+                    steps{
+                        sh "${kubectl} config use-context hoff031"
+                    
+                    }
+                }
+                stage('Add Helm Repo'){
+                    steps{
+                        sh "${helm} init --client-only"
+                        sh "${helm} version"
+						sh "${helm} repo add proj-enm-dev-internal-helm https://arm.epk.ericsson.se/artifactory/proj-enm-dev-internal-helm"
+						sh "${helm} repo update"
+                    }
+                }
+				stage('infra-integration chart version'){
+                    steps{
+					 sh "curl -u cenmbuild:2dc0ea58edb3bcfe90cd1abef820a698 https://fem16s11-eiffel004.lmera.ericsson.se:8443/jenkins/job/infra-integration/lastBuild/artifact/artifact.properties &gt; infra-integration-chart-version"
+					 sh "grep CHART_VERSION= infra-integration-chart-version | sed 's/INT_CHART_VERSION=//' &gt; INFRA_CHART_VERSION"
+					   script {
+                        def INFRA_CHART_VERSION = readFile('INFRA_CHART_VERSION')
+						env.INFRA_CHART_VERSION=INFRA_CHART_VERSION.trim()
+                      } 
+					 
+                    }
+                }
+				stage('integration value version'){
+                    steps{
+                      script {
+					 sh "curl -u cenmbuild:2dc0ea58edb3bcfe90cd1abef820a698 https://fem16s11-eiffel004.lmera.ericsson.se:8443/jenkins/job/integration-values-2.0/lastBuild/artifact/artifact.properties &gt; integration-values-version"
+                      sh "grep CHART_VERSION=  integration-values-version | sed 's/INT_CHART_VERSION=//' &gt; INTEGRATION_VALUE_VERSION"
+					   script {
+                        def INTEGRATION_VALUE_VERSION = readFile('INTEGRATION_VALUE_VERSION')
+						env.INTEGRATION_VALUE_VERSION=INTEGRATION_VALUE_VERSION.trim()			
+                      }                     
+                     sh "wget https://arm.epk.ericsson.se/artifactory/proj-enm-helm/eric-enm-integration-values/eric-enm-integration-values-${INTEGRATION_VALUE_VERSION}.yaml"
+				     updateIntegrationValues(NAMESPACE,NFS_STORAGE_CLASS,STORAGE_CLASS,ENM_LAUNCHER_HOSTNAME,LB_EXTERNAL_PORT,MODELSERV_LIVENESS_PROBE)					 
+                    } 
+                    }
+                }							
+				stage('stateless-integration chart version'){
+                    steps{
+                       sh "curl -u cenmbuild:2dc0ea58edb3bcfe90cd1abef820a698 https://fem16s11-eiffel004.lmera.ericsson.se:8443/jenkins/job/stateless-integration/lastBuild/artifact/artifact.properties &gt; stateless-integration-chart-version"
+					   sh "grep CHART_VERSION= stateless-integration-chart-version | sed 's/INT_CHART_VERSION=//' &gt; STATELESS_CHART_VERSION"
+					   script {
+                        def STATELESS_CHART_VERSION = readFile('STATELESS_CHART_VERSION')
+						env.STATELESS_CHART_VERSION=STATELESS_CHART_VERSION.trim()
+                      }
+                    }
+                }
+            }
+        }     
+        stage('Install cENM II 2.0'){
+		    parallel {
+			    stage('Install cENM Infra chart'){
+                    steps{
+                        echo "success"
+						}
+                 }
+				stage('Install cENM Stateless chart'){
+                    steps{
+                        echo "success"
+						}
+                 }
+			}
+		    post {
+                always {
+                    retry(3) {
+                        script {
+                            smokeTest(NAMESPACE,LB_EXTERNAL_PORT)
+                        }
+                    }
+                    script {
+                        def ingUrl = sh (script: "${kubectl} get ing -n ${NAMESPACE} | grep uiserv | awk \'{ print \$2 }\'",  returnStdout:true)
+             			currentBuild.description = "&lt;p&gt;INFRA INTEGRATION CHART :${INFRA_CHART_VERSION}&lt;/p&gt;&lt;/br&gt; &lt;p&gt;STATELESS_CHART_VERSION : ${STATELESS_CHART_VERSION}&lt;/p&gt;&lt;/br&gt;&lt;p&gt;INTEGRATION_VALUE_VERSION : ${INTEGRATION_VALUE_VERSION}&lt;/p&gt;&lt;/br&gt;&lt;p&gt;${NAMESPACE} URL : &lt;a href=\'https://${ENM_LAUNCHER_HOSTNAME}\'&gt;https://${ENM_LAUNCHER_HOSTNAME}&lt;/a&gt;&lt;/br&gt;"
+                    }
+                }
+            }
+        }
+        stage('CheckPods Running'){
+            steps{
+                script{
+                    retry(5){
+                        checkHealthyPods(NAMESPACE)
+                    }
+                }
+            }
+        }
+    }
+    post{
+        failure {
+            script{
+                echo "Failure"
+				currentBuild.description = "&lt;p&gt;INFRA INTEGRATION CHART :${INFRA_CHART_VERSION}&lt;/p&gt;&lt;/br&gt; &lt;p&gt;STATELESS_CHART_VERSION : ${STATELESS_CHART_VERSION}&lt;/p&gt;&lt;/br&gt;&lt;p&gt;INTEGRATION_VALUE_VERSION : ${INTEGRATION_VALUE_VERSION}&lt;/p&gt;&lt;/br&gt;&lt;p&gt;${NAMESPACE} URL : &lt;a href=\'https://${ENM_LAUNCHER_HOSTNAME}\'&gt;https://${ENM_LAUNCHER_HOSTNAME}&lt;/a&gt;&lt;/br&gt;"
+                   
+  
+            }
+        }
+        aborted{
+            script{
+                echo "Aborted" 
+             currentBuild.description = "&lt;p&gt;INFRA INTEGRATION CHART :${INFRA_CHART_VERSION}&lt;/p&gt;&lt;/br&gt; &lt;p&gt;STATELESS_CHART_VERSION : ${STATELESS_CHART_VERSION}&lt;/p&gt;&lt;/br&gt;&lt;p&gt;INTEGRATION_VALUE_VERSION : ${INTEGRATION_VALUE_VERSION}&lt;/p&gt;&lt;/br&gt;&lt;p&gt;${NAMESPACE} URL : &lt;a href=\'https://${ENM_LAUNCHER_HOSTNAME}\'&gt;https://${ENM_LAUNCHER_HOSTNAME}&lt;/a&gt;&lt;/br&gt;"
+                    				
+                
+            }
+        }
+        success{
+            script{
+                echo "Success" 
+currentBuild.description = "&lt;p&gt;INFRA INTEGRATION CHART :${INFRA_CHART_VERSION}&lt;/p&gt;&lt;/br&gt; &lt;p&gt;STATELESS_CHART_VERSION : ${STATELESS_CHART_VERSION}&lt;/p&gt;&lt;/br&gt;&lt;p&gt;INTEGRATION_VALUE_VERSION : ${INTEGRATION_VALUE_VERSION}&lt;/p&gt;&lt;/br&gt;&lt;p&gt;${NAMESPACE} URL : &lt;a href=\'https://${ENM_LAUNCHER_HOSTNAME}\'&gt;https://${ENM_LAUNCHER_HOSTNAME}&lt;/a&gt;&lt;/br&gt;"
+                    				
+            }
+        }
+        always {
+            script{
+                sh("cat ${HOME_DIR}/eric-enm-integration-values-${INTEGRATION_VALUE_VERSION}.yaml")
+				archiveArtifacts "eric-enm-integration-values-${env.INTEGRATION_VALUE_VERSION}.yaml"
+				
+            }
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>true</disabled>
+</flow-definition>

@@ -1,0 +1,502 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>&lt;font color=&quot;red&quot;&gt;&lt;b&gt;Do not make changes&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&#xd;
+This Job is used for compile commit loop validation.&lt;br&gt;&#xd;
+&lt;br&gt;&lt;br&gt;&#xd;
+&#xd;
+&lt;p&gt;&#xd;
+  &lt;font size=&quot;6&quot; color=&quot;blue&quot;&gt;&#xd;
+    &lt;b&gt;ULSA COMMIT LOOP VALIDATION&lt;/b&gt;&lt;br&gt;&#xd;
+  &lt;/font&gt;  &#xd;
+  &lt;br&gt;&#xd;
+  &lt;font size=&quot;3&quot; color=&quot;red&quot;&gt;&#xd;
+     &lt;b&gt;  &#xd;
+     This Job used as ULSA E2E valiadtion job for commit loop.&lt;br&gt;  &#xd;
+     The reported coverage includes both UT and USAT code coverage.&lt;br&gt; &#xd;
+     A Spock report is generated for UT: &lt;a href=&apos;https://fem109-eiffel004.lmera.ericsson.se:8443/jenkins/job/pmul-service_CommitLoop/Spock_HTML_Report&apos;&gt;Spock HTML Report&lt;/a&gt; before using.&lt;br&gt;   &#xd;
+     A cucumber report is generated for USAT: &lt;a href=&apos;https://fem109-eiffel004.lmera.ericsson.se:8443/jenkins/job/pmul-service_CommitLoop/Cucumber_HTML_Report&apos;&gt;Cucumber Html Report&lt;/a&gt; before using.&lt;br&gt;&#xd;
+     Please contact the maintainer for any issue &lt;br&gt;&#xd;
+     Maintainer: Biagio Laneve (ebialan)&lt;br&gt;&#xd;
+    &lt;/b&gt;&#xd;
+  &lt;/font&gt;&#xd;
+&lt;/p&gt;&#xd;
+&#xd;
+&lt;b&gt;TEAM NAME:&lt;/b&gt; Sunrise&lt;br&gt;&#xd;
+&lt;b&gt;ERIC DELIVERABLE:&lt;/b&gt; ERICpmulservice_CXP9032945&lt;br&gt;&#xd;
+&lt;b&gt;ERIC DELIVERABLE:&lt;/b&gt; ERICpmulservicemodel_CXP9032949&lt;br&gt;&#xd;
+&lt;b&gt;ERIC DELIVERABLE:&lt;/b&gt; ERICsaui_CXP9035035&lt;br&gt;</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>true</useBuildBlocker>
+      <blockLevel>UNDEFINED</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>20</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.23.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty plugin="leastload@1.0.3">
+      <leastLoadDisabled>false</leastLoadDisabled>
+    </org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>TOPIC</name>
+          <description>&lt;p&gt;
+  Use this field if you want to build a subset of reviews for a given gerrit topic.&lt;br&gt;
+&lt;/p&gt;</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>GERRIT_CHANGE_NUMBERS</name>
+          <description>&lt;p&gt;
+  Use this field if you want to build a subset of reviews for a given gerrit change number.&lt;br&gt;
+  The subset is identified by the owner provided. Use a list comma separated for more than one change number.&lt;br&gt;
+  (e.g. given &lt;a href=&apos;https://gerrit.ericsson.se/#/c/1898411/&apos;&gt;https://gerrit.ericsson.se/#/c/1898411/&lt;/a&gt; and &lt;a href=&apos;https://gerrit.ericsson.se/#/c/1906315/&apos;&gt;https://gerrit.ericsson.se/#/c/1906315/&lt;/a&gt;&lt;br&gt;
+  the parameter value must be: &lt;b&gt;1898411,1906315&lt;/b&gt;)&lt;br&gt;
+  &lt;b&gt;NOTE: &lt;/b&gt;the last patch will be taken in consideration.
+&lt;/p&gt;</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>deployPackage</name>
+          <description>&lt;p&gt;If you &lt;b&gt;want&lt;/b&gt; to execute software update, &lt;b&gt;add your packages here&lt;/b&gt; in the following format:&lt;/p&gt;
+&lt;blockquote&gt;&lt;p&gt;&lt;font color=&quot;blue&quot;&gt;&lt;b&gt;&amp;lt;deliverable name&amp;gt;::&amp;lt;version&amp;gt;&lt;/b&gt;&lt;/font&gt;, where version is in maven version format or &quot;Latest&quot;.
+  There is also an option to add a package that that has not been officially delivered as a complete URL.
+&lt;/p&gt;
+&lt;/blockquote&gt;
+  
+&lt;blockquote&gt;&lt;p&gt;&lt;b&gt;When adding multiple rpms, use @@ as the separator:&lt;/b&gt;
+  &lt;br&gt;
+  &amp;lt;deliverable name&amp;gt;::&amp;lt;version&amp;gt;&lt;font color=&quot;blue&quot;&gt;&lt;b&gt;@@&lt;/b&gt;&lt;/font&gt;&amp;lt;deliverable name&amp;gt;::&amp;lt;version&amp;gt;
+  &lt;br&gt;ERICneconnmepstub_CXP0000000::Latest@@
+  ERICmediationrouter_CXP9031423::2.10.7@@ERICrpm::https://cifwk-oss.lmera.ericsson.se/static/tmpUploadSnapshot/2015-08-17_14-44-56/ERICapdatamacro_CXP9030537-1.22.9-SNAPSHOT20150817134050.noarch.rpm
+  &lt;/p&gt;&lt;/blockquote&gt;</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>GERRIT_REFSPEC</name>
+          <defaultValue>refs/heads/master</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>BRANCH</name>
+          <defaultValue>master</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit></paramsToUseForLimit>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    <de.pellepelster.jenkins.walldisplay.WallDisplayJobProperty plugin="jenkinswalldisplay@0.6.30"/>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@4.2.2">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <refspec>${GERRIT_REFSPEC}</refspec>
+        <url>${GERRIT_MIRROR}/OSS/com.ericsson.oss.services.pm/pmul-service</url>
+      </hudson.plugins.git.UserRemoteConfig>
+      <hudson.plugins.git.UserRemoteConfig>
+        <refspec>${GERRIT_REFSPEC}</refspec>
+        <url>${GERRIT_MIRROR}/OSS/com.ericsson.oss.presentation.client.pm/sa-ui</url>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>${BRANCH}</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <gitTool>Default</gitTool>
+    <submoduleCfg class="list"/>
+    <extensions>
+      <hudson.plugins.git.extensions.impl.CleanCheckout>
+        <deleteUntrackedNestedRepositories>false</deleteUntrackedNestedRepositories>
+      </hudson.plugins.git.extensions.impl.CleanCheckout>
+      <hudson.plugins.git.extensions.impl.BuildChooserSetting>
+        <buildChooser class="com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTriggerBuildChooser" plugin="gerrit-trigger@2.30.5">
+          <separator>#</separator>
+        </buildChooser>
+      </hudson.plugins.git.extensions.impl.BuildChooserSetting>
+      <hudson.plugins.git.extensions.impl.RelativeTargetDirectory>
+        <relativeTargetDir>pmul-service</relativeTargetDir>
+      </hudson.plugins.git.extensions.impl.RelativeTargetDirectory>
+    </extensions>
+  </scm>
+  <assignedNode>fem27s11_podc_CIAgent</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>JDK 1.8.0_311</jdk>
+  <authToken>USAT</authToken>
+  <triggers>
+    <hudson.triggers.TimerTrigger>
+      <spec>H 04,11,18 * * *</spec>
+    </hudson.triggers.TimerTrigger>
+    <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger plugin="gerrit-trigger@2.30.5">
+      <spec></spec>
+      <gerritProjects>
+        <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject>
+          <compareType>PLAIN</compareType>
+          <pattern>OSS/com.ericsson.oss.services.pm/pmul-service</pattern>
+          <branches>
+            <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch>
+              <compareType>PLAIN</compareType>
+              <pattern>master</pattern>
+            </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch>
+          </branches>
+          <disableStrictForbiddenFileVerification>false</disableStrictForbiddenFileVerification>
+        </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject>
+        <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject>
+          <compareType>PLAIN</compareType>
+          <pattern>OSS/com.ericsson.oss.presentation.client.pm/sa-ui</pattern>
+          <branches>
+            <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch>
+              <compareType>PLAIN</compareType>
+              <pattern>master</pattern>
+            </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch>
+          </branches>
+          <disableStrictForbiddenFileVerification>false</disableStrictForbiddenFileVerification>
+        </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject>
+      </gerritProjects>
+      <dynamicGerritProjects class="empty-list"/>
+      <skipVote>
+        <onSuccessful>false</onSuccessful>
+        <onFailed>false</onFailed>
+        <onUnstable>false</onUnstable>
+        <onNotBuilt>false</onNotBuilt>
+      </skipVote>
+      <silentMode>true</silentMode>
+      <notificationLevel></notificationLevel>
+      <silentStartMode>false</silentStartMode>
+      <escapeQuotes>true</escapeQuotes>
+      <nameAndEmailParameterMode>PLAIN</nameAndEmailParameterMode>
+      <dependencyJobsNames></dependencyJobsNames>
+      <commitMessageParameterMode>BASE64</commitMessageParameterMode>
+      <changeSubjectParameterMode>PLAIN</changeSubjectParameterMode>
+      <commentTextParameterMode>PLAIN</commentTextParameterMode>
+      <buildStartMessage></buildStartMessage>
+      <buildFailureMessage></buildFailureMessage>
+      <buildSuccessfulMessage></buildSuccessfulMessage>
+      <buildUnstableMessage></buildUnstableMessage>
+      <buildNotBuiltMessage></buildNotBuiltMessage>
+      <buildUnsuccessfulFilepath></buildUnsuccessfulFilepath>
+      <customUrl></customUrl>
+      <serverName>Gerrit Central</serverName>
+      <triggerOnEvents>
+        <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginRefUpdatedEvent/>
+      </triggerOnEvents>
+      <dynamicTriggerConfiguration>false</dynamicTriggerConfiguration>
+      <triggerConfigURL></triggerConfigURL>
+      <triggerInformationAction/>
+    </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>ls
+export PROJECT_NAME=&quot;pmul-service&quot;
+cd $PROJECT_NAME
+
+ls
+echo &quot;Branch provided is $BRANCH&quot;
+ls
+
+if [ &quot;$BRANCH&quot; != &quot;master&quot; ]; then
+  echo &quot;Moving on $BRANCH ...&quot;
+  git fetch --all
+  git checkout $BRANCH
+fi  
+
+git status
+ls</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>#JOB CONFIGURATION
+export PROJECT_NAME=&quot;pmul-service&quot;
+export PROJECT_DIR=&quot;$WORKSPACE/$PROJECT_NAME&quot;
+export START_DATE=$(date)
+export IT_FOLDER=&quot;$PROJECT_DIR/vertical-slice/testsuite/&quot;
+
+source $IT_FOLDER/jenkinsConfig.txt
+
+#export INSPECT_REVIEW_ADDITIONAL_BUILD_PROPERTIES=&quot;-Dmaven.test.skip=false -DskipRpmCleanUp jacoco:prepare-agent install jacoco:report pmd:pmd&quot;
+#export INSPECT_REVIEW_ADDITIONAL_BUILD_PROPERTIES=&quot;&quot;
+#export INSPECT_REVIEW_BUILD_PROPERTIES=&quot;-U clean -DskipRpmCleanUp jacoco:prepare-agent install jacoco:report pmd:pmd&quot;
+export CI_SCRIPTS_VERSION=&quot;1.0.248&quot;
+
+#Download CI Scritps
+export SCRIPTS_FOLDER=&quot;$WORKSPACE/ci-job-scripts&quot;
+export CI_JOB_SCRIPT_GROUP_ID=&quot;com/ericsson/oss/services/test&quot;
+export CI_JOB_SCRIPT_ARTIFACT_ID=&quot;ci-job-scripts&quot;
+export CI_JOB_SCRIPT_VERSION=&quot;$CI_SCRIPTS_VERSION&quot;
+export CI_JOB_SCRIPT_ZIP=&quot;$CI_JOB_SCRIPT_ARTIFACT_ID-$CI_JOB_SCRIPT_VERSION.zip&quot;
+export NEXUS_DATASTORE=&quot;https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/service/local/repositories/releases/content&quot;
+export CI_JOB_SCRIPT_LINK=&quot;$NEXUS_DATASTORE/$CI_JOB_SCRIPT_GROUP_ID/$CI_JOB_SCRIPT_ARTIFACT_ID/$CI_JOB_SCRIPT_VERSION/$CI_JOB_SCRIPT_ZIP&quot;
+curl -o ci-job-scripts.zip $CI_JOB_SCRIPT_LINK
+unzip ci-job-scripts.zip
+
+env | grep &quot;=&quot; &gt; env.txt</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <com.ericsson.de.multi.master.ReadFile plugin="multi-master@1.0.13">
+      <filePath>env.txt</filePath>
+    </com.ericsson.de.multi.master.ReadFile>
+    <hudson.tasks.Shell>
+      <command>###############################################################
+
+#Create list of tasks to be executed
+echo &quot;donwload-rpms;$WORKSPACE; groovy $SCRIPTS_FOLDER/download_rpms.groovy&quot; &gt;&gt; tasksConfig.txt 
+echo &quot;docker-env-setup;$IT_FOLDER; $SCRIPTS_FOLDER/docker-env-setup.sh $IT_FOLDER&quot; &gt;&gt; tasksConfig.txt
+echo &quot;inspect-review;$WORKSPACE; groovy $SCRIPTS_FOLDER/inspect_review.groovy&quot; &gt;&gt; tasksConfig.txt
+
+#Trigger multitask executer
+groovy $SCRIPTS_FOLDER/multiTasks_executor.groovy tasksConfig.txt</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <com.ericsson.de.multi.master.ReadFile plugin="multi-master@1.0.13">
+      <filePath>env.txt</filePath>
+    </com.ericsson.de.multi.master.ReadFile>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+set -e
+
+export COMPOSE_HTTP_TIMEOUT=500
+docker ps -a
+#docker ps -qa | xargs docker rm -fv &gt;&amp; /dev/null  || echo
+#docker ps -a
+
+echo &quot;@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&quot;
+
+cd $PROJECT_DIR
+mvn -V -U clean jacoco:prepare-agent install jacoco:report
+
+#Docker compose monitor
+groovy $SCRIPTS_FOLDER/docker_compose_monitor.groovy $IT_FOLDER &amp;
+
+cd $IT_FOLDER
+
+$DOCKER_COMPOSE_CMD up --no-recreate -d
+$DOCKER_COMPOSE_CMD logs -f &gt;&amp; ${WORKSPACE}/docker-compose.log &amp;
+
+
+
+$SCRIPTS_FOLDER/wait-jboss.sh ${JBOSS_DOCKER}
+
+#Temp changes for testing
+export MAVEN_OPTS=&quot;-Xmx1524m -XX:MaxPermSize=512m&quot;
+
+echo &quot;@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@&quot;</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Maven>
+      <targets>verify -U -PIT -Pjacoco -Dmaven.javadoc.skip=true  -Darquillian.cucumber.options=&quot;${RESOLVED_CUCUMBER_OPTIONS}&quot; -Dit.test=&quot;${INTEGRATION_TESTS}&quot; ${MAVEN_BUILD_PROPERTIES} ${RESOLVED_ADDITIONAL_SYSTSEM_PROPERTIES}</targets>
+      <mavenName>Maven 3.5.3</mavenName>
+      <pom>pmul-service/vertical-slice/testsuite/pom.xml</pom>
+      <usePrivateRepository>false</usePrivateRepository>
+      <settings class="jenkins.mvn.DefaultSettingsProvider"/>
+      <globalSettings class="jenkins.mvn.DefaultGlobalSettingsProvider"/>
+      <injectBuildVariables>false</injectBuildVariables>
+    </hudson.tasks.Maven>
+  </builders>
+  <publishers>
+    <hudson.plugins.postbuildtask.PostbuildTask plugin="postbuild-task@1.9">
+      <tasks>
+        <hudson.plugins.postbuildtask.TaskProperties>
+          <logTexts>
+            <hudson.plugins.postbuildtask.LogProperties>
+              <logText></logText>
+              <operator>AND</operator>
+            </hudson.plugins.postbuildtask.LogProperties>
+          </logTexts>
+          <EscalateStatus>false</EscalateStatus>
+          <RunIfJobSuccessful>false</RunIfJobSuccessful>
+          <script>#!/bin/bash&#xd;
+set -e&#xd;
+&#xd;
+#$SCRIPTS_FOLDER/acceptance_job_review.sh $TEST_REPORTS_LOCATION&#xd;
+&#xd;
+docker cp ${JBOSS_DOCKER}:/ericsson/3pp/jboss/standalone/log/server.log ${WORKSPACE}/.&#xd;
+&#xd;
+echo &quot;#############################################&quot;&#xd;
+docker images&#xd;
+echo &quot;#############################################&quot;&#xd;
+&#xd;
+echo &quot;#############################################&quot;&#xd;
+docker ps -a&#xd;
+echo &quot;#############################################&quot;&#xd;
+&#xd;
+cd $IT_FOLDER&#xd;
+&#xd;
+$DOCKER_COMPOSE_CMD kill || echo&#xd;
+$DOCKER_COMPOSE_CMD down -v  || echo&#xd;
+docker ps -qa | xargs docker rm -fv &gt;&amp; /dev/null  || echo&#xd;
+&#xd;
+volumes=$(docker volume ls -qf dangling=true)&#xd;
+if [ ! -z &quot;$volumes&quot; ]; then&#xd;
+  docker volume rm ${volumes}&#xd;
+fi&#xd;
+&#xd;
+#PDLSUNRISE@pdl.internal.ericsson.com</script>
+        </hudson.plugins.postbuildtask.TaskProperties>
+      </tasks>
+    </hudson.plugins.postbuildtask.PostbuildTask>
+    <hudson.tasks.ArtifactArchiver>
+      <artifacts>**/*.log,**/*.rpm,**/netconf-maven-server.log,**/cucumber-trends.json,**/ScreenShot_*.png</artifacts>
+      <allowEmptyArchive>false</allowEmptyArchive>
+      <onlyIfSuccessful>false</onlyIfSuccessful>
+      <fingerprint>false</fingerprint>
+      <defaultExcludes>true</defaultExcludes>
+      <caseSensitive>true</caseSensitive>
+      <followSymlinks>true</followSymlinks>
+    </hudson.tasks.ArtifactArchiver>
+    <hudson.plugins.jacoco.JacocoPublisher plugin="jacoco@1.0.19">
+      <execPattern>**/**.exec</execPattern>
+      <classPattern>**/pmul-service-*/target/classes</classPattern>
+      <sourcePattern>**/pmul-service-*/src/main/java</sourcePattern>
+      <inclusionPattern></inclusionPattern>
+      <exclusionPattern>**/Dummy*.class</exclusionPattern>
+      <minimumInstructionCoverage>0</minimumInstructionCoverage>
+      <minimumBranchCoverage>0</minimumBranchCoverage>
+      <minimumComplexityCoverage>0</minimumComplexityCoverage>
+      <minimumLineCoverage>0</minimumLineCoverage>
+      <minimumMethodCoverage>0</minimumMethodCoverage>
+      <minimumClassCoverage>0</minimumClassCoverage>
+      <maximumInstructionCoverage>0</maximumInstructionCoverage>
+      <maximumBranchCoverage>0</maximumBranchCoverage>
+      <maximumComplexityCoverage>0</maximumComplexityCoverage>
+      <maximumLineCoverage>0</maximumLineCoverage>
+      <maximumMethodCoverage>0</maximumMethodCoverage>
+      <maximumClassCoverage>0</maximumClassCoverage>
+      <changeBuildStatus>false</changeBuildStatus>
+    </hudson.plugins.jacoco.JacocoPublisher>
+    <htmlpublisher.HtmlPublisher plugin="htmlpublisher@1.23">
+      <reportTargets>
+        <htmlpublisher.HtmlPublisherTarget>
+          <reportName>EJB Spock HTML Report</reportName>
+          <reportDir>${PROJECT_DIR}/pmul-service-ejb/target/spock-reports</reportDir>
+          <reportFiles>index.html</reportFiles>
+          <alwaysLinkToLastBuild>true</alwaysLinkToLastBuild>
+          <reportTitles></reportTitles>
+          <keepAll>true</keepAll>
+          <allowMissing>false</allowMissing>
+          <includes>**/*</includes>
+          <escapeUnderscores>true</escapeUnderscores>
+        </htmlpublisher.HtmlPublisherTarget>
+        <htmlpublisher.HtmlPublisherTarget>
+          <reportName>Spock HTML Report on WAR</reportName>
+          <reportDir>${PROJECT_DIR}/pmul-service-war/target/spock-reports</reportDir>
+          <reportFiles>index.html</reportFiles>
+          <alwaysLinkToLastBuild>true</alwaysLinkToLastBuild>
+          <reportTitles></reportTitles>
+          <keepAll>true</keepAll>
+          <allowMissing>false</allowMissing>
+          <includes>**/*</includes>
+          <escapeUnderscores>true</escapeUnderscores>
+        </htmlpublisher.HtmlPublisherTarget>
+        <htmlpublisher.HtmlPublisherTarget>
+          <reportName>HTML Cucumber Report</reportName>
+          <reportDir>${IT_FOLDER}/target/blast-reports/cucumber-html-reports</reportDir>
+          <reportFiles>overview-features.html</reportFiles>
+          <alwaysLinkToLastBuild>true</alwaysLinkToLastBuild>
+          <reportTitles></reportTitles>
+          <keepAll>true</keepAll>
+          <allowMissing>false</allowMissing>
+          <includes>**/*</includes>
+          <escapeUnderscores>true</escapeUnderscores>
+        </htmlpublisher.HtmlPublisherTarget>
+        <htmlpublisher.HtmlPublisherTarget>
+          <reportName>Cucumber Trends Report</reportName>
+          <reportDir>${IT_FOLDER}/target/blast-reports/cucumber-html-reports</reportDir>
+          <reportFiles>overview-trends.html</reportFiles>
+          <alwaysLinkToLastBuild>true</alwaysLinkToLastBuild>
+          <reportTitles></reportTitles>
+          <keepAll>true</keepAll>
+          <allowMissing>true</allowMissing>
+          <includes>**/*</includes>
+          <escapeUnderscores>true</escapeUnderscores>
+        </htmlpublisher.HtmlPublisherTarget>
+        <htmlpublisher.HtmlPublisherTarget>
+          <reportName>Spock HTML Report on WebSocket WAR</reportName>
+          <reportDir>${PROJECT_DIR}/pmul-service-websocket-war/target/spock-reports</reportDir>
+          <reportFiles>index.html</reportFiles>
+          <alwaysLinkToLastBuild>false</alwaysLinkToLastBuild>
+          <reportTitles></reportTitles>
+          <keepAll>false</keepAll>
+          <allowMissing>false</allowMissing>
+          <includes>**/*</includes>
+          <escapeUnderscores>true</escapeUnderscores>
+        </htmlpublisher.HtmlPublisherTarget>
+      </reportTargets>
+    </htmlpublisher.HtmlPublisher>
+    <hudson.tasks.Mailer plugin="mailer@1.34">
+      <recipients>PDLSUNRISE@pdl.internal.ericsson.com</recipients>
+      <dontNotifyEveryUnstableBuild>false</dontNotifyEveryUnstableBuild>
+      <sendToIndividuals>true</sendToIndividuals>
+    </hudson.tasks.Mailer>
+  </publishers>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.37">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+    <hudson.plugins.build__timeout.BuildTimeoutWrapper plugin="build-timeout@1.19">
+      <strategy class="hudson.plugins.build_timeout.impl.AbsoluteTimeOutStrategy">
+        <timeoutMinutes>180</timeoutMinutes>
+      </strategy>
+      <operationList>
+        <hudson.plugins.build__timeout.operations.AbortOperation/>
+      </operationList>
+    </hudson.plugins.build__timeout.BuildTimeoutWrapper>
+    <hudson.plugins.timestamper.TimestamperBuildWrapper plugin="timestamper@1.8.10"/>
+    <org.jenkinsci.plugins.buildnamesetter.BuildNameSetter plugin="build-name-setter@1.6.9">
+      <template>#${BUILD_NUMBER} - ${ENV,var=&quot;START_DATE&quot;} - ${ENV,var=&quot;REVIEWS_INFO&quot;} - ${ENV,var=&quot;GERRIT_CHANGE_OWNER_NAME&quot;} - ${ENV,var=&quot;GERRIT_CHANGE_SUBJECT&quot;} - ${ENV,var=&quot;GERRIT_CHANGE_URL&quot;}</template>
+      <runAtStart>true</runAtStart>
+      <runAtEnd>true</runAtEnd>
+    </org.jenkinsci.plugins.buildnamesetter.BuildNameSetter>
+  </buildWrappers>
+</project>

@@ -1,0 +1,151 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.25">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.3.2"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.3.2">
+      <jobProperties>
+        <string>org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty</string>
+      </jobProperties>
+      <triggers/>
+      <parameters>
+        <string>CHART_NAME</string>
+        <string>GERRIT_REFSPEC</string>
+        <string>CHART_REPO</string>
+        <string>CHART_VERSION</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>ENM Cloud Native Build pipeline eric-enm-monitoring-integration</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>CHART_NAME</name>
+          <description>Chart name e.g.: eric-ms-b</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>CHART_REPO</name>
+          <description>Chart repo e.g.: https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-helm</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>CHART_VERSION</name>
+          <description>Chart version e.g.: 1.0.0-1</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>GERRIT_REFSPEC</name>
+          <description>Gerrit Refspect of the integration chart git repo e.g.: refs/changes/87/4641487/1</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@69.0.3">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>30</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.19.2">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@69.0.3">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.57.2">
+    <script>pipeline {
+    options {
+        disableConcurrentBuilds()
+    }
+    agent {
+        node {
+            label &apos;Dev_Cloud_Native&apos;
+        }
+    }
+    parameters {
+        string(name: &apos;CHART_NAME&apos;, description: &apos;Chart name e.g.: eric-ms-b&apos;)
+        string(name: &apos;CHART_REPO&apos;, description: &apos;Chart repo e.g.: https://arm.rnd.ki.sw.ericsson.se/artifactory/proj-adp-helm&apos;)
+        string(name: &apos;CHART_VERSION&apos;, description: &apos;Chart version e.g.: 1.0.0-1&apos;)
+        string(name: &apos;GERRIT_REFSPEC&apos;,  description: &apos;Gerrit Refspect of the integration chart git repo e.g.: refs/changes/87/4641487/1&apos;)
+    }
+
+	stages {
+	
+		stage(&apos;Checkout Cloud-Native SG Git Repository&apos;) {
+            steps {
+                git branch: &apos;master&apos;,
+                        url: &apos;ssh://gerrit.ericsson.se:29418/OSS/com.ericsson.oss.containerisation/test-flow-enm-monitoring-integration&apos;
+            }
+        }
+		
+        stage(&apos;Init&apos;) {
+            steps {
+                script {
+                    if (params.GERRIT_REFSPEC != null &amp;&amp; params.GERRIT_REFSPEC != &apos;&apos;) {
+                        def tokens = params.GERRIT_REFSPEC.split(&quot;/&quot;)
+                        if (tokens.length == 5) {
+                            def link = &apos;&lt;a href=&quot;https://gerrit.ericsson.se/#/c/&apos; + tokens[3] + &apos;/&apos; + tokens[4] + &apos;&quot;&gt;&apos;  + tokens[3] + &apos;,&apos; + tokens[4] + &apos;&lt;/a&gt;&apos;
+                            currentBuild.description = link
+                        } else {
+                            def link = &apos;&lt;a href=&quot;&apos; + env.BUILD_NUMBER + &apos;/console&quot;&gt;&apos; + params.GERRIT_REFSPEC + &apos;&lt;/a&gt;&apos;
+                            currentBuild.description = link
+                        }
+                    } else {
+                        def link = &apos;&lt;a href=&quot;&apos; + env.BUILD_NUMBER + &apos;/console&quot;&gt;&apos; + params.CHART_NAME + &apos;:&apos; + params.CHART_VERSION + &apos;&lt;/a&gt;&apos;
+                        currentBuild.description = link
+                    }
+                }
+            }
+        }
+        stage(&apos;Prepare Helm Chart&apos;) {
+            steps {
+                // Generate integration helm chart
+                withCredentials([
+               //                   usernamePassword(credentialsId: &apos;gerrit-user&apos;, usernameVariable: &apos;GERRIT_USERNAME&apos;, passwordVariable: &apos;GERRIT_PASSWORD&apos;),
+                //                  string(credentialsId: &apos;artifactory-api-token-id&apos;, variable: &apos;ARM_API_TOKEN&apos;),
+                                  string(credentialsId: &apos;lciadm100&apos;, variable: &apos;HELM_REPO_TOKEN&apos;)]){
+                           //       file(credentialsId: &apos;repository-tokens-file&apos;, variable: &apos;HELM_REPO_CREDENTIALS&apos;)]) {
+                           
+                    sh &apos;./jenkins/scripts/baseline-handler.sh prepare&apos;
+                }
+            }
+        }
+        stage(&apos;Archive artifact.properties&apos;) {
+            steps {
+                // Archive artifact.properties so Spinnaker can read the parameters
+                archiveArtifacts &apos;artifact.properties&apos;
+            }
+        }
+    }
+    post {
+        always {
+            cleanWs()
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

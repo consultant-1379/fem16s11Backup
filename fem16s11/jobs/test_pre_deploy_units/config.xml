@@ -1,0 +1,103 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>#!/usr/bin/env groovy
+/* IMPORTANT:
+ * 
+ *In order to make this pipeline work, the following configuration on Jenkins is required:
+ * - slave with a specific label (see pipeline.agent.label below)
+ * - credentials plugin should be installed and have the secrets with the following names:
+ *   + lciadm100credentials (token to access Artifactory)
+ */
+
+
+def GIT_COMMITTER_NAME = 'lciadm100'
+def GIT_COMMITTER_EMAIL = 'lciadm100@ericsson.com'
+def failedStage = ''
+
+pipeline {
+    agent {
+        label 'INT_Cloud_Native'
+    }
+    stages {
+        stage('Inject Credential Files') {
+          steps {
+             withCredentials( [file(credentialsId: 'lciadm100-docker-auth', variable: 'dockerConfig')]) {
+                     sh "install -m 600 ${dockerConfig} ${HOME}/.docker/config.json"
+            }
+          }
+        }
+        stage('Checkout Cloud-Native SG Git Repository') {
+            steps {
+                script {
+                    if (env.GERRIT_CHANGE_NUMBER) {
+                        checkout changelog: true, \
+                        scm: [$class: 'GitSCM', \
+                        branches: [[name: "master"]], \
+                        doGenerateSubmoduleConfigurations: false, \
+                        extensions: [[$class: 'BuildChooserSetting', buildChooser: [$class: 'GerritTriggerBuildChooser']]], \
+                        submoduleCfg: [], \
+                        userRemoteConfigs: [[refspec: "master", \
+                        url: "ssh://lciadm100@gerritmirror-ha.lmera.ericsson.se:29418/OSS/com.ericsson.oss.containerisation/eric-enm-pre-deploy-integration"]]]
+                    } else {
+                        println "No GERRIT_CHANGE_NUMBER"
+                        git changelog: true, poll: false, url: 'ssh://lciadm100@gerritmirror-ha.lmera.ericsson.se:29418/OSS/com.ericsson.oss.containerisation/eric-enm-pre-deploy-integration'
+                    }
+                }
+            }
+        }
+        stage('Run unit tests') {
+            steps {
+                sh 'ls'
+                sh 'pwd'
+            }
+        }
+    }
+    post {
+        failure {
+            mail to: 'EricssonHyderabad.ENMDewdrops@tcs.com,${GERRIT_CHANGE_OWNER_EMAIL},${GERRIT_PATCHSET_UPLOADER_EMAIL}',
+                    subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
+                    body: "Failure on ${env.BUILD_URL}"
+        }
+    }
+}
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

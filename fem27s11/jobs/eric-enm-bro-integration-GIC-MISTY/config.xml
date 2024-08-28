@@ -1,0 +1,183 @@
+<?xml version="1.1" encoding="UTF-8"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>HELM_REPO_TOKEN</name>
+          <defaultValue>AKCp5dLCa6aGHsyeVbGmvchKEkohiHZDrqRJsq6ZJh2zkaVuz3wniNLJpynMtzZwDQLb5AjxZ</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>PRODUCT_SET_VERSION</name>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>INTEGRATION_CHART_VERSION</name>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>#!/usr/bin/env groovy
+
+/* IMPORTANT:
+ *
+ * In order to make this pipeline work, the following configuration on Jenkins is required:
+ * - slave with a specific label (see pipeline.agent.label below)
+ * - credentials plugin should be installed and have the secrets with the following names:
+ *   + lciadm100credentials (token to access Artifactory)
+ */
+
+def defaultBobImage = 'armdocker.rnd.ericsson.se/sandbox/adp-staging/adp-cicd/bob.2.0:1.5.0-1'
+def bob = new BobCommand()
+        .bobImage(defaultBobImage)
+        .envVars([ISO_VERSION: '${ISO_VERSION}'])
+        .needDockerSocket(true)
+        .toString()
+def GIT_COMMITTER_NAME = 'enmadm100'
+def GIT_COMMITTER_EMAIL = 'enmadm100@ericsson.com'
+def failedStage = ''
+pipeline {
+    agent {
+        label 'Docker-POC-e2e'
+    }
+    stages {
+        stage('Inject Credential Files') {
+            steps {
+                withCredentials([file(credentialsId: 'lciadm100-docker-auth', variable: 'dockerConfig')]) {
+                    sh "install -m 600 ${dockerConfig} ${HOME}/.docker/config.json"
+                }
+            }
+        }
+        stage('Checkout bro-integration Chart From Internal Stage Area') {
+            steps {
+                withCredentials([string(credentialsId: 'lciadm100', variable: 'HELM_REPO_TOKEN')]) {
+                     sh 'curl -4 -u ${GIT_COMMITTER_NAME}:${HELM_REPO_TOKEN} https://arm.epk.ericsson.se/artifactory/proj-enm-dev-internal-helm/eric-enm-bro-integration/eric-enm-bro-integration-${INTEGRATION_CHART_VERSION}.tgz -o eric-enm-bro-integration-${INTEGRATION_CHART_VERSION}.tgz'
+              }
+            }
+        }
+/*        stage('Publish-BRO-Integration') {
+            steps {
+                script {
+                        def bobWithHelmToken = new BobCommand()
+                                .bobImage(defaultBobImage)
+                                .needDockerSocket(true)
+                                .envVars(['HELM_REPO_TOKEN': env.HELM_REPO_TOKEN,
+                                          'INTEGRATION_CHART_VERSION': env.INTEGRATION_CHART_VERSION,
+                                ])
+                                .toString()
+                        sh "${bobWithHelmToken} helm-publish"
+                }
+            }
+        }
+*/        
+	stage('Helm Generate ADP Parameters') {
+         steps {
+                script {
+                        def bobWithAdpParameters = new BobCommand()
+                                .bobImage(defaultBobImage)
+                                .needDockerSocket(true)
+                                .envVars(['INTEGRATION_CHART_VERSION': env.INTEGRATION_CHART_VERSION,
+                                ])
+                                .toString()
+                        //sh "${bobWithAdpParameters} generate-adp-parameters"
+            // archiveArtifacts 'artifact.properties'
+	     }
+          }
+       }
+    }
+    post {
+        failure {
+            mail to: 'rakesh.thummala1-external@tcs.com',
+                    subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
+                    body: "Failure on ${env.BUILD_URL}"
+        }
+        success {
+            script {
+                echo "Success"
+            }
+        }
+        cleanup{
+             deleteDir()
+        }
+    }
+}
+
+// More about @Builder: http://mrhaki.blogspot.com/2014/05/groovy-goodness-use-builder-ast.html
+import groovy.transform.builder.Builder
+import groovy.transform.builder.SimpleStrategy
+
+@Builder(builderStrategy = SimpleStrategy, prefix = '')
+class BobCommand {
+    def bobImage = 'bob.2.0:latest'
+    def envVars = [:]
+    def needDockerSocket = false
+
+    String toString() {
+        def env = envVars
+                .collect({ entry -&gt; "-e ${entry.key}=\"${entry.value}\"" })
+                .join(' ')
+
+        def cmd = """\
+            |docker run
+            |--init
+            |--rm
+            |--workdir \${PWD}
+            |--user \$(id -u):\$(id -g)
+            |-v \${PWD}:\${PWD}
+            |-v /etc/group:/etc/group:ro
+            |-v /etc/passwd:/etc/passwd:ro
+            |-v \${HOME}/.m2:\${HOME}/.m2
+            |-v \${HOME}/.docker:\${HOME}/.docker
+            |${needDockerSocket ? '-v /var/run/docker.sock:/var/run/docker.sock' : ''}
+            |${env}
+            |\$(for group in \$(id -G); do printf ' --group-add %s' "\$group"; done)
+            |--group-add \$(stat -c '%g' /var/run/docker.sock)
+            |${bobImage}
+            |"""
+        return cmd
+                .stripMargin()           // remove indentation
+                .replace('\n', ' ')      // join lines
+                .replaceAll(/[ ]+/, ' ') // replace multiple spaces by one
+    }
+}
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

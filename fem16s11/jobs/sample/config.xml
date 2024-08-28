@@ -1,0 +1,6 @@
+<flow-definition plugin="workflow-job@2.25">
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <triggers/>
+  <disabled>true</disabled>
+</flow-definition>

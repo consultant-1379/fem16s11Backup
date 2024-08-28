@@ -1,0 +1,528 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>This job is to deploy point fixes version &lt;br&gt;&lt;br&gt;&#xd;
+&#xd;
+This job build the artifact again with a full version number.&lt;br&gt;&#xd;
+Code coverage and Unit tests are ran again. If the job is successful the code is published to the CI Portal.&lt;br&gt;&lt;br&gt;&#xd;
+&#xd;
+&lt;b&gt;&lt;font color=&quot;red&quot;&gt;Note: Please use below pipeline point fix job from now as the current job will be disabled in upcoming days&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&#xd;
+&lt;a href=&quot;https://fem7s11-eiffel004.eiffel.gic.ericsson.se:8443/jenkins/job/Pointfix/&quot;&gt;Pipeline Point fix job&lt;/a&gt;&lt;br&gt;&#xd;
+&lt;b&gt;Please refer below confluence page for further details regarding new point fix job&lt;/b&gt;&lt;br&gt;&#xd;
+&lt;a href=&quot;https://confluence-oss.seli.wh.rnd.internal.ericsson.com/display/CICD/Pipeline+Point+Fix&quot;&gt;Pipeline point fix confluence page&lt;/a&gt;</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>100</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.23.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.injection.EiffelVariableInjectionJobProperty plugin="eiffel-core@75.0.1">
+      <explicitInjections/>
+      <defaultArm>-1</defaultArm>
+      <armSelection>
+        <armIds class="java.util.Collections$UnmodifiableSet">
+          <c class="set"/>
+        </armIds>
+      </armSelection>
+      <mavenPomFilePath>
+        <pomFilePath>${WORKSPACE}/pom.xml</pomFilePath>
+      </mavenPomFilePath>
+    </com.ericsson.duraci.injection.EiffelVariableInjectionJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty plugin="leastload@1.0.3">
+      <leastLoadDisabled>false</leastLoadDisabled>
+    </org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>REPOSITORY</name>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.plugins.validating__string__parameter.ValidatingStringParameterDefinition plugin="validating-string-parameter@2.4">
+          <name>BRANCH_NAME</name>
+          <description>Please enter the branch that needs to be updated here &lt;br&gt;&lt;br&gt; The branch name must respect the following syntax: &lt;br&gt; dPF_drop_version &lt;br&gt; where version is a serie of three numbers splitted by points (e.g. dPF_drop_1.0.1). &lt;br&gt;&lt;br&gt; Branch name should reflect that of an existing branch on the repository. &lt;br&gt; If there is not a branch with the syntax described above then it must be created a new one, using the desired revision.</description>
+          <defaultValue></defaultValue>
+          <regex>(dPF_drop_).*(\d)+(\.\d+)+(\.\d+)</regex>
+          <failedValidationMessage>You cannot apply point fixes to the master branch.</failedValidationMessage>
+        </hudson.plugins.validating__string__parameter.ValidatingStringParameterDefinition>
+        <hudson.plugins.validating__string__parameter.ValidatingStringParameterDefinition plugin="validating-string-parameter@2.4">
+          <name>FIX_VERSION</name>
+          <description>Please enter the version you wish to release here. If you are point fixing to a certain drop then use the same minor version that you delivered and increment the incremental version to be one above the last version you released on that minor version. &lt;br&gt;&lt;br&gt; I.E. If you released 1.2.10 to 15.12 and need to point fix this then you should deliver 1.2.x here. x being a version above the last one you released. NOTE. Snapshot will be added automatically so you do not need to put -SNAPSHOT here</description>
+          <defaultValue></defaultValue>
+          <regex>(\d)+(\.\d+)+(\.\d+)</regex>
+          <failedValidationMessage>Please enter a valid fix-version.</failedValidationMessage>
+        </hudson.plugins.validating__string__parameter.ValidatingStringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>JAVA_HOME</name>
+          <description>Choose the jdk version accordingly with your project requirements.</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>/proj/ciexadm200/tools/jdk/7/latest</string>
+              <string>/proj/ciexadm200/tools/jdk/8/latest</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit></paramsToUseForLimit>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    <de.pellepelster.jenkins.walldisplay.WallDisplayJobProperty plugin="jenkinswalldisplay@0.6.30"/>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@4.2.2">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <name>gcm</name>
+        <url>${GERRIT_MIRROR}/${REPOSITORY}</url>
+      </hudson.plugins.git.UserRemoteConfig>
+      <hudson.plugins.git.UserRemoteConfig>
+        <name>gcn</name>
+        <url>${GERRIT_CENTRAL}/${REPOSITORY}</url>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>$BRANCH_NAME</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <gitTool>Default</gitTool>
+    <submoduleCfg class="list"/>
+    <extensions>
+      <hudson.plugins.git.extensions.impl.LocalBranch>
+        <localBranch>$BRANCH_NAME</localBranch>
+      </hudson.plugins.git.extensions.impl.LocalBranch>
+    </extensions>
+  </scm>
+  <assignedNode>GridEngine</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>JDK 1.8.0_172</jdk>
+  <triggers>
+    <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger plugin="gerrit-trigger@2.30.5">
+      <spec></spec>
+      <gerritProjects>
+        <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject>
+          <compareType>PLAIN</compareType>
+          <pattern></pattern>
+          <branches>
+            <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch>
+              <compareType>PLAIN</compareType>
+              <pattern></pattern>
+            </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch>
+          </branches>
+          <disableStrictForbiddenFileVerification>false</disableStrictForbiddenFileVerification>
+        </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject>
+      </gerritProjects>
+      <dynamicGerritProjects class="empty-list"/>
+      <skipVote>
+        <onSuccessful>false</onSuccessful>
+        <onFailed>false</onFailed>
+        <onUnstable>false</onUnstable>
+        <onNotBuilt>false</onNotBuilt>
+      </skipVote>
+      <silentMode>false</silentMode>
+      <notificationLevel></notificationLevel>
+      <silentStartMode>false</silentStartMode>
+      <escapeQuotes>true</escapeQuotes>
+      <nameAndEmailParameterMode>PLAIN</nameAndEmailParameterMode>
+      <dependencyJobsNames></dependencyJobsNames>
+      <commitMessageParameterMode>BASE64</commitMessageParameterMode>
+      <changeSubjectParameterMode>PLAIN</changeSubjectParameterMode>
+      <commentTextParameterMode>BASE64</commentTextParameterMode>
+      <buildStartMessage></buildStartMessage>
+      <buildFailureMessage></buildFailureMessage>
+      <buildSuccessfulMessage></buildSuccessfulMessage>
+      <buildUnstableMessage></buildUnstableMessage>
+      <buildNotBuiltMessage></buildNotBuiltMessage>
+      <buildUnsuccessfulFilepath></buildUnsuccessfulFilepath>
+      <customUrl></customUrl>
+      <serverName>Gerrit_UAT_3.4</serverName>
+      <triggerOnEvents>
+        <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent>
+          <excludeDrafts>false</excludeDrafts>
+          <excludeTrivialRebase>false</excludeTrivialRebase>
+          <excludeNoCodeChange>false</excludeNoCodeChange>
+          <excludePrivateState>false</excludePrivateState>
+          <excludeWipState>false</excludeWipState>
+        </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent>
+        <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginDraftPublishedEvent/>
+      </triggerOnEvents>
+      <dynamicTriggerConfiguration>false</dynamicTriggerConfiguration>
+      <triggerConfigURL></triggerConfigURL>
+      <triggerInformationAction/>
+    </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/sh
+
+# ####################################################### #
+# Update project POM with latest integration POM version, #
+# in order to inherit latest version of plugins.          #
+# ####################################################### #
+
+NEXUS_HOST=&quot;arm1s11-eiffel004.eiffel.gic.ericsson.se:8443&quot;
+
+PARENT_GROUP_ENM=&quot;com.ericsson.nms&quot;
+PARENT_GROUP_CDS=&quot;com.ericsson.cds&quot; 
+PARENT_ARTIFACT=&quot;integration&quot;
+
+#Find group ID and artifact ID of the repo&apos;s parent
+REPO_PARENT_GROUP=`awk &apos;/&lt;parent&gt;/,/&lt;\/parent&gt;/&apos; pom.xml | awk &apos;/&lt;groupId&gt;/,/&lt;\/groupId&gt;/&apos; | awk -v FS=&quot;(&lt;groupId&gt;|&lt;/groupId&gt;)&quot; &apos;{print $2}&apos;`
+REPO_PARENT_ARTIFACT=`awk &apos;/&lt;parent&gt;/,/&lt;\/parent&gt;/&apos; pom.xml | awk &apos;/&lt;artifactId&gt;/,/&lt;\/artifactId&gt;/&apos; | awk -v FS=&quot;(&lt;artifactId&gt;|&lt;/artifactId&gt;)&quot; &apos;{print $2}&apos;`
+
+
+#Update project POM with latest integration POM version
+integration_update()
+{
+    PARENT_GROUP=$1
+
+    PARENT_VERSION=`awk &apos;/&lt;parent&gt;/,/&lt;\/parent&gt;/&apos; pom.xml | awk &apos;/&lt;version&gt;/,/&lt;\/version&gt;/&apos; | awk -v FS=&quot;(&lt;version&gt;|&lt;/version&gt;)&quot; &apos;{print $2}&apos;`
+    echo &quot;PARENT_VERSION: $PARENT_VERSION&quot;
+    
+    #ENM_VERSION=$( curl --silent &quot;https://${NEXUS_HOST}/nexus/service/local/lucene/search?g=${PARENT_GROUP}&amp;a=${PARENT_ARTIFACT}&quot; | sed -n &apos;s|&lt;latestRelease&gt;\(.*\)&lt;/latestRelease&gt;|\1|p&apos; | sed -e &apos;s/^[ \t]*//&apos; | tail -1 )
+    ENM_VERSION=15.2.0.33
+    echo &quot;ENM_VERSION: $ENM_VERSION&quot;
+    
+    if [ $PARENT_VERSION != $ENM_VERSION ]
+    then
+        find . -name &quot;pom.xml&quot; -exec sed -i &quot;s/&gt;$PARENT_VERSION&lt;/&gt;$ENM_VERSION&lt;/g&quot; {} \;
+        git add .
+        git commit -m &quot;Integration pom version update&quot;
+    fi
+}
+
+if [ $REPO_PARENT_GROUP == &quot;$PARENT_GROUP_ENM&quot; ] &amp;&amp; [ $REPO_PARENT_ARTIFACT == &quot;$PARENT_ARTIFACT&quot; ]
+then
+    integration_update ${PARENT_GROUP_ENM}    
+elif [ $REPO_PARENT_GROUP == &quot;$PARENT_GROUP_CDS&quot; ] &amp;&amp; [ $REPO_PARENT_ARTIFACT == &quot;$PARENT_ARTIFACT&quot; ]
+then
+    integration_update ${PARENT_GROUP_CDS}
+fi
+</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash +x
+
+# Performing preliminary checks on git
+
+NEXUS_HOST=&quot;arm1s11-eiffel004.eiffel.gic.ericsson.se:8443&quot;
+#givenBranch=`git ls-remote --heads | grep &quot;refs/heads/$BRANCH_NAME&quot; | awk &apos;{ print $2 }&apos;` 
+
+#checking the given branch is present
+#if [ &quot;refs/heads/$BRANCH_NAME&quot; = &quot;$givenBranch&quot; ]; then 
+#    echo &quot;Branch name valid&quot; 
+#else
+#    echo &quot;Kindly check the branch name&quot;  
+#    exit 0
+#fi;
+
+#checking the given version to git labels
+allVersions=`git ls-remote --tags origin  | awk -F\- &apos;{print $NF}&apos;  | sed &apos;s/ //&apos; | sed &apos;s/{//&apos; | sed &apos;s/}//&apos; | tr -d &apos;^&apos; | uniq`
+
+for oneVersion in $allVersions
+do
+	if [ &quot;$oneVersion&quot; = &quot;${FIX_VERSION}&quot; ]; then 
+    	echo -e &quot;\n\n\nFix version ${FIX_VERSION} already available in git\n\n\n&quot;     
+        exit 1
+	fi;
+done
+
+biggerUsedVersion=${FIX_VERSION}
+
+for oneVersion in $allVersions
+do
+	IFS=&apos;.&apos; read -r -a currentVersion &lt;&lt;&lt; &quot;$oneVersion&quot;
+    IFS=&apos;.&apos; read -r -a expectedVersion &lt;&lt;&lt; &quot;${FIX_VERSION}&quot;
+    
+    if [ ${currentVersion[0]} -eq  ${expectedVersion[0]} ] &amp;&amp; [ ${currentVersion[1]} -eq  ${expectedVersion[1]} ] &amp;&amp; [ ${currentVersion[2]} -gt  ${expectedVersion[2]} ]; then  
+        biggerUsedVersion=$oneVersion
+	fi;
+done
+
+if [ &quot;$biggerUsedVersion&quot; = &quot;${FIX_VERSION}&quot; ]; then
+#	echo &quot;Using Available Version = ${FIX_VERSION}&quot;
+    git_check=1
+else
+#	echo &quot;Bigger used version available $biggerUserdVersion&quot;
+    git_check=0
+fi;
+
+
+# Performing preliminary checks on nexus
+
+nexus_repo_address=`echo ${REPOSITORY} | sed &quot;s/\./\//g&quot; | cut -d &apos;/&apos; -f2-`
+nexus_allVersions=`curl https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/repositories/releases/$nexus_repo_address/maven-metadata.xml | grep &quot;&lt;version&gt;&quot; | awk -F &quot;&gt;|&lt;&quot; &apos;{print$3}&apos;`
+
+
+for nexus_oneVersion in $nexus_allVersions
+do
+        if [ &quot;$nexus_oneVersion&quot; = &quot;${FIX_VERSION}&quot; ]; then
+        echo -e &quot;\n\n\nFix version ${FIX_VERSION} already available in Nexus\n\n\n&quot;
+        exit 1
+        fi;
+done
+
+nexus_biggerUsedVersion=${FIX_VERSION}
+
+for nexus_oneVersion in $nexus_allVersions
+do
+    IFS=&apos;.&apos; read -r -a nexus_currentVersion &lt;&lt;&lt; &quot;$nexus_oneVersion&quot;
+    IFS=&apos;.&apos; read -r -a nexus_expectedVersion &lt;&lt;&lt; &quot;${FIX_VERSION}&quot;
+
+    if [ ${nexus_currentVersion[0]} -eq  ${nexus_expectedVersion[0]} ] &amp;&amp; [ ${nexus_currentVersion[1]} -eq  ${nexus_expectedVersion[1]} ] &amp;&amp; [ ${nexus_currentVersion[2]} -gt  ${nexus_expectedVersion[2]} ]; then
+        nexus_biggerUsedVersion=$nexus_oneVersion
+        fi;
+done
+
+if [ &quot;$nexus_biggerUsedVersion&quot; = &quot;${FIX_VERSION}&quot; ]; then
+#        echo &quot;Using Available Version = ${FIX_VERSION}&quot;
+        nexus_check=1
+else
+#        echo &quot;Bigger used version available on nexus $nexus_biggerUsedVersion&quot;
+        nexus_check=0
+fi;
+
+if [ &quot;$nexus_check&quot; = &quot;1&quot; ] &amp;&amp; [ &quot;$nexus_check&quot; = &quot;1&quot; ];  then
+        echo -e &quot;\n\n\nThe selected Point Fix Version is ok. Proceeding with the job\n\n\n&quot;
+        exit 0
+else         
+		echo -e &quot;\n\n\nThe selected Point Fix Version is not ok. Job is failing. Please use patchset version greater than $biggerUsedVersion. \nCheck the Console log for details\n\n\n&quot;
+        exit 1
+fi</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+#CI Common pre step scripts
+#/proj/ciexadm200/tools/utils/scripts/common_pre_post_jenkins_scripts/pre_step/release_pre_step.sh
+
+#Get current version of project
+currentVersion=`/proj/ciexadm200/tools/apache-maven-3.5.3/bin/mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version|grep &quot;^[0-9]*\.[0-9]*\.[0-9]*&quot;`
+
+#Check if there is a SNAPSHOT in the pom
+if [[ $currentVersion == *SNAPSHOT ]]; then
+  echo &quot;Snapshot in pom!&quot;
+else
+ 	echo &quot;Adding Snapshot in pom!&quot;
+ 	
+	#Replace versions with SNAPSHOT version
+	/proj/ciexadm200/tools/apache-maven-3.5.3/bin/mvn versions:set -DnewVersion=$currentVersion-SNAPSHOT
+ 	
+	#clean all untracted files
+        git clean -fdx
+
+	#Add files
+	git add .
+ 	git commit -m &quot;Adding Snapshot to Project&quot;
+
+fi
+
+git status
+git reset --hard $BRANCH_NAME</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash +x
+#Set the version of the point fix to deploy 
+/proj/ciexadm200/tools/apache-maven-3.5.3/bin/mvn -X versions:set -DnewVersion=&quot;${FIX_VERSION}-SNAPSHOT&quot;
+
+#preliminary versioning check: compare if every pom files has version modified. If not potential error in deploy  
+echo $&apos;\n&apos;
+echo -e &quot;===== Check Modifed Pom =====&quot;
+echo -e &quot;  --- Total Number of Pom in repo ---  &quot;
+find . -name &quot;pom.xml&quot; -print &gt; ./AllPom.txt
+cat ./AllPom.txt| wc -l
+echo -e &quot;  --- Total Number of Pom modified ---  &quot;
+find . -name &quot;pom.xml&quot; -print | xargs grep -l &quot;${FIX_VERSION}-SNAPSHOT&quot; &gt; ./ModPom.txt
+cat ./ModPom.txt| wc -l
+echo -e &quot; --- Suspected POM list ---  &quot;
+diff ./AllPom.txt ./ModPom.txt &gt; ErrPom.txt
+cat ./ErrPom.txt
+echo -e &quot;===== Check Modifed Pom END =====&quot;
+echo $&apos;\n&apos;
+
+git add .
+if [ &quot;$(git status --porcelain)&quot; != &quot;&quot; ]; then
+git commit -m &quot;versions update&quot;
+fi</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Maven>
+      <targets>-V
+-U
+-Dresume=false
+clean
+install
+-Penm,enm-cli,enm-gui,enm-server
+-DlocalCheckout=true
+-Pintegration-tests
+-DskipTests=true
+-Dmaven.test.skip=true
+-Dtest.unit.skip=true
+-Darguments=&quot;-Dmaven.javadoc.skip=true -DskipTests -DskipTests&quot;</targets>
+      <mavenName>Maven 3.5.3</mavenName>
+      <usePrivateRepository>false</usePrivateRepository>
+      <settings class="jenkins.mvn.DefaultSettingsProvider"/>
+      <globalSettings class="jenkins.mvn.DefaultGlobalSettingsProvider"/>
+      <injectBuildVariables>false</injectBuildVariables>
+    </hudson.tasks.Maven>
+    <hudson.tasks.Shell>
+      <command>#CI Common pre step scripts
+#/proj/ciexadm200/tools/utils/scripts/common_pre_post_jenkins_scripts/post_step/release_post_step.sh</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <org.jenkinsci.plugins.conditionalbuildstep.ConditionalBuilder plugin="conditional-buildstep@1.3.6">
+      <runner class="org.jenkins_ci.plugins.run_condition.BuildStepRunner$Fail" plugin="run-condition@1.0"/>
+      <runCondition class="org.jenkins_ci.plugins.run_condition.core.StatusCondition" plugin="run-condition@1.0">
+        <worstResult>
+          <name>SUCCESS</name>
+          <ordinal>0</ordinal>
+          <color>BLUE</color>
+          <completeBuild>true</completeBuild>
+        </worstResult>
+        <bestResult>
+          <name>SUCCESS</name>
+          <ordinal>0</ordinal>
+          <color>BLUE</color>
+          <completeBuild>true</completeBuild>
+        </bestResult>
+      </runCondition>
+      <conditionalbuilders>
+        <hudson.tasks.Maven>
+          <targets>release:prepare
+release:perform
+-Dgoals=&quot;deploy
+-DdeployOnly
+-U&quot;
+-DlocalCheckout=true
+-DskipTests=true
+-Dmaven.test.skip=true
+-Darguments=&quot;-Dmaven.javadoc.skip=true -DskipTests -DskipTests&quot;</targets>
+          <mavenName>Maven 3.5.3</mavenName>
+          <usePrivateRepository>false</usePrivateRepository>
+          <settings class="jenkins.mvn.DefaultSettingsProvider"/>
+          <globalSettings class="jenkins.mvn.DefaultGlobalSettingsProvider"/>
+          <injectBuildVariables>false</injectBuildVariables>
+        </hudson.tasks.Maven>
+        <hudson.tasks.Shell>
+          <command>#!/bin/bash
+
+removeParent=&quot;${REPOSITORY/OSS/}&quot;
+artifactpath=&quot;${removeParent//.//}&quot;
+
+echo &quot;${artifactpath}&quot;
+
+curl -v -u NexusID:nexuspwdrestapi! -X DELETE https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/service/local/metadata/repositories/releases/content${artifactpath}</command>
+          <configuredLocalRules/>
+        </hudson.tasks.Shell>
+      </conditionalbuilders>
+    </org.jenkinsci.plugins.conditionalbuildstep.ConditionalBuilder>
+  </builders>
+  <publishers>
+    <hudson.plugins.emailext.ExtendedEmailPublisher plugin="email-ext@2.63">
+      <recipientList>$DEFAULT_RECIPIENTS</recipientList>
+      <configuredTriggers>
+        <hudson.plugins.emailext.plugins.trigger.FailureTrigger>
+          <email>
+            <subject>$PROJECT_DEFAULT_SUBJECT</subject>
+            <body>$PROJECT_DEFAULT_CONTENT</body>
+            <recipientProviders>
+              <hudson.plugins.emailext.plugins.recipients.DevelopersRecipientProvider/>
+            </recipientProviders>
+            <attachmentsPattern></attachmentsPattern>
+            <attachBuildLog>false</attachBuildLog>
+            <compressBuildLog>false</compressBuildLog>
+            <replyTo>$PROJECT_DEFAULT_REPLYTO</replyTo>
+            <contentType>project</contentType>
+          </email>
+        </hudson.plugins.emailext.plugins.trigger.FailureTrigger>
+      </configuredTriggers>
+      <contentType>default</contentType>
+      <defaultSubject> --- POINT FIX ERROR !!!</defaultSubject>
+      <defaultContent>Your project has some issues due to a possible wrong dependency management.
+in ErrPom.txt file in this attachment there is a list of suspected pom: in this pom versioning in not complaint to requirement.
+
+Please take a look into the attached logfile, fix and you can run PoinfFix job again
+
+
+if necessary, contact DE-AXIS_OPS.
+</defaultContent>
+      <attachmentsPattern>ErrPom.*</attachmentsPattern>
+      <presendScript>$DEFAULT_PRESEND_SCRIPT</presendScript>
+      <postsendScript>$DEFAULT_POSTSEND_SCRIPT</postsendScript>
+      <attachBuildLog>true</attachBuildLog>
+      <compressBuildLog>false</compressBuildLog>
+      <replyTo>$DEFAULT_REPLYTO</replyTo>
+      <from></from>
+      <saveOutput>false</saveOutput>
+      <disabled>false</disabled>
+    </hudson.plugins.emailext.ExtendedEmailPublisher>
+  </publishers>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.37">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+    <hudson.plugins.build__timeout.BuildTimeoutWrapper plugin="build-timeout@1.19">
+      <strategy class="hudson.plugins.build_timeout.impl.AbsoluteTimeOutStrategy">
+        <timeoutMinutes>180</timeoutMinutes>
+      </strategy>
+      <operationList/>
+    </hudson.plugins.build__timeout.BuildTimeoutWrapper>
+    <hudson.plugins.timestamper.TimestamperBuildWrapper plugin="timestamper@1.8.10"/>
+    <org.jenkinsci.plugins.buildnamesetter.BuildNameSetter plugin="build-name-setter@1.6.9">
+      <template>#${BUILD_NUMBER} - ${GIT_LOCAL_BRANCH}</template>
+      <runAtStart>false</runAtStart>
+      <runAtEnd>true</runAtEnd>
+    </org.jenkinsci.plugins.buildnamesetter.BuildNameSetter>
+  </buildWrappers>
+</project>

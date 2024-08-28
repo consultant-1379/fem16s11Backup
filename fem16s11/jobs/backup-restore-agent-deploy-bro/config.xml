@@ -1,0 +1,136 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>NAMESPACE</string>
+        <string>BRO_HELM_CHART_NAME</string>
+        <string>RECREATE</string>
+        <string>BRO_HELM_CHART_VERSION</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>This Job can be used to create a namespace and deploys BRO, Multiple jobs can be run in parallel  </description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.security.AuthorizationMatrixProperty>
+      <inheritanceStrategy class="org.jenkinsci.plugins.matrixauth.inheritance.InheritParentStrategy"/>
+      <permission>USER:hudson.model.Item.Build:epunsri</permission>
+      <permission>USER:hudson.model.Item.Build:esteved</permission>
+      <permission>USER:hudson.model.Item.Build:ezpetgi</permission>
+      <permission>USER:hudson.model.Item.Cancel:epunsri</permission>
+      <permission>USER:hudson.model.Item.Cancel:esteved</permission>
+      <permission>USER:hudson.model.Item.Cancel:ezpetgi</permission>
+      <permission>USER:hudson.model.Item.Configure:epunsri</permission>
+      <permission>USER:hudson.model.Item.Configure:esteved</permission>
+      <permission>USER:hudson.model.Item.Configure:ezpetgi</permission>
+      <permission>USER:hudson.model.Item.Discover:esteved</permission>
+      <permission>USER:hudson.model.Item.Read:epunsri</permission>
+      <permission>USER:hudson.model.Item.Read:esteved</permission>
+      <permission>USER:hudson.model.Item.Read:ezpetgi</permission>
+      <permission>USER:hudson.model.Item.Workspace:epunsri</permission>
+      <permission>USER:hudson.model.Item.Workspace:esteved</permission>
+      <permission>USER:hudson.model.Item.Workspace:ezpetgi</permission>
+      <permission>USER:hudson.model.Run.Delete:epunsri</permission>
+      <permission>USER:hudson.model.Run.Delete:ezpetgi</permission>
+      <permission>USER:hudson.model.Run.Update:epunsri</permission>
+      <permission>USER:hudson.model.Run.Update:esteved</permission>
+      <permission>USER:hudson.model.Run.Update:ezpetgi</permission>
+    </hudson.security.AuthorizationMatrixProperty>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>NAMESPACE</name>
+          <description>K8s cluster namespace to use for the integration tests (e.g. rwxpvc-ns)</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>BRO_HELM_CHART_NAME</name>
+          <description>Provide BRO helm chart name (eric-ctrl-bro or eric-enm-bro-integration)</description>
+          <defaultValue>eric-enm-bro-integration</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>BRO_HELM_CHART_VERSION</name>
+          <description>BRO Helm chart version, leave it empty for latest version</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>RECREATE</name>
+          <description>Force recreation of the namespace if it already exists.</description>
+          <defaultValue>False</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <EnvInjectJobProperty plugin="envinject@2.4.0">
+      <info>
+        <propertiesContent>GERRIT_REFSPEC=refs/heads/master</propertiesContent>
+        <secureGroovyScript plugin="script-security@1138.v8e727069a_025">
+          <script/>
+          <sandbox>true</sandbox>
+        </secureGroovyScript>
+        <loadFilesFromMaster>false</loadFilesFromMaster>
+      </info>
+      <on>true</on>
+      <keepJenkinsSystemVariables>true</keepJenkinsSystemVariables>
+      <keepBuildVariables>true</keepBuildVariables>
+      <overrideBuildParameters>false</overrideBuildParameters>
+    </EnvInjectJobProperty>
+    
+    <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+      <triggers/>
+    </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <scm class="hudson.plugins.git.GitSCM" plugin="git@4.10.3">
+      <configVersion>2</configVersion>
+      <userRemoteConfigs>
+        <hudson.plugins.git.UserRemoteConfig>
+          <refspec>$GERRIT_REFSPEC:staging</refspec>
+          <url>ssh://lciadm100@gerritmirror-ha.lmera.ericsson.se:29418/OSS/com.ericsson.oss.itpf/backup-restore-agent</url>
+          <credentialsId>lciadm100_private_key</credentialsId>
+        </hudson.plugins.git.UserRemoteConfig>
+      </userRemoteConfigs>
+      <branches>
+        <hudson.plugins.git.BranchSpec>
+          <name>dTORF-589281_Spinnaker-Pipelines</name>
+        </hudson.plugins.git.BranchSpec>
+      </branches>
+      <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+      <gitTool>Default</gitTool>
+      <submoduleCfg class="empty-list"/>
+      <extensions>
+        <hudson.plugins.git.extensions.impl.WipeWorkspace/>
+      </extensions>
+    </scm>
+    <scriptPath>jenkins/JenkinsfileDeployBRO</scriptPath>
+    <lightweight>true</lightweight>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

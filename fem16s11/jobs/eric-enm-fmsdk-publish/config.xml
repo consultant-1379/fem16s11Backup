@@ -1,0 +1,296 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>PRODUCT_SET_VERSION</string>
+        <string>SPRINT_TAG</string>
+        <string>ISO_VERSION</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>Build the 3 FMSDK artifacts for Release. &#13;
+The job can be is triggered manually with ISO_VERSION, SPRINT_TAG and PRODUCT_SET_VERSION.&#13;
+The job is also built when triggered in spinnaker on the succesful build of the overall cENM e2e pipeline. &#13;
+First the build of eric-enm-fmsdk image, then build of fm-sdk-templates tar.gz, and last build the sdk-csar-buildmanager tar.gz.&#13;
+The 3 FMSDK repos are tagged with the ISO_VERSION and SPRINT_TAG, linking each FMSDK build to a corresponding cENM build.&#13;
+&#13;
+Full Description here:&#13;
+https://confluence-oss.seli.wh.rnd.internal.ericsson.com/display/TINH/FMSDK+-+CI+Builds</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>20</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty>
+      <abortPrevious>false</abortPrevious>
+    </org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>ISO_VERSION</name>
+          <description>The ENM ISO version (e.g. 1.65.77)</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>SPRINT_TAG</name>
+          <description>Tag for GIT tagging the repository after build</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>PRODUCT_SET_VERSION</name>
+          <description>The product set version from ENM build</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>pipeline {
+    agent { node { label 'Cloud-Native' } }
+    options {
+        timestamps()
+    }
+    environment {
+        PIPELINE_LAST_STAGE_STATUS = 'UNKNOWN'
+        CENMBUILD_ARM_TOKEN = credentials('cenmbuild_ARM_token')
+    }
+    parameters {
+        string(name: 'ISO_VERSION', description: 'The ENM ISO version (e.g. 1.65.77)')
+        string(name: 'SPRINT_TAG', description: 'Tag for GIT tagging the repository after build')
+        string(name: 'PRODUCT_SET_VERSION', description: 'The product set version from ENM build')
+    }
+    stages {
+        stage ('Initialization of ENM Versions') {
+            steps {
+                script {
+                    if (!params.ISO_VERSION?.trim()) {
+                            currentBuild.result = 'ABORTED'
+                            error("ISO_VERSION and must be given. Aborting the build. ")
+                     }
+                     if (!params.SPRINT_TAG?.trim()) {
+                            currentBuild.result = 'ABORTED'
+                            error("SPRINT_TAG and must be given. Aborting the build. ")
+                     }
+                    echo "params.ISO_VERSION - $ISO_VERSION"
+                    echo "params.SPRINT_TAG  - $SPRINT_TAG "
+                    echo "params.PRODUCT_SET_VERSION  - $PRODUCT_SET_VERSION "
+
+                    currentBuild.description = "ISO Version: $ISO_VERSION&lt;br/&gt;"
+                    currentBuild.description += "Sprint Tag: $SPRINT_TAG&lt;br/&gt;"
+
+                    environment_list = [[$class:'StringParameterValue', name:"ISO_VERSION", value:String.valueOf("${ISO_VERSION}")],
+                                        [$class:'StringParameterValue', name:"SPRINT_TAG", value:String.valueOf("${SPRINT_TAG}")]]
+                    echo "$environment_list"
+                }
+            }
+        }
+        stage('Inject Credential Files') {
+            steps {
+                withCredentials([file(credentialsId: 'lciadm100-docker-auth', variable: 'dockerConfig')]) {
+                    sh "install -m 600 ${dockerConfig} ${HOME}/.docker/config.json"
+                }
+            }
+        }
+        stage('Build eric-enm-fmsdk') {
+            steps {
+                script{
+                        def imageFromFmsdk=""
+                        def build = build(job: "eric-enm-fmsdk", propagate: true, wait: true, parameters: environment_list)
+                        imageFromFmsdk = "$build.buildVariables.IMAGE_TAG"
+					    env.ERIC_ENM_FMSDK_IMAGE_TAG=imageFromFmsdk
+					    echo "This is the new eric-enm-fmsdk - ${ERIC_ENM_FMSDK_IMAGE_TAG}"
+					    echo "${build.buildVariables}"
+                }
+            }
+        }
+        stage ('SYNC : eric-enm-fmsdk Image') {
+            steps {
+                        sleep(5)
+                        script {
+                            build_environment_list()
+                  }
+            }
+        }
+        // stage('Build eric-enm-pmsdk') {
+        //     steps {
+        //         script{
+        //                 def imageFromPmsdk=""
+        //                 def build = build(job: "eric-enm-pmsdk", propagate: true, wait: true, parameters: environment_list)
+        //                 imageFromPmsdk = "$build.buildVariables.IMAGE_TAG"
+					   // env.ERIC_ENM_PMSDK_IMAGE_TAG=imageFromPmsdk
+					   // echo "This is the new eric-enm-pmsdk - ${ERIC_ENM_PMSDK_IMAGE_TAG}"
+					   // echo "${build.buildVariables}"
+        //         }
+        //     }
+        // }
+        // stage ('SYNC : eric-enm-pmsdk Image') {
+        //     steps {
+        //                 sleep(5)
+        //                 script {
+        //                     build_environment_list()
+        //           }
+        //     }
+        // }
+        stage('Build fm-sdk-templates') {
+            steps {
+                script{
+                        def fmVersionFromTemplates=""
+                        def fmTemplatesBuild = build(job: "fm-sdk-templates", propagate: true, wait: true, parameters: environment_list)
+                        fmVersionFromTemplates = "$fmTemplatesBuild.buildVariables.VERSION"
+                        env.ERIC_ENM_FMSDK_TEMPLATES=fmVersionFromTemplates
+					    echo "This is the new fm-sdk-templates - ${ERIC_ENM_FMSDK_TEMPLATES}"
+					    
+					    fmTemplatesUrl = "$fmTemplatesBuild.buildVariables.TEMPLATESURL"
+                }
+            }
+        }
+        stage ('SYNC : fm-sdk-templates Image') {
+            steps {
+                        sleep(5)
+                        script {
+                            build_environment_list()
+                  }
+            }
+        }
+        // stage('Build pm-sdk-templates') {
+        //     steps {
+        //         script{
+        //                 def pmVersionFromTemplates=""
+        //                 def pmTemplatesBuild = build(job: "pm-sdk-templates", propagate: true, wait: true, parameters: environment_list)
+        //                 pmVersionFromTemplates = "$pmTemplatesBuild.buildVariables.VERSION"
+        //                 env.ERIC_ENM_FMSDK_TEMPLATES=pmVersionFromTemplates
+					   // echo "This is the new fm-sdk-templates - ${ERIC_ENM_PMSDK_TEMPLATES}"
+					    
+					   // pmTemplatesUrl = "$pmTemplatesBuild.buildVariables.TEMPLATESURL"
+        //         }
+        //     }
+        // }
+        // stage ('SYNC : pm-sdk-templates Image') {
+        //     steps {
+        //                 sleep(5)
+        //                 script {
+        //                     build_environment_list()
+        //           }
+        //     }
+        // }
+        stage('Build sdk-csar-buildmanager') {
+            steps {
+                script{
+                        def build = build(job: "sdk-csar-buildmanager", propagate: true, wait: true, parameters: environment_list)
+                        csarUrl = "$build.buildVariables.CSARURL"
+                }
+            }
+        }
+        
+        
+        // stage('TAF') {
+                  
+        //           steps{
+                      
+        //               build job: 'INH_Cloud_Native_FMSDK_KGB+N', parameters: [
+        //                   string(name: 'cluster_id', value: "ieatenmc16b006"),
+        //                   string(name: '_Testware_Items', value: "&lt;item timeout-in-seconds=\"900\"&gt;&lt;name&gt;FMSDK - insert_name_here&lt;/name&gt;&lt;component&gt;com.ericsson.oss.mediation.sdk:ERICTAFfmsdk_CXP9042868:1.0.2-SNAPSHOT&lt;/component&gt;&lt;suites&gt;suites.xml&lt;/suites&gt;&lt;env-properties&gt;&lt;property type=\"system\" key=\"sdkBuildManager\"&gt;${csarUrl}&lt;/property&gt;&lt;property type=\"system\" key=\"fmSdkTemplates\"&gt;${templatesUrl}&lt;/property&gt;&lt;property type=\"system\" key=\"integration_value_type\"&gt;eric-enm-single-instance-production-integration-values&lt;/property&gt;&lt;property type=\"system\" key=\"product_set_version\"&gt;${PRODUCT_SET_VERSION}&lt;/property&gt;&lt;property type=\"system\" key=\"eric-enm-fmsdk\"&gt;armdocker.rnd.ericsson.se/proj-cenm-sdk/proj-cenm-sdk-released/eric-enm-fmsdk:${ERIC_ENM_FMSDK_IMAGE_TAG}&lt;/property&gt;&lt;property type=\"system\" key=\"repository-url\"&gt;armdocker.rnd.ericsson.se/proj-cenm-sdk/proj-cenm-sdk-released&lt;/property&gt;&lt;/env-properties&gt;&lt;/item&gt;")
+        //             //       string(name: 'internal_nodes', value: String.valueOf(internal_nodes)),
+        //             //       string(name: 'MT_CSV_FILE_URI', value: "$MT_CSV_FILE_URI")
+        //             //       string(name: '_Testware_Items', value: "&lt;item timeout-in-seconds=\"900\"&gt;&lt;name&gt;FMSDK - insert_name_here&lt;/name&gt;&lt;component&gt;com.ericsson.oss.mediation.sdk:ERICTAFfmsdk_CXP9042868:1.0.2-SNAPSHOT&lt;/component&gt;&lt;suites&gt;suites.xml&lt;/suites&gt;&lt;env-properties&gt;&lt;property type=\"system\" key=\"sdkBuildManager\"&gt;https://arm2s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/repositories/fmsdk-releases/buildmanager/buildmanager-lite/fmsdk-buildmanager/1.0.14-hc245d25/fmsdk-buildmanager-1.0.14-hc245d25.csar&lt;/property&gt;&lt;property type=\"system\" key=\"fmSdkTemplates\"&gt;https://arm2s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/repositories/fmsdk-releases/templates/ci-internal/fm-sdk-templates/1.0.12-3/fm-sdk-templates-1.0.12-3.tar.gz&lt;/property&gt;&lt;property type=\"system\" key=\"integration_value_type\"&gt;eric-enm-single-instance-production-integration-values&lt;/property&gt;&lt;property type=\"system\" key=\"product_set_version\"&gt;22.16.51&lt;/property&gt;&lt;property type=\"system\" key=\"eric-enm-fmsdk\"&gt;armdocker.rnd.ericsson.se/proj_oss_releases/enm/eric-enm-fmsdk:INH_eeipca_eric-enm-fmsdk&lt;/property&gt;&lt;property type=\"system\" key=\"repository-url\"&gt;armdocker.rnd.ericsson.se/proj_oss_releases/enm&lt;/property&gt;&lt;/env-properties&gt;&lt;/item&gt;")
+
+        //               ]
+                    
+        //           }
+        //       }
+    }
+    post {
+        success {
+            mail to: "Thoms.Johnston@ericsson.com",
+                    subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
+                    body: "Failure on ${env.BUILD_URL}"
+        }
+        failure {
+                script {
+                        failedStage = env.STAGE_NAME
+                }
+            }
+    }
+}
+def build_environment_list(){
+    env.getEnvironment().each { key, value -&gt;
+        if ("${key}".startsWith("ERIC_")){
+            echo "Adding new parameter to build_environment_list - ${key} "
+            echo "${key}=${value}"
+            environment_list &lt;&lt; [$class:'StringParameterValue', name:"${key}", value:String.valueOf("${value}")]
+        } else if ("${key}".startsWith("IMAGE_")){
+            echo "${key}=${value}"
+            environment_list &lt;&lt; [$class:'StringParameterValue', name:"${key}", value:String.valueOf("${value}")]
+        }
+        
+    }
+    //build(job: "sync-build-trigger", propagate: true, wait: true, parameters: environment_list)
+}
+
+def init_requirements() {
+    outString = 'dependencies:\r\n'
+    writeFile file: 'requirements.yaml', text: outString
+}
+
+def build_requirements_file(){
+    env.getEnvironment().each { key, value -&gt;
+        if (key.startsWith("ERIC_ENM") || key.startsWith("ERIC_PM")){
+            if (key.endsWith("_REPOSITORY_TAG")){
+                return
+            }
+            else{
+                key=key.replace("_IMAGE_TAG","")
+                env.repoKey = '${'+key+'_REPOSITORY_TAG}'
+                repository=sh(returnStdout: true, script: "echo $repoKey").trim()
+            if (repository == ""){
+                repoString = '  repository: https://arm.epk.ericsson.se/artifactory/proj-enm-helm/'
+            } else {
+                repoString = '  repository: ' + repository
+            }
+                key = key.replace("_POINTFIX","")
+                key=key.toLowerCase().replace("_","-")
+                nameString = '- name: '+ key
+                versionString = '  version: ' + value
+            }
+        readContent = readFile 'requirements.yaml'
+        outString = readContent + nameString + "\r\n" + repoString + "\r\n" + versionString + "\r\n"
+        writeFile file: 'requirements.yaml', text: outString
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

@@ -1,0 +1,129 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>TEST_PARAM</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>TEST_PARAM</name>
+          <description>The ENM ISO version (e.g. 1.65.77)</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>pipeline {
+    agent { node { label 'Cloud-Native' } }
+    options {
+        timestamps()
+    }
+    parameters {
+        string(name: 'TEST_PARAM', description: 'The ENM ISO version (e.g. 1.65.77)')
+        
+    }
+    
+    stages {
+        
+        stage('TAF Only') {
+                  
+                  steps{
+                       //echo "$TEST_PARAM"
+                    //   build job: 'INH_Cloud_Native_FMSDK_KGB+N', parameters: [
+                    //       string(name: 'cluster_id', value: "ieatenmc16b006"),
+                    //       string(name: '_Testware_Items', value: "&lt;item timeout-in-seconds=\"900\"&gt;&lt;name&gt;FMSDK - insert_name_here&lt;/name&gt;&lt;component&gt;com.ericsson.oss.mediation.sdk:ERICTAFfmsdk_CXP9042868:1.0.2-SNAPSHOT&lt;/component&gt;&lt;suites&gt;suites.xml&lt;/suites&gt;&lt;env-properties&gt;&lt;property type=\"system\" key=\"sdkBuildManager\"&gt;https://arm2s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/repositories/fmsdk-releases/buildmanager/buildmanager-lite/fmsdk-buildmanager/1.0.14-hc245d25/fmsdk-buildmanager-1.0.14-hc245d25.csar&lt;/property&gt;&lt;property type=\"system\" key=\"fmSdkTemplates\"&gt;https://arm2s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/repositories/fmsdk-releases/templates/ci-internal/fm-sdk-templates/1.0.12-3/fm-sdk-templates-1.0.12-3.tar.gz&lt;/property&gt;&lt;property type=\"system\" key=\"integration_value_type\"&gt;eric-enm-single-instance-production-integration-values&lt;/property&gt;&lt;property type=\"system\" key=\"product_set_version\"&gt;22.16.51&lt;/property&gt;&lt;property type=\"system\" key=\"eric-enm-fmsdk\"&gt;armdocker.rnd.ericsson.se/proj_oss_releases/enm/eric-enm-fmsdk:INH_eeipca_eric-enm-fmsdk&lt;/property&gt;&lt;property type=\"system\" key=\"repository-url\"&gt;armdocker.rnd.ericsson.se/proj_oss_releases/enm&lt;/property&gt;&lt;/env-properties&gt;&lt;/item&gt;")
+                    // //       string(name: 'internal_nodes', value: String.valueOf(internal_nodes)),
+                    // //       string(name: 'MT_CSV_FILE_URI', value: "$MT_CSV_FILE_URI")
+                    //   ]
+                    script { env.TESTPARAM = "Hello"}
+                    echo "${TESTPARAM}"
+                    echo "${NOPARAM}"
+                  }
+              }
+    }
+    
+}
+def build_environment_list(){
+    env.getEnvironment().each { key, value -&gt;
+        if ("${key}".startsWith("ERIC_")){
+            echo "Adding new parameter to build_environment_list - ${key} "
+            echo "${key}=${value}"
+            environment_list &lt;&lt; [$class:'StringParameterValue', name:"${key}", value:String.valueOf("${value}")]
+        } else if ("${key}".startsWith("IMAGE_")){
+            echo "${key}=${value}"
+            environment_list &lt;&lt; [$class:'StringParameterValue', name:"${key}", value:String.valueOf("${value}")]
+        }
+        
+    }
+    //build(job: "sync-build-trigger", propagate: true, wait: true, parameters: environment_list)
+}
+
+def init_requirements() {
+    outString = 'dependencies:\r\n'
+    writeFile file: 'requirements.yaml', text: outString
+}
+
+def build_requirements_file(){
+    env.getEnvironment().each { key, value -&gt;
+        if (key.startsWith("ERIC_ENM") || key.startsWith("ERIC_PM")){
+            if (key.endsWith("_REPOSITORY_TAG")){
+                return
+            }
+            else{
+                key=key.replace("_IMAGE_TAG","")
+                env.repoKey = '${'+key+'_REPOSITORY_TAG}'
+                repository=sh(returnStdout: true, script: "echo $repoKey").trim()
+            if (repository == ""){
+                repoString = '  repository: https://arm.epk.ericsson.se/artifactory/proj-enm-helm/'
+            } else {
+                repoString = '  repository: ' + repository
+            }
+                key = key.replace("_POINTFIX","")
+                key=key.toLowerCase().replace("_","-")
+                nameString = '- name: '+ key
+                versionString = '  version: ' + value
+            }
+        readContent = readFile 'requirements.yaml'
+        outString = readContent + nameString + "\r\n" + repoString + "\r\n" + versionString + "\r\n"
+        writeFile file: 'requirements.yaml', text: outString
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

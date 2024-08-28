@@ -1,0 +1,161 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@74.0.3">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>3</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@74.0.3">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@74.0.3">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@74.0.3">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@74.0.3">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>true</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers>
+    <com.ericsson.duraci.groovy.trigger.GroovyTrigger plugin="eiffel-core@74.0.3">
+      <spec></spec>
+      <bindingKey>artifact.modified.*.eiffel004.#.fem27s11</bindingKey>
+      <keepQueue>true</keepQueue>
+      <file></file>
+      <script>import groovy.json.*
+
+event = message.getEvent()
+
+if (message.getEventType().equals(&quot;EiffelConfidenceLevelModifiedEvent&quot;) &amp;&amp;
+   event.getGav().getGroupId().equals(&quot;eiffelop_test_group_0&quot;) &amp;&amp;
+   event.getGav().getArtifactId().startsWith(&quot;eiffelop_test_artifact_fem27s11_0&quot;) &amp;&amp;
+   event.getConfidenceLevels().get(&quot;COMPILED_0&quot;).equals(&quot;SUCCESS&quot;))
+{
+  optParam = event.getOptionalParameter(&quot;ARTIFACTSUFFIX&quot;)
+  log.info(&quot;optParam 1: &quot; + optParam)
+  env.put(&quot;ARTIFACTSUFFIX&quot;, optParam)
+
+  flowContext = event.getFlowContext()
+  log.info(&quot;flowContext 1: &quot; + flowContext)
+  env.put(&quot;FLOWCONTEXT&quot;, flowContext)
+
+  queue.unique(message)
+}</script>
+      <maxQueueLength>0</maxQueueLength>
+    </com.ericsson.duraci.groovy.trigger.GroovyTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/usr/bin/env bash
+
+date
+
+cat &gt; CXC1234567_1.xml &lt;&lt; EOS
+&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;
+&lt;MyType&gt;
+      &lt;ProductData
+                number=&quot;CXC1234567/1&quot;
+                revision=&quot;*&quot;
+                name=&quot;MYFILE&quot;
+                /&gt;
+&lt;/MyType&gt;
+EOS</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <com.ericsson.duraci.uploading.UploadingArtifactActionsBuildStep plugin="eiffel-core@74.0.3">
+      <actions>
+        <com.ericsson.duraci.uploading.actions.UploadArtifactToArm>
+          <gav>
+            <groupId>eiffelop_test_group_1</groupId>
+            <artifactId>eiffelop_test_artifact_fem27s11_1_${ARTIFACTSUFFIX}</artifactId>
+            <version>1.$BUILD_NUMBER</version>
+          </gav>
+          <packaging>txt</packaging>
+          <confidenceLevels>
+            <map>
+              <entry>
+                <string>COMPILED_1</string>
+                <string>SUCCESS</string>
+              </entry>
+            </map>
+          </confidenceLevels>
+          <fileClassifierPairs>
+            <com.ericsson.duraci.uploading.FileClassifierPair>
+              <filePath>CXC1234567_1.xml</filePath>
+              <classifier>settingfile</classifier>
+              <extension></extension>
+            </com.ericsson.duraci.uploading.FileClassifierPair>
+          </fileClassifierPairs>
+          <armSelection>
+            <armIds class="java.util.Collections$UnmodifiableSet">
+              <c class="set">
+                <string>0</string>
+              </c>
+            </armIds>
+          </armSelection>
+          <optionalParameters>
+            <list>
+              <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+                <key>ARTIFACTSUFFIX</key>
+                <value>${ARTIFACTSUFFIX}</value>
+              </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            </list>
+          </optionalParameters>
+          <flowContext>$FLOWCONTEXT</flowContext>
+          <skipSendingArtifactNewEvent>false</skipSendingArtifactNewEvent>
+          <previous></previous>
+          <baselineId></baselineId>
+        </com.ericsson.duraci.uploading.actions.UploadArtifactToArm>
+      </actions>
+    </com.ericsson.duraci.uploading.UploadingArtifactActionsBuildStep>
+  </builders>
+  <publishers>
+    <com.ericsson.duraci.messaging.ConfidenceLevelMessageDispatcher plugin="eiffel-core@74.0.3">
+      <gav class="com.ericsson.duraci.messaging.events.params.ArtifactGavWrapper">
+        <groupId>eiffelop_test_group_1</groupId>
+        <artifactId>eiffelop_test_artifact_fem27s11_1_${ARTIFACTSUFFIX}</artifactId>
+        <version>1.$BUILD_NUMBER</version>
+      </gav>
+      <confidenceLevels>
+        <map>
+          <entry>
+            <string>BUILT_1</string>
+            <string>SUCCESS</string>
+          </entry>
+        </map>
+      </confidenceLevels>
+      <optionalParameters>
+        <list>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>ARTIFACTSUFFIX</key>
+            <value>${ARTIFACTSUFFIX}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+        </list>
+      </optionalParameters>
+      <baselineId></baselineId>
+      <flowContext>$FLOWCONTEXT</flowContext>
+      <extraInputEventIdsAsString></extraInputEventIdsAsString>
+    </com.ericsson.duraci.messaging.ConfidenceLevelMessageDispatcher>
+  </publishers>
+  <buildWrappers/>
+</project>

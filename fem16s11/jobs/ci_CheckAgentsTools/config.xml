@@ -1,0 +1,253 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>&lt;br&gt;&#xd;
+&lt;h4 style=&quot;border:3px solid red;&quot;&gt;This job used to purge the docker images and clean workspace of MT e2e slaves fall under below labels&lt;/h4&gt;&#xd;
+&#xd;
+&lt;a href=&quot;https://fem16s11-eiffel004.eiffel.gic.ericsson.se:8443/jenkins/label/Cloud-Native/&quot;&gt;Cloud-Native&lt;/a&gt;&lt;br&gt;&#xd;
+&lt;a href=&quot;https://fem16s11-eiffel004.eiffel.gic.ericsson.se:8443/jenkins/label/INT_Cloud_Native/&quot;&gt;INT_Cloud_Native&lt;/a&gt;&#xd;
+</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>10</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>tool</name>
+          <description>The tool you want to check</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>docker</string>
+              <string>git</string>
+              <string>python</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>ToolVer</name>
+          <description>&lt;br&gt;
+&lt;h4 style=&quot;border:3px solid red;&quot;&gt;Insert First Version to compare&lt;/h4&gt;
+
+Format is MM.mm.rr like 2.28.0 like in 2.20.0 &lt;br&gt;
+First Version is: &lt;br&gt;
+Minimum expected docker version for docker choice&lt;br&gt;
+Minimum expected python version for python choice&lt;br&gt;
+Minimum expected    git version for git choice&lt;br&gt;</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>ToolVer2</name>
+          <description>&lt;br&gt;
+&lt;h4 style=&quot;border:3px solid red;&quot;&gt;Insert Second Version to compare&lt;/h4&gt;
+
+Format is MM.mm.rr like 2.28.0 like in 2.20.0 &lt;br&gt;
+Second Version is: &lt;br&gt;
+Minimum expected docker-compose version for docker choice&lt;br&gt;
+Minimum expected python3        version for python choice&lt;br&gt;
+     ----don&apos;t care-----                for git choice&lt;br&gt;</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+      <triggers>
+        <hudson.triggers.TimerTrigger>
+          <spec>H 22 * * *</spec>
+        </hudson.triggers.TimerTrigger>
+      </triggers>
+    </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>#!/usr/bin/env groovy
+def nodes = [:]
+//for MT e2e, label should be replaced with Cloud-Native
+//String cloudNativeLabel = &quot;Cloud-Native&quot; 
+String cloudNativeLabel = &quot;!master&quot;
+//String cloudNativeLabel = &quot;TEMP-Cloud-Native&quot;
+
+nodesByLabel(&quot;${cloudNativeLabel}&quot;).each {
+  nodes[it] = { -&gt;
+    node(it) {
+      stage(&quot;CheckTools@${it}&quot;) {
+          cleanWs()
+        sh  &apos;&apos;&apos;
+            set +xe #reduce console verbosity
+            function version { printf &quot;%03d%03d%03d%03d&quot; $(echo &quot;$1&quot; | tr &apos;.&apos; &apos; &apos;); }
+
+            case $tool in
+
+            docker)
+                #variable=`sestatus | awk &apos;/Current mode:/ {print $3}&apos;`
+                dockerVer=`docker --version | awk &apos;{print $3}&apos;| tr -d &apos;,&apos;`
+                echo &quot;docker ver.: $dockerVer&quot;
+                if [ $(version $dockerVer) -ge $(version $ToolVer) ]; then
+                    echo &quot;Docker Version is up to date&quot;
+                else
+                    echo &quot;$dockerVer&quot; &gt; DockerVerErr
+                fi
+
+                dockerComposeVer=`docker-compose --version | awk &apos;{print $3}&apos;| tr -d &apos;,&apos;`
+                echo &quot;dockerCompose ver.: $dockerComposeVer&quot;
+                if [ $(version $dockerComposeVer) -ge $(version $ToolVer2) ]; then
+                    echo &quot;Docker Version is up to date&quot;
+                else
+                    echo &quot;$dockerComposeVer&quot; &gt; DockerComposeVerErr
+                fi
+
+                ;;
+            git)
+                # git --version
+                gitVer=`git --version | awk &apos;{print $3}&apos;`
+                echo &quot;git ver.: $gitVer&quot;
+                if [ $(version $gitVer) -ge $(version $ToolVer) ]; then
+                    echo &quot;GIT Version is up to date&quot;
+                else
+                    echo &quot;$gitVer&quot; &gt; GitVerErr
+                fi
+                
+                # list custom git in default folder /proj/ciexadm200/tools/git/
+                echo &quot;git in /proj/ciexadm200/tools/git/&quot;
+                ls /proj/ciexadm200/tools/git/
+                ;;
+            python)
+                #python --version
+                PythVer=`python --version | awk &apos;{print $2}&apos;`
+                echo &quot;python ver.: $PythVer&quot;
+                if [ $(version $PythVer) -ge $(version $ToolVer) ]; then
+                    echo &quot;Python Version is up to date&quot;
+                else
+                    echo &quot;$PythVer&quot; &gt; PythVerErr
+                fi
+                
+                # list custom git in default folder /proj/ciexadm200/tools/git/
+                
+                #python3 --version
+                Pyth3Ver=`python3 --version | awk &apos;{print $2}&apos;`
+                echo &quot;python3 ver.: $Pyth3Ver&quot;
+                if [ $(version $Pyth3Ver) -ge $(version $ToolVer2) ]; then
+                    echo &quot;Python3 Version is up to date&quot;
+                else
+                    echo &quot;$Pyth3Ver&quot; &gt; Pyth3VerErr
+                fi
+                
+                # list custom python in default folder /proj/ciexadm200/tools/ + add || true so not exit if missing
+                ls /proj/ciexadm200/tools | grep python || true
+            ;;
+            esac
+            &apos;&apos;&apos;
+            
+        if (fileExists(&quot;DockerVerErr&quot;)) {
+            def dockerVer = readFile( file:&apos;DockerVerErr&apos;)
+            println dockerVer
+            unstable &apos;ERROR&apos;;
+            if(dockerVer?.trim())
+                addShortText (text: &quot;${NODE_NAME} ** Docker ${dockerVer}&quot;, background: &quot;yellow&quot;, border: &quot;5&quot;, borderColor: &quot;red&quot;, color: &quot;black&quot;); 
+            else
+                addShortText (text: &quot;${NODE_NAME} ** Docker !!No Version!!&quot;, background: &quot;yellow&quot;, border: &quot;5&quot;, borderColor: &quot;red&quot;, color: &quot;black&quot;); 
+            
+            addErrorBadge(text: &apos;ERR&apos;);
+            addShortText (text: &quot;\n&quot;, background: &quot;white&quot;, border: &quot;0&quot;, borderColor: &quot;white&quot;, color: &quot;white&quot;); 
+
+        }
+        
+        if (fileExists(&quot;DockerComposeVerErr&quot;)) {
+            def dockerComposeVer = readFile( file:&apos;DockerComposeVerErr&apos;)
+            println dockerComposeVer
+            unstable &apos;ERROR&apos;;
+            if(dockerComposeVer?.trim())
+                addShortText (text: &quot;${NODE_NAME} ** Compose ${dockerComposeVer}&quot;, background: &quot;yellow&quot;, border: &quot;5&quot;, borderColor: &quot;red&quot;, color: &quot;black&quot;); 
+            else
+                addShortText (text: &quot;${NODE_NAME} ** Compose !!No Version!!&quot;, background: &quot;yellow&quot;, border: &quot;5&quot;, borderColor: &quot;red&quot;, color: &quot;black&quot;); 
+            addErrorBadge(text: &apos;ERR&apos;);
+            addShortText (text: &quot;\n&quot;, background: &quot;white&quot;, border: &quot;0&quot;, borderColor: &quot;white&quot;, color: &quot;white&quot;); 
+        }
+        
+        if (fileExists(&quot;GitVerErr&quot;)) {
+            def gitVer = readFile( file:&apos;GitVerErr&apos;)
+            println gitVer
+            unstable &apos;ERROR&apos;;
+            if(gitVer?.trim())
+                addShortText (text: &quot;${NODE_NAME} ** Git ${gitVer}&quot;, background: &quot;yellow&quot;, border: &quot;5&quot;, borderColor: &quot;red&quot;, color: &quot;black&quot;); 
+            else
+                addShortText (text: &quot;${NODE_NAME} ** Git !!No Version!!&quot;, background: &quot;yellow&quot;, border: &quot;5&quot;, borderColor: &quot;red&quot;, color: &quot;black&quot;); 
+            addErrorBadge(text: &apos;ERR&apos;);
+            addShortText (text: &quot;\n&quot;, background: &quot;white&quot;, border: &quot;0&quot;, borderColor: &quot;white&quot;, color: &quot;white&quot;); 
+        }
+        
+        if (fileExists(&quot;PythVerErr&quot;)) {
+            def PythVer = readFile( file:&apos;PythVerErr&apos;)
+            println PythVer
+            unstable &apos;ERROR&apos;;
+            if(PythVer?.trim())
+                addShortText (text: &quot;${NODE_NAME} ** Pyth ${PythVer}&quot;, background: &quot;yellow&quot;, border: &quot;5&quot;, borderColor: &quot;red&quot;, color: &quot;black&quot;); 
+            else
+                addShortText (text: &quot;${NODE_NAME} ** Pyth !!No Version!!&quot;, background: &quot;yellow&quot;, border: &quot;5&quot;, borderColor: &quot;red&quot;, color: &quot;black&quot;); 
+            addErrorBadge(text: &apos;ERR&apos;);
+            addShortText (text: &quot;\n&quot;, background: &quot;white&quot;, border: &quot;0&quot;, borderColor: &quot;white&quot;, color: &quot;white&quot;); 
+        }
+
+         if (fileExists(&quot;Pyth3VerErr&quot;)) {
+            def Pyth3Ver = readFile( file:&apos;Pyth3VerErr&apos;)
+            println Pyth3Ver
+            unstable &apos;ERROR&apos;;
+            if(Pyth3Ver?.trim())
+                addShortText (text: &quot;${NODE_NAME} ** Pyth3 ${Pyth3Ver}&quot;, background: &quot;yellow&quot;, border: &quot;5&quot;, borderColor: &quot;red&quot;, color: &quot;black&quot;); 
+            else
+                addShortText (text: &quot;${NODE_NAME} **  Pyth3 !!No Version!!&quot;, background: &quot;yellow&quot;, border: &quot;5&quot;, borderColor: &quot;red&quot;, color: &quot;black&quot;); 
+            addErrorBadge(text: &apos;ERR&apos;);
+            addShortText (text: &quot;\n&quot;, background: &quot;white&quot;, border: &quot;0&quot;, borderColor: &quot;white&quot;, color: &quot;white&quot;); 
+        }
+
+    }
+  }
+}
+}
+parallel nodes
+//if(manager.logContains(&quot;.*python.*&quot;)) {
+//    manager.addWarningBadge(&quot;Thou shalt not use deprecated python.&quot;)
+//    manager.createSummary(&quot;warning.gif&quot;).appendText(&quot;&lt;h1&gt;You have been warned!&lt;/h1&gt;&quot;, false, false, false, &quot;red&quot;)
+//    manager.buildUnstable()
+//}
+
+</script>
+    <sandbox>false</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>true</disabled>
+</flow-definition>

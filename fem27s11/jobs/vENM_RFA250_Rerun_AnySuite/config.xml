@@ -1,0 +1,939 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><project>
+  <actions/>
+  <description>&lt;html&gt;&#13;
+&lt;head&gt;&#13;
+&lt;style&gt;&#13;
+h1 {&#13;
+    color: Blue;&#13;
+}&#13;
+&#13;
+h2 {&#13;
+    color: Green;&#13;
+}&#13;
+&lt;/style&gt;&#13;
+&lt;/head&gt;&#13;
+&lt;body&gt;&#13;
+&#13;
+&lt;h1&gt;This job is used to run RFA250 test suites individually, against a vENM Cloud Deployment&lt;/h1&gt;&#13;
+  &#13;
+&#13;
+&lt;/body&gt;&#13;
+&lt;/html&gt;</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@69.0.3">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>25</daysToKeep>
+        <numToKeep>20</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.24.1">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@69.0.3">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@69.0.3">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@69.0.3">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty plugin="leastload@1.0.3">
+      <leastLoadDisabled>false</leastLoadDisabled>
+    </org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>cluster_id</name>
+          <description>N.B. Make sure to pick the right deployment! See the job description for details
+
+The "cluster_id" for the test environment to use.
+Please verify first which environment to use
+To login &lt;cluster_id&gt;.athtem.eei.ericsson.se
+&lt;h4&gt;Default value will be maintained by Maintrack/Thunderbee Team&lt;/h4&gt;</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>ieatenmc3a06</string>
+              <string>ieatenmc3a04</string>
+              <string>ieatenmc3b09</string>
+              <string>ieatenmc5a03</string>
+              <string>ieatenmc5b01</string>
+              <string>ieatenmc5b02</string>
+              <string>ieatenmc4b11</string>
+              <string>ieatenmc6a09</string>
+              <string>ieatenmc6a10</string>
+              <string>ieatenmc6a11</string>
+              <string>ieatenmc4b08</string>
+              <string>ieatenmc4b12</string>
+              <string>ieatenmc7a01</string>
+              <string>ieatenmc5a06</string>
+              <string>ieatenmc12a05</string>
+              <string>ieatenmc12a04</string>
+              <string>ieatenmc7a12</string>
+              <string>ieatenmc3b10</string>
+              <string>ieatenmc7a10</string>
+              <string>ieatenmc7a08</string>
+              <string>ieatenmc6a04</string>
+              <string>ieatenmc14a02</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <org.biouno.unochoice.ChoiceParameter plugin="uno-choice@2.2.1">
+          <name>Suite_Name</name>
+          <description>&lt;h3&gt; Select your test suite from "SuitesToRun" list, Use Filter box to filter them&lt;/h3&gt;</description>
+          <randomName>choice-parameter-28154975154277314</randomName>
+          <visibleItemCount>1</visibleItemCount>
+          <script class="org.biouno.unochoice.model.GroovyScript">
+            <secureScript plugin="script-security@1.73">
+              <script>def list = []
+def xmlslist = ["enm_schedule_RFA250_evt.xml","enm_schedule_RFA250_scp.xml","enm_schedule_RFA250_svc.xml","enm_schedule_RFA250_svc_evt.xml","enm_schedule_RFA250_svc_scp.xml","enm_schedule_RFA250_svc_scp_evt.xml","enm_schedule_Users_And_Nodes.xml"]
+def metadata
+xmlslist.each {
+
+    def addr = "https://staging-gerrit.sero.gic.ericsson.se/a/gitweb?p=OSS/com.ericsson.ci.test/onboardingfour.git;a=blob_plain;f=src/main/resources/${it};hb=refs/heads/master"
+    def authString = "thunderbee:TBFunc_userid1234".getBytes().encodeBase64().toString()
+
+    def connection = addr.toURL().openConnection()
+    connection.setRequestProperty( "Authorization", "Basic ${authString}" )
+    xmlString = connection.content.text
+
+    File kvmFile = new File('kvm.xml')
+    kvmFile.write(xmlString)
+    xmlString = kvmFile.getText()
+    kvmFile.delete()
+
+    metadata = new XmlSlurper().parseText(xmlString)
+
+    metadata.'**'.findAll { it.name() == 'item' }.each {
+        list.add (it.name)
+    }
+}
+
+return list</script>
+              <sandbox>false</sandbox>
+            </secureScript>
+            <secureFallbackScript plugin="script-security@1.73">
+              <script/>
+              <sandbox>false</sandbox>
+            </secureFallbackScript>
+          </script>
+          <projectName>vENM_RFA250_Rerun_AnySuite</projectName>
+          <projectFullName>vENM_RFA250_Rerun_AnySuite</projectFullName>
+          <choiceType>PT_SINGLE_SELECT</choiceType>
+          <filterable>true</filterable>
+          <filterLength>1</filterLength>
+        </org.biouno.unochoice.ChoiceParameter>
+        <org.biouno.unochoice.CascadeChoiceParameter plugin="uno-choice@2.2.1">
+          <name>Component</name>
+          <description>&lt;h3&gt;Version of the selected test ware suite. Only last RFA version and above will be displayed&lt;/h3&gt;
+&lt;h3&gt;To Run a specific version of a suite, add it after the CXP. e.g.   ERICTAFnodesecurity_CXP9032282:1.59.2&lt;/h3&gt;
+&lt;h3&gt;NOTE: This can only be done in a rebuild&lt;/h3&gt;</description>
+          <randomName>choice-parameter-28154975159200978</randomName>
+          <visibleItemCount>1</visibleItemCount>
+          <script class="org.biouno.unochoice.model.GroovyScript">
+            <secureScript plugin="script-security@1.73">
+              <script>def list = []
+def creds = "tb_func_pass_1"
+def xmlslist = ["enm_schedule_RFA250_evt.xml","enm_schedule_RFA250_scp.xml","enm_schedule_RFA250_svc.xml","enm_schedule_RFA250_svc_evt.xml","enm_schedule_RFA250_svc_scp.xml","enm_schedule_RFA250_svc_scp_evt.xml","enm_schedule_Users_And_Nodes.xml"]
+def metadata
+
+xmlslist.each {
+
+    def addr = "https://staging-gerrit.sero.gic.ericsson.se/a/gitweb?p=OSS/com.ericsson.ci.test/onboardingfour.git;a=blob_plain;f=src/main/resources/${it};hb=refs/heads/master"
+    def authString = "thunderbee:TBFunc_userid1234".getBytes().encodeBase64().toString()
+
+    def connection = addr.toURL().openConnection()
+    connection.setRequestProperty( "Authorization", "Basic ${authString}" )
+    xmlString = connection.content.text
+
+    File kvmFile = new File('kvm.xml')
+    kvmFile.write(xmlString)
+    xmlString = kvmFile.getText()
+    kvmFile.delete()
+
+    metadata = new XmlSlurper().parseText(xmlString)
+
+metadata.'**'.findAll { it.name() == 'item' }.each {
+
+if(Suite_Name.contains(it.name.toString())) {
+list.add (it.component.toString())
+}
+
+}
+}
+return list</script>
+              <sandbox>false</sandbox>
+            </secureScript>
+            <secureFallbackScript plugin="script-security@1.73">
+              <script/>
+              <sandbox>false</sandbox>
+            </secureFallbackScript>
+          </script>
+          <projectName>vENM_RFA250_Rerun_AnySuite</projectName>
+          <projectFullName>vENM_RFA250_Rerun_AnySuite</projectFullName>
+          <parameters class="linked-hash-map"/>
+          <referencedParameters>Suite_Name</referencedParameters>
+          <choiceType>PT_SINGLE_SELECT</choiceType>
+          <filterable>false</filterable>
+          <filterLength>1</filterLength>
+        </org.biouno.unochoice.CascadeChoiceParameter>
+        <org.biouno.unochoice.CascadeChoiceParameter plugin="uno-choice@2.2.1">
+          <name>Suite_xml</name>
+          <description>&lt;b&gt; It will automatically populated when Suite_Name selected&lt;/b&gt;</description>
+          <randomName>choice-parameter-28154975164303166</randomName>
+          <visibleItemCount>1</visibleItemCount>
+          <script class="org.biouno.unochoice.model.GroovyScript">
+            <secureScript plugin="script-security@1.73">
+              <script>def list = []
+def xmlslist = ["enm_schedule_RFA250_evt.xml","enm_schedule_RFA250_scp.xml","enm_schedule_RFA250_svc.xml","enm_schedule_RFA250_svc_evt.xml","enm_schedule_RFA250_svc_scp.xml","enm_schedule_RFA250_svc_scp_evt.xml","enm_schedule_Users_And_Nodes.xml"]
+def metadata
+xmlslist.each {
+
+    def addr = "https://staging-gerrit.sero.gic.ericsson.se/a/gitweb?p=OSS/com.ericsson.ci.test/onboardingfour.git;a=blob_plain;f=src/main/resources/${it};hb=refs/heads/master"
+    def authString = "thunderbee:TBFunc_userid1234".getBytes().encodeBase64().toString()
+
+    def connection = addr.toURL().openConnection()
+    connection.setRequestProperty( "Authorization", "Basic ${authString}" )
+    xmlString = connection.content.text
+
+    File kvmFile = new File('kvm.xml')
+    kvmFile.write(xmlString)
+    xmlString = kvmFile.getText()
+    kvmFile.delete()
+
+    metadata = new XmlSlurper().parseText(xmlString)
+
+    metadata = new XmlSlurper().parseText(xmlString)
+metadata.'**'.findAll { it.name() == 'item' }.each {
+
+if(Suite_Name.contains(it.name.toString())) {
+list.add (it.suites.toString())
+}
+}
+}
+return list</script>
+              <sandbox>false</sandbox>
+            </secureScript>
+            <secureFallbackScript plugin="script-security@1.73">
+              <script/>
+              <sandbox>false</sandbox>
+            </secureFallbackScript>
+          </script>
+          <projectName>vENM_RFA250_Rerun_AnySuite</projectName>
+          <projectFullName>vENM_RFA250_Rerun_AnySuite</projectFullName>
+          <parameters class="linked-hash-map"/>
+          <referencedParameters>Suite_Name</referencedParameters>
+          <choiceType>PT_SINGLE_SELECT</choiceType>
+          <filterable>false</filterable>
+          <filterLength>1</filterLength>
+        </org.biouno.unochoice.CascadeChoiceParameter>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>drop</name>
+          <description>&lt;h4&gt;Default value will be maintained by Maintrack/Thunderbee Team&lt;/h4&gt;</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>21.09</string>
+              <string>21.08</string>
+              <string>21.07</string>
+              <string>21.06</string>
+              <string>21.05</string>
+              <string>21.04</string>
+              <string>21.03</string>
+              <string>21.02</string>
+              <string>21.01</string>
+              <string>20.17</string>
+              <string>20.16</string>
+              <string>20.15</string>
+              <string>20.14</string>
+              <string>20.13</string>
+              <string>20.12</string>
+              <string>20.11</string>
+              <string>20.10</string>
+              <string>20.09</string>
+              <string>20.08</string>
+              <string>20.07</string>
+              <string>20.06</string>
+              <string>20.05</string>
+              <string>20.04</string>
+              <string>20.03</string>
+              <string>20.02</string>
+              <string>20.01</string>
+              <string>19.17</string>
+              <string>19.16</string>
+              <string>19.15</string>
+              <string>19.14</string>
+              <string>19.13</string>
+              <string>19.12</string>
+              <string>19.11</string>
+              <string>19.10</string>
+              <string>19.09</string>
+              <string>19.08</string>
+              <string>19.07</string>
+              <string>19.06</string>
+              <string>19.05</string>
+              <string>19.04</string>
+              <string>19.03</string>
+              <string>19.02</string>
+              <string>19.01</string>
+              <string>18.18</string>
+              <string>18.17</string>
+              <string>18.16</string>
+              <string>18.15</string>
+              <string>18.14</string>
+              <string>18.13</string>
+              <string>18.12</string>
+              <string>18.11</string>
+              <string>18.10</string>
+              <string>18.09</string>
+              <string>18.08</string>
+              <string>18.07</string>
+              <string>18.06</string>
+              <string>18.05</string>
+              <string>18.04</string>
+              <string>18.03</string>
+              <string>18.02</string>
+              <string>18.01</string>
+              <string>17.17</string>
+              <string>17.16</string>
+              <string>17.15</string>
+              <string>17.14</string>
+              <string>17.13</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>tafVersion</name>
+          <description>&lt;h4&gt;Default value will be maintained by Maintrack/Thunderbee Team&lt;/h4&gt;</description>
+          <defaultValue>AUTO</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <jp.ikedam.jenkins.plugins.extensible__choice__parameter.ExtensibleChoiceParameterDefinition plugin="extensible-choice-parameter@1.5.0">
+          <name>centralCSVVersion</name>
+          <description>&lt;b&gt;&lt;p&gt; Version of the Central CSV to use - https://gerrit.ericsson.se/#/admin/projects/OSS/com.ericsson.oss.testware.maintrack/enm-maintrack-central-test-datasource-testware&lt;/p&gt;&lt;/b&gt;</description>
+          <editable>true</editable>
+          <choiceListProvider class="jp.ikedam.jenkins.plugins.extensible_choice_parameter.TextareaChoiceListProvider">
+            <whenToAdd>Triggered</whenToAdd>
+            <choiceList>
+              <string>17.14.11</string>
+              <string>17.14.10</string>
+              <string>17.13.16</string>
+              <string>17.14.15</string>
+              <string>17.14.18</string>
+              <string>17.14.26</string>
+              <string>17.15.1</string>
+              <string>17.15.2</string>
+              <string>17.15.4</string>
+              <string>17.15.5</string>
+              <string>17.15.7</string>
+              <string>17.15.9</string>
+              <string>17.15.10</string>
+              <string>17.15.13</string>
+              <string>17.15.16</string>
+              <string>17.14.19 </string>
+              <string>17.15.22</string>
+              <string>17.15.26</string>
+              <string>17.15.27</string>
+              <string>17.15.28</string>
+              <string>17.14.19</string>
+              <string>17.15.29</string>
+              <string>17.15.30</string>
+              <string>17.16.2</string>
+              <string>17.16.4</string>
+              <string>17.16.10</string>
+              <string>17.16.11</string>
+              <string>17.16.14</string>
+              <string>17.16.15</string>
+              <string>17.16.18</string>
+              <string>17.16.22</string>
+              <string>17.16.23</string>
+              <string>17.16.25</string>
+              <string>17.16.24</string>
+              <string>17.17.3</string>
+              <string>17.17.4</string>
+              <string>17.17.6</string>
+              <string>17.17.5</string>
+              <string>17.17.8</string>
+              <string>17.17.9</string>
+              <string>18.01.1</string>
+              <string>18.01.3</string>
+              <string>18.01.4</string>
+              <string>18.01.5</string>
+              <string>18.01.6</string>
+              <string>18.02.2</string>
+              <string>18.01.2</string>
+              <string>18.02.3</string>
+              <string>18.02.4</string>
+              <string>17.15.17</string>
+              <string>18.02.8</string>
+              <string>18.02.9</string>
+              <string>18.02.10</string>
+              <string>18.02.11</string>
+              <string>18.03.4</string>
+              <string>18.03.1</string>
+              <string>18.03.2</string>
+              <string>18.03.3</string>
+              <string>18.03.4</string>
+              <string>18.03.5</string>
+              <string>18.03.6</string>
+              <string>18.03.7</string>
+              <string>18.03.8</string>
+              <string>18.03.9</string>
+              <string>18.03.10</string>
+              <string>18.03.11</string>
+              <string>18.03.12</string>
+              <string>18.03.14</string>
+              <string>18.03.16</string>
+              <string>18.03.17</string>
+              <string>18.03.18</string>
+              <string>18.03.19</string>
+              <string>18.0319</string>
+              <string>18.03.21</string>
+              <string>18.04.2</string>
+              <string>18.04.1</string>
+              <string>18.04.4</string>
+              <string>18.04.9</string>
+              <string>18.04.10</string>
+              <string>18.04.8</string>
+              <string>18.04.14</string>
+              <string>18.04.16</string>
+              <string>18.04.17</string>
+              <string>18.04.20</string>
+              <string>18.04.21</string>
+              <string>18.04.23</string>
+              <string>18.05.1</string>
+              <string>18.05.2</string>
+              <string>18.05.02</string>
+              <string>18.05.3</string>
+              <string>18.05.4</string>
+              <string>18.05.7</string>
+              <string>AUTO</string>
+              <string>18.05.8</string>
+              <string>18.05.9</string>
+              <string>18.05.14</string>
+              <string>18.05.15</string>
+              <string>18.05.16</string>
+              <string>18.05.17</string>
+              <string>18.05.20</string>
+              <string>18.05.21</string>
+              <string>18.05.22</string>
+              <string>18.05.23</string>
+              <string>18.06.1</string>
+              <string>18.06.2</string>
+              <string>18.06.4</string>
+              <string>18.06.5</string>
+              <string>18.06.4 </string>
+              <string>18.06.6</string>
+              <string>18.06.7</string>
+              <string>18.06.8</string>
+              <string>18.06.9</string>
+              <string>18.06.11</string>
+              <string>18.06.13</string>
+              <string>18.06.14</string>
+              <string>18.06.15</string>
+              <string>18.06.16</string>
+              <string>18.06.16</string>
+              <string>18.07.1</string>
+              <string> 18.07.1</string>
+              <string>18.07.2</string>
+              <string>18.07.3</string>
+              <string>18.07.3 </string>
+              <string>18.07.4</string>
+              <string>18.07.5</string>
+              <string>18.07.6</string>
+              <string>18.07.7</string>
+              <string>18.07.8</string>
+              <string>18.07.13</string>
+              <string>18.07.12</string>
+              <string>18.07.15</string>
+              <string>18.07.17</string>
+              <string>18.07.19</string>
+              <string>18.08.1</string>
+              <string>18.08.2</string>
+              <string>18.08.3</string>
+              <string>18.08.4</string>
+              <string>18.08.5</string>
+              <string>18.08.6</string>
+              <string>18.08.7</string>
+              <string>18.08.8</string>
+              <string>18.08.9</string>
+              <string>18.08.10</string>
+              <string>18.08.11</string>
+              <string>18.08.12</string>
+              <string>18.08.13</string>
+              <string>18.08.14</string>
+              <string>18.08.15</string>
+              <string>18.09.1</string>
+              <string>18.09.2</string>
+              <string>18.09.3</string>
+              <string>18.09.5</string>
+              <string>18.09.6</string>
+              <string>18.09.7</string>
+              <string>18.09.8</string>
+              <string>18.09.9</string>
+              <string>18.09.10</string>
+              <string>18.09.11</string>
+              <string>18.09.13</string>
+              <string>18.09.14</string>
+              <string>18.09.15</string>
+              <string>18.09.17</string>
+              <string>18.09.19</string>
+              <string>18.09.20</string>
+              <string>18.09.22</string>
+              <string>18.09.24</string>
+              <string>18.10.1</string>
+              <string>18.10.2</string>
+              <string>18.10.3</string>
+              <string>18.10.7</string>
+              <string>18.10.8</string>
+              <string>18.10.9 </string>
+              <string>18.10.10</string>
+              <string>18.10.10 </string>
+              <string>18.10.12</string>
+              <string>18.10.12 </string>
+              <string>18.11.13</string>
+              <string>18.11.3</string>
+              <string>18.11.4</string>
+              <string>18.11.16</string>
+              <string>18.11.6</string>
+              <string>18.11.7</string>
+              <string>18.11.9</string>
+              <string>18.11.11</string>
+              <string>18.11.14</string>
+              <string>18.11.18</string>
+              <string>18.11.20</string>
+              <string>18.11.24</string>
+              <string>18.12.1</string>
+              <string>18.12.3</string>
+              <string>18.12.2</string>
+              <string>18.12.5</string>
+              <string>18.13.1</string>
+              <string>18.13.3</string>
+              <string>18.13.4</string>
+              <string>18.13.7</string>
+              <string>18.13.7 </string>
+              <string>18.13.8</string>
+              <string>18.13.8 </string>
+              <string>18.13.11</string>
+              <string>18.13.11 </string>
+              <string>18.13.20</string>
+              <string>18.13.21</string>
+              <string>18.14.1</string>
+              <string>18.14.4</string>
+              <string>18.14.6</string>
+              <string>18.13.21 </string>
+              <string>18.14.8</string>
+              <string>18.14.9</string>
+              <string>18.14.11</string>
+              <string>18.14.12</string>
+              <string>18.14.14</string>
+              <string>18.14.15</string>
+              <string>18.14.16</string>
+              <string>18.14.17</string>
+              <string>18.15.1</string>
+              <string>18.15.2</string>
+              <string>18.15.7</string>
+              <string>18.15.10</string>
+              <string>18.15.12</string>
+              <string>18.15.14</string>
+              <string>18.15.20</string>
+              <string>18.15.21</string>
+              <string>18.15.20 </string>
+              <string>18.15.22</string>
+              <string>18.15.23</string>
+              <string>18.16.1</string>
+              <string>18.16.4</string>
+              <string>18.16.20</string>
+              <string>18.16.9</string>
+              <string>18.16.10</string>
+              <string>18.16.11</string>
+              <string>18.16.13</string>
+              <string>18.16.18</string>
+              <string>18.16.19</string>
+              <string>18.16.22</string>
+              <string>18.16.26</string>
+              <string>18.16.29</string>
+              <string>18.16.32</string>
+              <string>18.16.34</string>
+              <string>18.16.36</string>
+              <string>18.16.35</string>
+              <string>18.17.1</string>
+              <string>18.17.4</string>
+              <string>18.17.6</string>
+              <string>18.17.9</string>
+              <string>18.17.19</string>
+              <string>18.17.10</string>
+              <string>18.11.10</string>
+              <string>18.17.16</string>
+              <string>18.17.17</string>
+              <string>18.17.18</string>
+              <string>18.17.19</string>
+              <string>18.17.20</string>
+              <string>18.17.23</string>
+              <string>18.17.24</string>
+              <string>18.17.26</string>
+              <string>18.17.27</string>
+              <string>18.18.8</string>
+              <string>18.18.9</string>
+              <string>18.18.13</string>
+              <string>18.18.14</string>
+              <string>18.18.15</string>
+              <string>18.18.16</string>
+              <string>18.18.17</string>
+              <string>18.18.18</string>
+              <string>18.18.25</string>
+              <string>18.18.27</string>
+              <string>19.01.1</string>
+              <string>19.01.01</string>
+              <string>19.01.8</string>
+              <string>19.01.1 </string>
+              <string>19.01.2</string>
+              <string>19.01.7</string>
+              <string>19.01.9</string>
+              <string>19.02.3</string>
+              <string>19.02.03</string>
+              <string>19.02.05</string>
+              <string>19.01.05</string>
+              <string>19.02.10</string>
+              <string>19.02.15</string>
+              <string>19.02.23</string>
+              <string>19.02.26</string>
+              <string>19.02.31</string>
+              <string>19.02.29</string>
+              <string>19.02.33</string>
+              <string>19.02.38</string>
+              <string>19.02.41</string>
+              <string>19.02.45</string>
+              <string>19.03.1</string>
+              <string>19.03.2</string>
+              <string>19.04.3</string>
+              <string>19.04.6</string>
+              <string>19.04.6 </string>
+              <string>19.04.7</string>
+              <string>19.04.7 </string>
+              <string>19.04.7</string>
+              <string>19.04.9 </string>
+              <string>19.04.9</string>
+              <string>19.04.9  </string>
+              <string>19.04.11</string>
+              <string>19.05.1</string>
+              <string>19.05.3</string>
+              <string>19.05.4</string>
+              <string>19.05.7</string>
+              <string>19.05.9</string>
+              <string>19.05.11</string>
+              <string>19.05.18</string>
+              <string>19.05.19</string>
+              <string>19.05.21</string>
+              <string>19.05.22</string>
+              <string>19.06.86</string>
+              <string>19.05.25</string>
+              <string>19.07.1</string>
+              <string>19.07.4</string>
+              <string>19.07.8</string>
+              <string>19.07.11</string>
+              <string>19.07.12</string>
+              <string>19.07.16</string>
+              <string>19.07.18</string>
+              <string>19.07.20</string>
+              <string>19.07.21</string>
+              <string>19.07.22</string>
+              <string>19.08.2</string>
+              <string>19.08.6</string>
+              <string>19.08.12</string>
+              <string>19.08.14</string>
+              <string>19.08.19</string>
+              <string>19.08.20</string>
+              <string>19.09.2</string>
+              <string>19.09.2 </string>
+              <string>19.09.3</string>
+              <string>19.09.3 </string>
+              <string>2.44.1</string>
+              <string>19.19.3</string>
+              <string>19.09.8</string>
+              <string>19.10.3</string>
+              <string>19.10.4</string>
+              <string>19.10.15</string>
+              <string>19.11.3</string>
+              <string>19.11.6</string>
+              <string>19.11.9</string>
+              <string>19.11.11</string>
+              <string>19.11.12</string>
+              <string>19.11.13</string>
+              <string>19.11.16</string>
+              <string>19.11.18</string>
+              <string>19.12.2</string>
+              <string>19.12.4</string>
+              <string>19.08.06</string>
+              <string>19.12.6</string>
+              <string>19.11.16	</string>
+              <string>19.12..6</string>
+              <string>19.12.18</string>
+              <string>19.12.21</string>
+              <string>19.12.20</string>
+              <string>19.12.25</string>
+              <string>19.12.26</string>
+              <string>19.14.6</string>
+              <string>19.14.8</string>
+              <string>19.14.10 </string>
+              <string>19.14.10</string>
+              <string>19.14.11</string>
+              <string>19.14.15</string>
+              <string>19.14.15 </string>
+              <string>19.14.18</string>
+              <string>19.15.6</string>
+              <string>19.16.1</string>
+              <string>19.16.2</string>
+              <string>19.15.13</string>
+              <string>19.16.14</string>
+              <string>2.47.1 </string>
+              <string>19.16.12</string>
+              <string>19.17.9</string>
+              <string>20.01.16</string>
+              <string>20.02.13</string>
+              <string>20.02.14</string>
+              <string>20.03.2</string>
+              <string>20.03.6</string>
+              <string>20.03.18</string>
+              <string>20.03.22</string>
+              <string>20.03.29</string>
+              <string>20.05.1</string>
+              <string>20.05.4</string>
+              <string>20.05.7</string>
+              <string>20.05.5</string>
+              <string>20.05.12-SNAPSHOT</string>
+              <string>20.05.12</string>
+              <string>20.05.13</string>
+              <string>20.05.14</string>
+              <string>20.05.9</string>
+              <string>20.03.27</string>
+              <string>20.06.3</string>
+              <string>20.06.2</string>
+              <string>20.07.2</string>
+              <string>20.05.15</string>
+              <string>20.07.10</string>
+              <string>20.08.8</string>
+              <string>20.08.17</string>
+              <string>20.08.19</string>
+              <string>20.09.2</string>
+              <string>20.09.7</string>
+              <string>20.09.9</string>
+              <string>20.11.14</string>
+              <string>20.12.7</string>
+              <string>20.13.3</string>
+              <string>20.14.2</string>
+              <string>20.10.10</string>
+              <string>20.14.12</string>
+              <string>20.14.16</string>
+              <string>20.14.18</string>
+              <string>20.14.21</string>
+              <string>20.14.22</string>
+              <string>20.15.1</string>
+              <string>20.15.5-SNAPSHOT</string>
+              <string>20.15.5</string>
+              <string>20.16.1</string>
+              <string>20.16.8</string>
+              <string>20.16.10</string>
+              <string>20.17.2</string>
+              <string>21.01.2</string>
+              <string>20.01.2</string>
+              <string>20.17.9</string>
+              <string>20.01.1</string>
+              <string>21.01.1</string>
+              <string>21.01.7</string>
+              <string>20.01.11</string>
+              <string>21.01.9</string>
+              <string>21.01.14</string>
+              <string>21.01.16</string>
+              <string>21.02.3</string>
+              <string>21.02.6</string>
+              <string>21.03.1</string>
+              <string>21.03.2</string>
+              <string>21.03.7</string>
+              <string>21.06.1</string>
+              <string>21.05.3</string>
+              <string>21.08.8</string>
+              <string>21.08.10</string>
+              <string>21.08.9</string>
+              <string>21.08.12</string>
+              <string>21.09.2</string>
+              <string>21.07.10</string>
+              <string>21.09.3</string>
+              <string>21.09.11</string>
+            </choiceList>
+            <defaultChoice>AUTO</defaultChoice>
+          </choiceListProvider>
+        </jp.ikedam.jenkins.plugins.extensible__choice__parameter.ExtensibleChoiceParameterDefinition>
+        <org.biouno.unochoice.CascadeChoiceParameter plugin="uno-choice@2.2.1">
+          <name>product_set_version</name>
+          <description/>
+          <randomName>choice-parameter-28154975170467026</randomName>
+          <visibleItemCount>1</visibleItemCount>
+          <script class="org.biouno.unochoice.model.GroovyScript">
+            <secureScript plugin="script-security@1.73">
+              <script> def drop = drop
+ def metadata = new XmlSlurper().parse("https://ci-portal.seli.wh.rnd.internal.ericsson.com/getProductSetVersions/?drop=${drop}&amp;productSet=ENM")
+ def listtwo = []
+ listtwo.add(drop)
+ listtwo.add("GREEN")
+ metadata.versions.version.each
+ {
+   listtwo .add(""+it)
+ }
+return listtwo</script>
+              <sandbox>false</sandbox>
+            </secureScript>
+            <secureFallbackScript plugin="script-security@1.73">
+              <script/>
+              <sandbox>false</sandbox>
+            </secureFallbackScript>
+          </script>
+          <projectName>vENM_RFA250_Rerun_AnySuite</projectName>
+          <projectFullName>vENM_RFA250_Rerun_AnySuite</projectFullName>
+          <parameters class="linked-hash-map"/>
+          <referencedParameters>drop</referencedParameters>
+          <choiceType>PT_SINGLE_SELECT</choiceType>
+          <filterable>false</filterable>
+          <filterLength>1</filterLength>
+        </org.biouno.unochoice.CascadeChoiceParameter>
+        <hudson.model.StringParameterDefinition>
+          <name/>
+          <description/>
+          <defaultValue/>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit/>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@69.0.3">
+      <enabled>false</enabled>
+      <userDomainSuffix/>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    <de.pellepelster.jenkins.walldisplay.WallDisplayJobProperty plugin="jenkinswalldisplay@0.6.30"/>
+    
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>ENM-SLAVE-GE-7</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <authToken>tb_functional_rerun_job</authToken>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <org.jenkinsci.plugins.exportparams.ExportParametersBuilder plugin="export-params@1.9">
+      <filePath>parameters</filePath>
+      <fileFormat>properties</fileFormat>
+      <keyPattern/>
+      <useRegexp>false</useRegexp>
+    </org.jenkinsci.plugins.exportparams.ExportParametersBuilder>
+    <hudson.tasks.Shell>
+      <command>echo "Retrieving Scripts from Nexus"
+mt_utils_version="RELEASE"
+tarFileName="utils_${mt_utils_version}.tar.gz"
+echo "Downloading file - ${tarFileName} - to the workspace"
+curl -s --noproxy \* -L "https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/service/local/artifact/maven/redirect?r=releases&amp;g=com.ericsson.mtg&amp;a=utils&amp;p=tar.gz&amp;v=${mt_utils_version}" -o ${tarFileName}
+tar -zxf ${tarFileName}
+
+sh MTELoopScripts/pipeline_scripts/rfa250_rerun_any_suite_setup.sh ${WORKSPACE}/parameters.properties</command>
+    </hudson.tasks.Shell>
+    <EnvInjectBuilder plugin="envinject@2.1.5">
+      <info>
+        <propertiesFilePath>$WORKSPACE/build.properties</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+    <hudson.plugins.descriptionsetter.DescriptionSetterBuilder plugin="description-setter@1.10">
+      <regexp/>
+      <description>&lt;b&gt;Test Phase = ${test_phase} &lt;br&gt; Product Set = ${product_set_version} &lt;br&gt; ENM ISO = ${mediaArtifactVersion} &lt;br&gt; CSV Version = ${centralCSVVersion} &lt;br&gt; TAF Version = ${tafVersion} &lt;/b&gt;</description>
+    </hudson.plugins.descriptionsetter.DescriptionSetterBuilder>
+    <com.ericsson.oss.axis.BaselineDefinedMessageDispatcher plugin="taf-trigger@1.0.56">
+      <ciArtifacts>
+        <isoProduct>ENM</isoProduct>
+        <isoDrop>${drop}</isoDrop>
+        <isoVersion>${mediaArtifactVersion}</isoVersion>
+        <jobType>Entry Loop</jobType>
+        <artifactsClassName>com.ericsson.oss.axis.BaselineDefinedMessageDispatcher$ArtifactAsISO$1</artifactsClassName>
+      </ciArtifacts>
+      <schedule>
+        <xml>&lt;?xml version="1.0"?&gt;
+&lt;schedule xmlns="http://taf.lmera.ericsson.se/schema/te" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://taf.lmera.ericsson.se/schema/te http://taf.lmera.ericsson.se/schema/te/schedule/xml"&gt;
+		&lt;item timeout-in-seconds="1800"&gt;
+			&lt;name&gt;${Suite_Name}&lt;/name&gt;
+			&lt;component&gt;${Component}&lt;/component&gt;
+			&lt;suites&gt;${Suite_xml}&lt;/suites&gt;
+                        &lt;groups&gt;RFA250&lt;/groups&gt;
+		&lt;/item&gt;            
+&lt;/schedule&gt;</xml>
+        <testPropertiesAsString/>
+        <scheduleClassName>com.ericsson.oss.axis.BaselineDefinedMessageDispatcher$ScheduleAsXml$1</scheduleClassName>
+      </schedule>
+      <testwarePropertiesFile>${WORKSPACE}/MTELoopScripts/libraries/rfa_250/taf.properties</testwarePropertiesFile>
+      <tunnellingOn>true</tunnellingOn>
+      <breakBuildOnTestsFailure>true</breakBuildOnTestsFailure>
+      <sutClusterId/>
+      <citeHostPropertiesFile/>
+      <globalTestGroups/>
+      <tafVersion>${tafVersion}</tafVersion>
+      <userDefinedGAVs>${etl_bom_version_for_gav}</userDefinedGAVs>
+      <additionalTestProperties>
+        <property name="taf.config.dit.deployment.internal.nodes" value="fmhistory_1,fmhistory_2,fmhistory_3,fmhistory_4,fmalarmprocessing_1,fmalarmprocessing_2,fmalarmprocessing_3,fmalarmprocessing_4,fmx_1,fmx_2,fmserv_1,fmserv_2,fmserv_3,fmserv_4,jms_1,consshm_1,shmserv_1,shmserv_2,shmcoreserv_1,shmcoreserv_2"/>
+        <property name="host.UiTestGrid.ip" value="${UiTestGridIP}"/>
+        <property name="deployment.type" value="cloud"/>
+      </additionalTestProperties>
+      <arm>
+        <id/>
+        <description/>
+        <httpString>https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/groups/public</httpString>
+        <credentials>
+          <username/>
+          <password/>
+        </credentials>
+      </arm>
+      <ciFwkHost>https://ci-portal.seli.wh.rnd.internal.ericsson.com/</ciFwkHost>
+      <tafTestExecutorHostname/>
+      <tafTestExecutorPort>8080</tafTestExecutorPort>
+    </com.ericsson.oss.axis.BaselineDefinedMessageDispatcher>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.37">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter/>
+      <externalDelete/>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+    <org.jenkinsci.plugins.buildnamesetter.BuildNameSetter plugin="build-name-setter@1.6.9">
+      <template>${ENV, var="Suite_Name"} on ${ENV,var="cluster_id"}</template>
+      <runAtStart>true</runAtStart>
+      <runAtEnd>true</runAtEnd>
+    </org.jenkinsci.plugins.buildnamesetter.BuildNameSetter>
+  </buildWrappers>
+</project>

@@ -1,0 +1,197 @@
+<flow-definition plugin="workflow-job@2.25">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.3.2"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.3.2">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>NAMESPACE</string>
+        <string>KUBE_CRED</string>
+        <string>STORAGE_CLASS</string>
+        <string>MODELSERV_LIVENESS_PROBE</string>
+        <string>emailList</string>
+        <string>NFS_STORAGE_CLASS</string>
+        <string>CM_VIP_ADDRESS</string>
+        <string>INTEGRATION_VALUE_VERSION</string>
+        <string>LB_EXTERNAL_PORT</string>
+        <string>ENM_LAUNCHER_HOSTNAME</string>
+        <string>FM_VIP_ADDRESS</string>
+        <string>PM_VIP_ADDRESS</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>KUBE_CRED</name>
+          <description>Kuberenetes Access Credentails</description>
+          <defaultValue>enm101_configfile</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>NAMESPACE</name>
+          <description>Kubernetes Namespace Name</description>
+          <defaultValue>enm101</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>NFS_STORAGE_CLASS</name>
+          <description>NFS Storage Class Name</description>
+          <defaultValue>nfs-enm101</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>STORAGE_CLASS</name>
+          <description>Default Storage Class Name</description>
+          <defaultValue>network-block</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>ENM_LAUNCHER_HOSTNAME</name>
+          <description>ENM UI Hostname for Ingress</description>
+          <defaultValue>ieatenmc12a009.athtem.eei.ericsson.se</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>LB_EXTERNAL_PORT</name>
+          <description>External Loabalancer IP address</description>
+          <defaultValue>10.42.14.162</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>FM_VIP_ADDRESS</name>
+          <description>Fm VIP IP address</description>
+          <defaultValue>10.42.14.164</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>CM_VIP_ADDRESS</name>
+          <description>Cm VIP IP address</description>
+          <defaultValue>10.42.14.165</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>PM_VIP_ADDRESS</name>
+          <description>Pm VIP IP address</description>
+          <defaultValue>10.42.14.166</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>INTEGRATION_VALUE_VERSION</name>
+          <description>Integration value version</description>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>MODELSERV_LIVENESS_PROBE</name>
+          <description>modelserv liveness probe</description>
+          <defaultValue>21600</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>emailList</name>
+          <description>Semi colon separated list of Email Recipients</description>
+          <defaultValue>naveen.kumar.maremanda@ericsson.com</defaultValue>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@65.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.19.2">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@65.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.57.2">
+    <script>
+
+def updateIntegrationValues(NAMESPACE,NFS_STORAGE_CLASS,STORAGE_CLASS,ENM_LAUNCHER_HOSTNAME,LB_EXTERNAL_PORT,FM_VIP_ADDRESS,CM_VIP_ADDRESS,PM_VIP_ADDRESS,MODELSERV_LIVENESS_PROBE) {
+    try {
+        filename = "${HOME_DIR}/eric-enm-integration-values-${INTEGRATION_VALUE_VERSION}.yaml"
+        values = readYaml file: filename
+        values.global.persistentVolumeClaim.storageClass = "${STORAGE_CLASS}"
+        values.global.ingress.enmHost = "${ENM_LAUNCHER_HOSTNAME}"
+        values.global.enmProperties.lb_external_port = "${LB_EXTERNAL_PORT}"
+		values.global.enmProperties.fm_vip_address = "${FM_VIP_ADDRESS}"
+		values.global.enmProperties.cm_vip_address = "${CM_VIP_ADDRESS}"
+		values.global.enmProperties.pm_vip_address = "${PM_VIP_ADDRESS}"
+        values.global.nfs.storageClass = "${NFS_STORAGE_CLASS}"
+        values.global.storageClass.name= "${NFS_STORAGE_CLASS}"
+		values.global.modelserv.livenessProbe= "${MODELSERV_LIVENESS_PROBE}"
+		values.global.enmProperties.timezone="UTC"
+		values."eric-data-graph-database-nj".persistentVolumeClaim.storageClass = "${STORAGE_CLASS}"
+		values."eric-data-graph-database-nj".persistentVolumeClaim.backup.storageClass = "${STORAGE_CLASS}"
+		values."eric-data-graph-database-nj".persistentVolumeClaim.logging.storageClass = "${STORAGE_CLASS}"
+
+        sh "rm -f ${filename}"
+        writeYaml file: filename, data: values
+    } catch( err ) {
+        echo "$err"
+    }
+}
+
+
+pipeline{
+    agent { label 'Cloud-Native' }
+    options {  
+        timeout(time: 6, unit: 'HOURS') 
+    }
+    parameters {
+        string(defaultValue: 'enm101_configfile', description: 'Kuberenetes Access Credentails',  name: 'KUBE_CRED')
+        string(defaultValue: 'enm101', description: 'Kubernetes Namespace Name',  name: 'NAMESPACE')
+        string(defaultValue: 'nfs-enm101', description: 'NFS Storage Class Name',  name: 'NFS_STORAGE_CLASS')
+        string(defaultValue: 'network-block', description: 'Default Storage Class Name',  name: 'STORAGE_CLASS')
+        string(defaultValue: 'ieatenmc12a009.athtem.eei.ericsson.se', description: 'ENM UI Hostname for Ingress',  name: 'ENM_LAUNCHER_HOSTNAME')
+        string(defaultValue: '10.42.14.162', description: 'External Loabalancer IP address',  name: 'LB_EXTERNAL_PORT')
+		string(defaultValue: '10.42.14.164', description: 'Fm VIP IP address',  name: 'FM_VIP_ADDRESS')
+		string(defaultValue: '10.42.14.165', description: 'Cm VIP IP address',  name: 'CM_VIP_ADDRESS')
+		string(defaultValue: '10.42.14.166', description: 'Pm VIP IP address',  name: 'PM_VIP_ADDRESS')
+		string(description: 'Integration value version',  name: 'INTEGRATION_VALUE_VERSION')
+		string(defaultValue: '21600', description: 'modelserv liveness probe',  name: 'MODELSERV_LIVENESS_PROBE')
+        string(defaultValue: 'naveen.kumar.maremanda@ericsson.com', description: 'Semi colon separated list of Email Recipients',  name: 'emailList')
+	}
+
+    environment {
+        kubeConfig = "/home/lciadm100/.kube/${KUBE_CRED}"
+        HOME_DIR = "${WORKSPACE}"
+        kubectl = "kubectl --kubeconfig=${kubeConfig}"
+        helm = "KUBECONFIG=${kubeConfig} helm"
+        https_proxy = "http://www-proxy.lmera.ericsson.se:8080/"
+    }
+
+    stages{
+        stage( 'Pre Build' ) {
+            parallel {
+				stage('integration value version'){
+                    steps{
+                     sh "wget https://arm.epk.ericsson.se/artifactory/proj-enm-dev-internal-helm/eric-enm-integration-values/eric-enm-integration-values-${INTEGRATION_VALUE_VERSION}.yaml"
+				     updateIntegrationValues(NAMESPACE,NFS_STORAGE_CLASS,STORAGE_CLASS,ENM_LAUNCHER_HOSTNAME,LB_EXTERNAL_PORT,FM_VIP_ADDRESS,CM_VIP_ADDRESS,PM_VIP_ADDRESS,MODELSERV_LIVENESS_PROBE)
+                    }
+                 }			
+            }
+        }     
+    }
+    post{
+        success{
+            script{
+                echo "Success"                
+            }
+        }
+        always {
+            script{
+                sh("cat ${HOME_DIR}/eric-enm-integration-values-${INTEGRATION_VALUE_VERSION}.yaml")
+            }
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>true</disabled>
+</flow-definition>

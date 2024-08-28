@@ -1,0 +1,223 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.23.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty plugin="leastload@1.0.3">
+      <leastLoadDisabled>false</leastLoadDisabled>
+    </org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit></paramsToUseForLimit>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    <de.pellepelster.jenkins.walldisplay.WallDisplayJobProperty plugin="jenkinswalldisplay@0.6.30"/>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>RHEL6.10_GE_1</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/sh
+
+set_environment_variables()
+{
+        GERRIT_HOST=&quot;staging-gerritmirror.sero.gic.ericsson.se&quot;
+        NEXUS_HOST=&quot;ci-portal.seli.wh.rnd.internal.ericsson.com&quot;
+        MAIL_USERS=&quot;leelakrishna.maddirala@tcs.com&quot;
+}
+
+create_files()
+{
+        BUILD_MAIL=$WORKSPACE/workspace/$JOB_NAME/Candidate_mail.txt
+        REPOSITORY_NAME_FILE=$WORKSPACE/workspace/$JOB_NAME/Repository_Name.txt
+        ARM101_REF_REPOS=$WORKSPACE/workspace/$JOB_NAME/repos_arm101_nexusurl.txt
+
+        for file_name in $BUILD_MAIL $REPOSITORY_NAME_FILE $ARM101_REF_REPOS
+        do
+                if [ -f $file_name ]
+                then
+                        rm -rf $file_name
+                else
+                        touch $file_name
+                fi
+        done
+}
+
+get_repository_name()
+{
+        echo &quot;Generating list of ALL Projects in Gerrit&quot;
+        for REPO_LIST in `ssh -p 29418 $GERRIT_HOST gerrit ls-projects`
+        do
+                echo $REPO_LIST | egrep &quot;^LITP|^OSS&quot; &gt;&gt; $REPOSITORY_NAME_FILE
+        done
+}
+
+remove_duplicate_repos()
+{
+        sort $REPOSITORY_NAME_FILE | uniq &gt; ${REPOSITORY_NAME_FILE}.tmp
+        cp ${REPOSITORY_NAME_FILE}.tmp $REPOSITORY_NAME_FILE
+        rm ${REPOSITORY_NAME_FILE}.tmp
+}
+
+count_repos_scanned()
+{
+        TOTAL_REPOS_SCAN_COUNT=`wc -l $REPOSITORY_NAME_FILE | awk -F&quot; &quot; &apos;{print $1}&apos;`
+}
+
+count_repos_withURL()
+{
+        TOTAL_REPOS_WITHURL_COUNT=`wc -l $ARM101_REF_REPOS | awk -F&quot; &quot; &apos;{print $1}&apos;`
+}
+
+search_pattern()
+{
+        LITP_CHECK=`echo $REPOSITORY | awk -F&quot;/&quot; &apos;{print $1}&apos;`
+        if [ &quot;$LITP_CHECK&quot; == &quot;LITP&quot; ]
+        then
+                ARTIFACT=`echo $REPOSITORY | awk -F&quot;/&quot; &apos;{print $2}&apos;`
+        else
+                ARTIFACT=`echo $REPOSITORY | awk -F&quot;/&quot; &apos;{print $3}&apos;`
+        fi
+
+        git clone ${GERRIT_MIRROR_new}/$REPOSITORY
+        if [ $? -ne 0 ]
+        then
+                echo &quot;git clone ${GERRIT_MIRROR_new}/$REPOSITORY - FAILED&quot;
+        else
+                cd $ARTIFACT
+                echo &quot;Inside ${GERRIT_MIRROR_new}/$REPOSITORY&quot;
+                #for POM_FILE in `find . -type f -name pom.xml -exec grep -l &quot;&lt;url&gt;http://eselivm2v238l.lmera.ericsson.se:8081/nexus/&quot; {} \;`
+                #for POM_FILE in `find . -type f -name pom.xml -exec grep -l &quot;&lt;url&gt;http://cifwk-oss.lmera.ericsson.se:8081/nexus/&quot; {} \;`
+                #for POM_FILE in `find . -type f -name pom.xml -exec egrep -l &quot;&lt;url&gt;https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/&quot; {} \;`
+                for POM_FILE in `find . -type f -name pom.xml -execdir egrep -l &quot;&lt;artifactId&gt;master&lt;/artifactId&gt;&quot; {} +;`
+                #find . -type f -exec egrep -l &quot;https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/&quot; {} \;
+                do
+                        #echo ${GERRIT_MIRROR}/$REPOSITORY/$POM_FILE &gt;&gt; $BUILD_MAIL
+                        #echo ${GERRIT_MIRROR}/$REPOSITORY &gt;&gt; $ARM101_REF_REPOS
+                        echo $REPOSITORY &gt;&gt; $ARM101_REF_REPOS
+                done
+                cd ..
+                echo `pwd`
+                echo &quot;Deleting $ARTIFACT directory&quot;
+                rm -rf $ARTIFACT
+        fi
+}
+
+remove_duplicate_pdu_nam_ref_repos()
+{
+        sort $ARM101_REF_REPOS | uniq &gt; ${ARM101_REF_REPOS}.tmp
+        cp ${ARM101_REF_REPOS}.tmp $ARM101_REF_REPOS
+        rm ${ARM101_REF_REPOS}.tmp
+}
+
+#---------------------------------------------------------------------------------------#
+#              MAIN                                                                     #
+#---------------------------------------------------------------------------------------#
+
+echo &quot; &quot;
+echo &quot;+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++&quot;
+echo &quot;                                          master pom reference in GIT Repositories Report Script                    &quot;
+echo &quot;+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++&quot;
+echo &quot; &quot;
+
+cd $WORKSPACE/workspace/$JOB_NAME
+
+set_environment_variables
+create_files
+get_repository_name
+remove_duplicate_repos
+count_repos_scanned
+
+echo &quot;-------------------------------------------------------------------------------------------------------------------------- &quot; &gt; $BUILD_MAIL
+echo &quot;ARM101-Nexus reference in GIT Repositories Jenkins Job has been Executed &quot; &gt;&gt; $BUILD_MAIL
+echo &quot;-------------------------------------------------------------------------------------------------------------------------- &quot; &gt;&gt; $BUILD_MAIL
+echo &quot; &quot; &gt;&gt; $BUILD_MAIL
+echo &quot;Total Number of Repositories scanned for master pom reference : $TOTAL_REPOS_SCAN_COUNT&quot; &gt;&gt; $BUILD_MAIL
+
+mkdir -m 775 Git_Clones
+for REPOSITORY in `cat $REPOSITORY_NAME_FILE`
+do
+        cd $WORKSPACE/workspace/$JOB_NAME/Git_Clones
+        search_pattern
+done
+
+remove_duplicate_pdu_nam_ref_repos
+count_repos_withURL
+
+echo &quot; &quot; &gt;&gt; $BUILD_MAIL
+echo &quot;Total Number of Repositories with master pom reference : $TOTAL_REPOS_WITHURL_COUNT&quot; &gt;&gt; $BUILD_MAIL
+
+echo &quot; &quot; &gt;&gt; $BUILD_MAIL
+echo &quot; &quot; &gt;&gt; $BUILD_MAIL
+echo &quot;The below mentioned Projects have reference to master pom: &quot; &gt;&gt; $BUILD_MAIL
+echo &quot;----------------------------------------------------------------------------- &quot; &gt;&gt; $BUILD_MAIL
+for REF_REPOS in `cat $ARM101_REF_REPOS`
+do
+        echo $REF_REPOS &gt;&gt; $BUILD_MAIL
+done
+
+echo &quot; &quot; &gt;&gt; $BUILD_MAIL
+echo &quot; &quot; &gt;&gt; $BUILD_MAIL
+echo &quot;Thanks and Best Regards,&quot; &gt;&gt; $BUILD_MAIL
+echo &quot;ENM DE Infrastructure Team&quot; &gt;&gt; $BUILD_MAIL
+
+mailx -r &quot;jenkins_monitoring@ericsson.com&quot; -s &quot;master pom Reference in GIT Repositories Report&quot; $MAIL_USERS &lt;&lt;-EOF
+`cat $BUILD_MAIL`
+EOF</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.37">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+    <hudson.plugins.timestamper.TimestamperBuildWrapper plugin="timestamper@1.8.10"/>
+  </buildWrappers>
+</project>

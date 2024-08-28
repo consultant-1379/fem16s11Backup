@@ -1,0 +1,234 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>&lt;h3&gt;Job Description&lt;/h3&gt;&#xd;
+&lt;p&gt;This job is used to rerun RFA250 test suites.&lt;/p&gt;&#xd;
+&lt;ul&gt;&#xd;
+  &lt;li&gt;Takes in an allure report as input.&lt;/li&gt;&#xd;
+  &lt;li&gt;Rerun job for all broken and failed test suites will be kicked off&lt;/li&gt;&#xd;
+&lt;/ul&gt;&#xd;
+&lt;br&gt;&#xd;
+&lt;br&gt;&#xd;
+</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.security.AuthorizationMatrixProperty>
+      <inheritanceStrategy class="org.jenkinsci.plugins.matrixauth.inheritance.InheritParentStrategy"/>
+      <permission>USER:hudson.model.Item.Build:XSRESAN</permission>
+      <permission>USER:hudson.model.Item.Cancel:XSRESAN</permission>
+      <permission>USER:hudson.model.Item.Configure:XSRESAN</permission>
+      <permission>USER:hudson.model.Item.Read:XSRESAN</permission>
+      <permission>USER:hudson.model.Item.Workspace:XSRESAN</permission>
+    </hudson.security.AuthorizationMatrixProperty>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>25</daysToKeep>
+        <numToKeep>20</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>allure_report_url</name>
+          <description>URL of the allure report of the failing RFA250 test(s)&lt;br&gt;
+&lt;b&gt;e.g. http://oss-taf-logs.lmera.ericsson.se/af58fe70-9f63-4b20-a7c2-d218042a03b0/&lt;b&gt;&lt;br&gt;</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>cluster_id</name>
+          <description>The deployment name to run the job against.&lt;br&gt;</description>
+          <defaultValue>ieatenmc12a009</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>drop</name>
+          <description>Drop for upgrade&lt;br&gt;
+Example: 18.02</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>product_set_version</name>
+          <description>The product set version for your deployment&lt;br&gt;
+This should also be a product set contained within the drop specified&lt;br&gt;
+The following options are available:&lt;br&gt;
+&lt;ul&gt;
+    &lt;li&gt;Product Set version prepended with the drop - Example: 18.18.56&lt;/li&gt;
+&lt;/ul&gt;</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>mt_utils_version</name>
+          <description>This is the version of the scripts available in Nexus&lt;br&gt;
+We recommend you always use RELEASE&lt;br&gt;
+However, if there is an issue with RELEASE please use one of the versions available &lt;a href = https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/repositories/releases/com/ericsson/mtg/utils/&gt;here&lt;/a&gt;</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>enm_iso_version</name>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>central_csv_version</name>
+          <description>Version of the Central CSV to use&lt;br&gt;
+AUTO will get the version mapped to Product Set&lt;br&gt;
+If you do not want to use mapped version, then can select a specific version to use</description>
+          <defaultValue>AUTO</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>taf_version</name>
+          <description>Version of the TAF to use&lt;br&gt;
+AUTO will get the version mapped to Product Set&lt;br&gt;
+If you do not want to use mapped version, select a specific version to use</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>test_phase</name>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>CN_TAF</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>true</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <org.jenkinsci.plugins.exportparams.ExportParametersBuilder plugin="export-params@1.9">
+      <filePath>parameters</filePath>
+      <fileFormat>properties</fileFormat>
+      <keyPattern></keyPattern>
+      <useRegexp>false</useRegexp>
+    </org.jenkinsci.plugins.exportparams.ExportParametersBuilder>
+    <hudson.tasks.Shell>
+      <command>
+#!/bin/sh
+echo &quot;Retrieving Scripts from Nexus&quot;
+#tarFileName=&quot;utils_${mt_utils_version}.tar.gz&quot;
+#echo &quot;Downloading file - ${tarFileName} - to the workspace&quot;
+#curl -s --noproxy \* -L &quot;https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/service/local/artifact/maven/redirect?r=releases&amp;g=com.ericsson.mtg&amp;a=utils&amp;p=tar.gz&amp;v=${mt_utils_version}&quot; -o ${tarFileName}
+#tar -zxf ${tarFileName}
+
+sudo pip install xmltodict
+sudo pip install python-jenkins
+
+sh -x MTELoopScripts/pipeline_scripts/rfa250_reruner_setup.sh &quot;${WORKSPACE}/parameters.properties&quot; || exit 1
+</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <EnvInjectBuilder plugin="envinject@2.4.0">
+      <info>
+        <propertiesFilePath>${WORKSPACE}/suites_xml_schema.properties</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+    <EnvInjectBuilder plugin="envinject@2.4.0">
+      <info>
+        <propertiesFilePath>$WORKSPACE/build.properties</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+    <org.jenkinsci.plugins.conditionalbuildstep.ConditionalBuilder plugin="conditional-buildstep@1.4.1">
+      <runner class="org.jenkins_ci.plugins.run_condition.BuildStepRunner$Fail" plugin="run-condition@1.5"/>
+      <runCondition class="org.jenkins_ci.plugins.run_condition.logic.Not" plugin="run-condition@1.5">
+        <condition class="org.jenkins_ci.plugins.run_condition.core.StringsMatchCondition">
+          <arg1>$suites_xml_schema</arg1>
+          <arg2></arg2>
+          <ignoreCase>false</ignoreCase>
+        </condition>
+      </runCondition>
+      <conditionalbuilders>
+        <com.ericsson.oss.axis.BaselineDefinedMessageDispatcher plugin="taf-trigger@1.0.60">
+          <ciArtifacts>
+            <isoProduct>ENM</isoProduct>
+            <isoDrop>${drop}</isoDrop>
+            <isoVersion>${enm_iso_version}</isoVersion>
+            <jobType>Entry Loop</jobType>
+            <artifactsClassName>com.ericsson.oss.axis.BaselineDefinedMessageDispatcher$ArtifactAsISO$1</artifactsClassName>
+          </ciArtifacts>
+          <schedule>
+            <xml>&lt;?xml version=&quot;1.0&quot;?&gt;
+&lt;schedule xmlns=&quot;http://taf.lmera.ericsson.se/schema/te&quot; xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+    xsi:schemaLocation=&quot;http://taf.lmera.ericsson.se/schema/te http://taf.lmera.ericsson.se/schema/te/schedule/xml&quot;&gt;
+        &lt;item-group parallel=&quot;true&quot;&gt;
+               ${suites_xml_schema}
+      &lt;/item-group&gt;
+&lt;/schedule</xml>
+            <testPropertiesAsString></testPropertiesAsString>
+            <scheduleClassName>com.ericsson.oss.axis.BaselineDefinedMessageDispatcher$ScheduleAsXml$1</scheduleClassName>
+          </schedule>
+          <testwarePropertiesFile>${WORKSPACE}/MTELoopScripts/libraries/rfa_250/taf.properties</testwarePropertiesFile>
+          <tunnellingOn>true</tunnellingOn>
+          <breakBuildOnTestsFailure>true</breakBuildOnTestsFailure>
+          <sutClusterId></sutClusterId>
+          <citeHostPropertiesFile></citeHostPropertiesFile>
+          <globalTestGroups></globalTestGroups>
+          <tafVersion>${taf_version}</tafVersion>
+          <userDefinedGAVs></userDefinedGAVs>
+          <additionalTestProperties>
+            <property name="taf.config.dit.deployment.internal.nodes" value="fmhistory_1,fmhistory_2,fmhistory_3,fmhistory_4,fmalarmprocessing_1,fmalarmprocessing_2,fmalarmprocessing_3,fmalarmprocessing_4,fmx_1,fmx_2,fmserv_1, fmserv_2, fmserv_3, fmserv_4,jms_1"/>
+            <property name="host.UiTestGrid.ip" value="${UiTestGridIP}"/>
+          </additionalTestProperties>
+          <arm>
+            <id></id>
+            <description></description>
+            <httpString>https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/groups/public</httpString>
+            <credentials>
+              <username></username>
+              <password></password>
+            </credentials>
+          </arm>
+          <ciFwkHost>https://cifwk-oss.lmera.ericsson.se/</ciFwkHost>
+          <tafTestExecutorHostname></tafTestExecutorHostname>
+          <tafTestExecutorPort>8080</tafTestExecutorPort>
+        </com.ericsson.oss.axis.BaselineDefinedMessageDispatcher>
+      </conditionalbuilders>
+    </org.jenkinsci.plugins.conditionalbuildstep.ConditionalBuilder>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.timestamper.TimestamperBuildWrapper plugin="timestamper@1.17"/>
+    <org.jenkinsci.plugins.buildnamesetter.BuildNameSetter plugin="build-name-setter@2.2.0">
+      <template>Kicking off reruns on ${ENV,var=&quot;cluster_id&quot;}</template>
+      <descriptionTemplate></descriptionTemplate>
+      <runAtStart>true</runAtStart>
+      <runAtEnd>true</runAtEnd>
+    </org.jenkinsci.plugins.buildnamesetter.BuildNameSetter>
+  </buildWrappers>
+</project>

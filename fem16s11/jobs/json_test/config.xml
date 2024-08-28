@@ -1,0 +1,156 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+
+echo &apos;&apos;&apos;[
+      {
+         &quot;repo&quot;:&quot;OSS/com.ericsson.oss.containerisation/eric-enm-monitoring-eap7&quot;,
+         &quot;project_type&quot;:&quot;BASE_IMAGE&quot;,
+         &quot;helm_dep_up&quot;:&quot;False&quot;,
+         &quot;merge_values&quot;:&quot;False&quot;,
+         &quot;sg_rpm_repo&quot;:&quot;False&quot;,
+         &quot;lint_br_agent&quot;:&quot;False&quot;,
+         &quot;python_unit_test&quot;:&quot;False&quot;,
+         &quot;jenkinsfile_release&quot;:&quot;jenkins/jobDSL/common_jenkinsfile_baseImages&quot;,
+         &quot;jenkinsfile_pcr&quot;:&quot;jenkins/jobDSL/common_jenkinsfile_baseImages_precommit&quot;,
+         &quot;yum_swap&quot;:&quot;swap&quot;,
+         &quot;skip_PCR_DSL&quot;:&quot;False&quot;,
+         &quot;skip_Release_DSL&quot;:&quot;False&quot;
+      },
+      {
+         &quot;repo&quot;:&quot;OSS/com.ericsson.oss.containerisation/eric-enmsg-jmsserver&quot;,
+         &quot;project_type&quot;:&quot;SERVICE_GROUP&quot;,
+         &quot;helm_dep_up&quot;:&quot;True&quot;,
+         &quot;merge_values&quot;:&quot;True&quot;,
+         &quot;sg_rpm_repo&quot;:&quot;False&quot;,
+         &quot;lint_br_agent&quot;:&quot;False&quot;,
+         &quot;python_unit_test&quot;:&quot;False&quot;,
+         &quot;jenkinsfile_release&quot;:&quot;jenkins/jobDSL/common_jenkinsfile_serviceGroup&quot;,
+         &quot;jenkinsfile_pcr&quot;:&quot;jenkins/jobDSL/common_jenkinsfile_serviceGroup_precommit&quot;,
+         &quot;yum_swap&quot;:&quot;swap&quot;,         
+         &quot;skip_PCR_DSL&quot;:&quot;False&quot;,
+         &quot;skip_Release_DSL&quot;:&quot;False&quot;
+      }
+]&apos;&apos;&apos; &gt; project_file.json</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <javaposse.jobdsl.plugin.ExecuteDslScripts plugin="job-dsl@1.78.3">
+      <scriptText>import groovy.json.JsonSlurper;
+ 
+def jsonSlurper = new JsonSlurper()
+ 
+File project_file = new File(WORKSPACE + &quot;/workspace/&quot; + JOB_NAME + &apos;/project_file.json&apos;) 
+def project_file_parsed = jsonSlurper.parse(project_file)
+
+project_file_parsed.each { entry -&gt;
+    project_details_map = [:]
+    entry.each { key,value -&gt;
+        project_details_map[key] = value
+    }
+    if (project_details_map[&quot;skip_Release_DSL&quot;] == &quot;False&quot;) {
+        if (project_details_map[&quot;project_type&quot;] == &quot;MODEL&quot;) {
+            createPipelineJobModel(project_details_map[&quot;repo&quot;])
+        } else {
+            createPipelineBuildJob(project_details_map[&quot;repo&quot;], project_details_map, project_details_map[&quot;jenkinsfile_release&quot;])
+        }
+    }
+}
+
+def createPipelineBuildJob(project_name, project_details, jenkinsfile) {
+    project_name = project_name.replaceAll(&quot;\\s&quot;,&quot;&quot;) // remove empty spaces
+    pipeline_name = project_name.split(&apos;/&apos;).last()
+  
+  	println project_name
+    println jenkinsfile
+  
+    /*pipelineJob(pipeline_name + &apos;testjson&apos;) {
+        description (&apos;ENM Cloud Native Build pipeline &apos; + pipeline_name + &apos; - autogenerated using JobDSL - all manual changes will be overwritten!&apos;)
+        concurrentBuild(allowConcurrentBuild = false)
+        parameters {
+            stringParam(&apos;ISO_VERSION&apos;)
+        }
+        logRotator {
+            numToKeep(30)
+        }
+        environmentVariables {
+            env(&apos;CHART_DIR&apos;, pipeline_name)
+            project_details.each { key,value -&gt;
+                env(key.toUpperCase(), value)
+            }
+        }
+        definition {
+            cps {
+                script(readFileFromWorkspace(&quot;JenkinsFile&quot;))
+                sandbox(true)
+            }
+        }
+    }*/
+}</scriptText>
+      <usingScriptText>true</usingScriptText>
+      <sandbox>false</sandbox>
+      <ignoreExisting>false</ignoreExisting>
+      <ignoreMissingFiles>false</ignoreMissingFiles>
+      <failOnMissingPlugin>false</failOnMissingPlugin>
+      <failOnSeedCollision>false</failOnSeedCollision>
+      <unstableOnDeprecation>false</unstableOnDeprecation>
+      <removedJobAction>IGNORE</removedJobAction>
+      <removedViewAction>IGNORE</removedViewAction>
+      <removedConfigFilesAction>IGNORE</removedConfigFilesAction>
+      <lookupStrategy>JENKINS_ROOT</lookupStrategy>
+    </javaposse.jobdsl.plugin.ExecuteDslScripts>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.40">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+  </buildWrappers>
+</project>

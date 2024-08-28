@@ -1,0 +1,229 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><project>
+  <actions/>
+  <description>&lt;font color="red"&gt;&lt;b&gt;Do not make changes to Maven goals&lt;/b&gt;&lt;/font&gt;&lt;br&gt;&#13;
+This job build the artifact again with a full version number.&#13;
+Code coverage and Unit tests are ran again.&#13;
+If the job is successful the code is published to the CI Portal.&lt;br&gt;&lt;br&gt;&#13;
+&#13;
+&lt;b&gt;TEAM NAME:&lt;/b&gt; NSS&lt;br&gt;&#13;
+&lt;b&gt;ERIC DELIVERABLE:&lt;/b&gt; ERICTWnssutils_CXP9036352&lt;br&gt;</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>true</useBuildBlocker>
+      <blockLevel>UNDEFINED</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs>nssutilities_Acceptance</blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@74.0.3">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>20</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.24.1">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@74.0.3">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.injection.EiffelVariableInjectionJobProperty plugin="eiffel-core@74.0.3">
+      <explicitInjections/>
+      <defaultArm>-1</defaultArm>
+      <armSelection>
+        <armIds class="java.util.Collections$UnmodifiableSet">
+          <c class="set"/>
+        </armIds>
+      </armSelection>
+      <mavenPomFilePath>
+        <pomFilePath>${WORKSPACE}/pom.xml</pomFilePath>
+      </mavenPomFilePath>
+    </com.ericsson.duraci.injection.EiffelVariableInjectionJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@74.0.3">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@74.0.3">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty plugin="leastload@1.0.3">
+      <leastLoadDisabled>false</leastLoadDisabled>
+    </org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit/>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@74.0.3">
+      <enabled>false</enabled>
+      <userDomainSuffix/>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    <de.pellepelster.jenkins.walldisplay.WallDisplayJobProperty plugin="jenkinswalldisplay@0.6.30"/>
+    
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@4.2.2">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <name>gcm</name>
+        <url>${GERRIT_MIRROR}/OSS/com.ericsson.oss.services.nss.nssutils/nssutils-testware</url>
+      </hudson.plugins.git.UserRemoteConfig>
+      <hudson.plugins.git.UserRemoteConfig>
+        <name>gcn</name>
+        <url>${GERRIT_CENTRAL}/OSS/com.ericsson.oss.services.nss.nssutils/nssutils-testware</url>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>master</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <gitTool>Default</gitTool>
+    <submoduleCfg class="list"/>
+    <extensions>
+      <hudson.plugins.git.extensions.impl.DisableRemotePoll/>
+      <hudson.plugins.git.extensions.impl.CleanCheckout>
+        <deleteUntrackedNestedRepositories>false</deleteUntrackedNestedRepositories>
+      </hudson.plugins.git.extensions.impl.CleanCheckout>
+      <hudson.plugins.git.extensions.impl.UserIdentity>
+        <name>ENM_Jenkins</name>
+      </hudson.plugins.git.extensions.impl.UserIdentity>
+      <hudson.plugins.git.extensions.impl.UserExclusion>
+        <excludedUsers>ENM_Jenkins
+ENM_CI_Admin
+CDS_CI_Admin</excludedUsers>
+      </hudson.plugins.git.extensions.impl.UserExclusion>
+      <hudson.plugins.git.extensions.impl.LocalBranch>
+        <localBranch>master</localBranch>
+      </hudson.plugins.git.extensions.impl.LocalBranch>
+    </extensions>
+  </scm>
+  <assignedNode>Jenkins_Fem27s11_Ci_Dev_Agent1.0.10_3</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>JDK 1.8.0_311</jdk>
+  <triggers>
+    <jenkins.triggers.ReverseBuildTrigger>
+      <spec/>
+      <upstreamProjects>nssutilities_PerformanceTest</upstreamProjects>
+      <threshold>
+        <name>SUCCESS</name>
+        <ordinal>0</ordinal>
+        <color>BLUE</color>
+        <completeBuild>true</completeBuild>
+      </threshold>
+    </jenkins.triggers.ReverseBuildTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#CI Common pre step scripts
+/proj/ciexadm200/tools/utils/scripts/common_pre_post_jenkins_scripts/pre_step/release_pre_step.sh
+</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>rm -rf .env .deploy
+export PATH_TO_PYTHON_INSTALLATION="/proj/lciadm100/tools/python-2.7.16"
+#export PATH_TO_PYTHON_INSTALLATION="/opt/SELIW/Python/2.7.8/"
+
+# Exporting LITP python paths because it contains python 2.7 interpreter and we bundle that with this project
+export LITP_PY=/proj/litpadm200/tools/litp-requirements-py
+export PATH=$LITP_PY/usr/bin:$PATH
+export PYTHONPATH=$LITP_PY/usr/lib/python2.6/site-packages:$LITP_PY/usr/lib64/python2.6/site-packages
+INSTALL_PATH_ESC='\/opt\/ericsson\/nssutils'
+
+
+virtualenv -p ${PATH_TO_PYTHON_INSTALLATION}/bin/python2.7 --no-site-packages .env &amp;&amp; source .env/bin/activate
+
+
+export PYTHONPATH=
+
+rsync .env/lib/python2.7/ python2.7/ -a --copy-links
+rm -rf .env/lib/python2.7/
+mv python2.7/ .env/lib/
+cp -r ${PATH_TO_PYTHON_INSTALLATION}/lib/python2.7/* .env/lib/python2.7/
+rm -r .env/lib/python2.7/test
+.env/bin/python .env/bin/pip install --ignore-installed --no-index --find-links=ERICTWnssutils_CXP9036352/nssutils/3pp ./ERICTWnssutils_CXP9036352/
+
+find . -type f -exec sed -i "s/$(pwd|sed 's_/_\\/_g')/$INSTALL_PATH_ESC/g" {} \;
+
+.env/bin/python post_install_script.py --package=production
+
+
+find ${WORKSPACE} -name "*.pyc" -delete
+find ${WORKSPACE} -name "*.pyo" -delete</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Maven>
+      <targets>-V -X -U -B -Dresume=false release:prepare -DpreparationGoals="deploy" -DlocalCheckout=true  -Dmaven.javadoc.skip=true   </targets>
+      <mavenName>(Default)</mavenName>
+      <usePrivateRepository>false</usePrivateRepository>
+      <settings class="jenkins.mvn.DefaultSettingsProvider"/>
+      <globalSettings class="jenkins.mvn.DefaultGlobalSettingsProvider"/>
+      <injectBuildVariables>false</injectBuildVariables>
+    </hudson.tasks.Maven>
+    <hudson.tasks.Shell>
+      <command>#CI Common post step scripts
+/proj/ciexadm200/tools/utils/scripts/common_pre_post_jenkins_scripts/post_step/release_post_step.sh</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <hudson.plugins.descriptionsetter.DescriptionSetterBuilder plugin="description-setter@1.10">
+      <regexp>Version :.*</regexp>
+    </hudson.plugins.descriptionsetter.DescriptionSetterBuilder>
+  </builders>
+  <publishers>
+    <hudson.plugins.descriptionsetter.DescriptionSetterPublisher plugin="description-setter@1.10">
+      <regexp>\[INFO\] \[INFO\] Building \[ArtifactID\] JEE6 Project (.*)</regexp>
+      <regexpForFailed/>
+      <setForMatrix>false</setForMatrix>
+    </hudson.plugins.descriptionsetter.DescriptionSetterPublisher>
+    <hudson.plugins.git.GitPublisher plugin="git@4.2.2">
+      <configVersion>2</configVersion>
+      <pushMerge>true</pushMerge>
+      <pushOnlyIfSuccess>true</pushOnlyIfSuccess>
+      <forcePush>false</forcePush>
+      <branchesToPush>
+        <hudson.plugins.git.GitPublisher_-BranchToPush>
+          <targetRepoName>gcn</targetRepoName>
+          <branchName>master</branchName>
+          <rebaseBeforePush>false</rebaseBeforePush>
+        </hudson.plugins.git.GitPublisher_-BranchToPush>
+      </branchesToPush>
+    </hudson.plugins.git.GitPublisher>
+  </publishers>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.37">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter/>
+      <externalDelete/>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+    <hudson.plugins.build__timeout.BuildTimeoutWrapper plugin="build-timeout@1.19">
+      <strategy class="hudson.plugins.build_timeout.impl.AbsoluteTimeOutStrategy">
+        <timeoutMinutes>180</timeoutMinutes>
+      </strategy>
+      <operationList>
+        <hudson.plugins.build__timeout.operations.AbortOperation/>
+      </operationList>
+    </hudson.plugins.build__timeout.BuildTimeoutWrapper>
+    <hudson.plugins.timestamper.TimestamperBuildWrapper plugin="timestamper@1.8.10"/>
+  </buildWrappers>
+</project>

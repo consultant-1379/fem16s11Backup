@@ -1,0 +1,406 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.security.AuthorizationMatrixProperty>
+      <inheritanceStrategy class="org.jenkinsci.plugins.matrixauth.inheritance.InheritParentStrategy"/>
+      <permission>USER:hudson.model.Item.Build:emosluc</permission>
+      <permission>USER:hudson.model.Item.Cancel:emosluc</permission>
+      <permission>USER:hudson.model.Item.Configure:emosluc</permission>
+      <permission>USER:hudson.model.Item.Read:emosluc</permission>
+      <permission>USER:hudson.model.Item.Workspace:emosluc</permission>
+      <permission>USER:hudson.model.Run.Delete:emosluc</permission>
+      <permission>USER:hudson.model.Run.Update:emosluc</permission>
+    </hudson.security.AuthorizationMatrixProperty>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <jp.ikedam.jenkins.plugins.extensible__choice__parameter.ExtensibleChoiceParameterDefinition plugin="extensible-choice-parameter@1.8.0">
+          <name>KGB_PRODUCT_SET</name>
+          <description>Select base product set from list.</description>
+          <editable>false</editable>
+          <editableType>NoFilter</editableType>
+          <choiceListProvider class="jp.ikedam.jenkins.plugins.extensible_choice_parameter.SystemGroovyChoiceListProvider">
+            <groovyScript plugin="script-security@1138.v8e727069a_025">
+              <script>import groovy.json.JsonSlurper
+
+ def list = []
+    list.add("--NONE--")
+    list.add("--USER DEFINED--")
+    def jsonSlurper = new JsonSlurper()
+    def latestUrl = "https://ci-portal.seli.wh.rnd.internal.ericsson.com/api/cloudNative/getConfidenceLevelVersion/"          
+    def latestObjectRaw = ["curl", "-s", "-H", "accept: application/json", "-k", "--url", "${latestUrl}"].execute().text 
+    def latestJsonObject = jsonSlurper.parseText(latestObjectRaw)
+    
+    list.add(latestJsonObject.'cENM-Deploy-UG-Charts'+"--[Latest Upgrade]")
+    list.add(latestJsonObject.'cENM-Deploy-II-Charts'+"--[Latest Initial Install]")
+
+    def dropUrl = "https://ci-portal.seli.wh.rnd.internal.ericsson.com/api/product/ENM/latestdrop/"          
+    def dropObjectRaw = ["curl", "-s", "-H", "accept: application/json", "-k", "--url", "${dropUrl}"].execute().text 
+    def dropJsonObject = jsonSlurper.parseText(dropObjectRaw)
+def drop = dropJsonObject.'drop'
+
+def allUrl = "https://ci-portal.seli.wh.rnd.internal.ericsson.com//api/cloudNative/getOverallWorkingBaseline/drop/"+drop +"/"
+
+  def allObjectRaw = ["curl", "-s", "-H", "accept: application/json", "-k", "--url", "${allUrl}"].execute().text 
+   def allJsonObject = jsonSlurper.parseText(allObjectRaw)    
+def dataArray = allJsonObject .data
+    for(item in allJsonObject ){
+        status = item.'status'.toUpperCase()
+if (item.'status' == 'passed'){
+        //list.add(item.'version' +"--"+[status ])
+       list.add(item.'version')
+}
+
+    } 
+return list</script>
+              <sandbox>false</sandbox>
+            </groovyScript>
+            <usePredefinedVariables>false</usePredefinedVariables>
+          </choiceListProvider>
+        </jp.ikedam.jenkins.plugins.extensible__choice__parameter.ExtensibleChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>GERRIT_REVIEW_URL</name>
+          <description>e.g. https://gerrit.ericsson.se/#/c/3298909/</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>RPMs</name>
+          <description>RPMs to test in KGB+N
+use format Artifact::Version</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>@Library('ci-cn-pipeline-lib-test') _
+
+/* IMPORTANT
+ *
+ * In order to make this pipeline work, the following configuration on Jenkins is required:
+ * - slave with a specific label (see pipeline.agent.label below)
+ * - credentials plugin should be installed and have the secrets with the following names:
+ *   + lciadm100credentials (token to access Artifactory)
+ */
+
+def defaultBobImage = 'armdocker.rnd.ericsson.se/sandbox/adp-staging/adp-cicd/bob.2.0:1.5.2-0'
+def bob = new BobCommand()
+        .bobImage(defaultBobImage)
+        .envVars([
+            ISO_VERSION: '${ISO_VERSION}', 
+            ADD_ARTIFACTS: '${ADD_ARTIFACTS}',
+            IMAGE_NAME: '${IMAGE_NAME}',            
+            KGB_DOCKER_REPO: '${KGB_DOCKER_REPO}',
+            KGB_DOCKER_IMAGE_PATH: '${KGB_DOCKER_IMAGE_PATH}',
+            KGB_DOCKER_REPO1: '${KGB_DOCKER_REPO1}',
+            KGB_DOCKER_IMAGE_PATH1: '${KGB_DOCKER_IMAGE_PATH1}',
+            HELM_CHART_REPO_KGB: '${HELM_CHART_REPO_KGB}',
+            HELM_CHART_NAME: '${HELM_CHART_NAME}',
+            HELM_CHART_DIR: '${HELM_CHART_DIR}',
+            HELM_REPO_TOKEN: '${HELM_REPO_TOKEN}',
+            DOCKER_FILE_PATH: '${DOCKER_FILE_PATH}',
+            DOCKER_FILE: '${DOCKER_FILE}',
+            DOCKER_FILE_SIDECAR_PATH: '${DOCKER_FILE_SIDECAR_PATH}',
+            KGB_SIDECAR_DOCKER_IMAGE_PATH: '${KGB_SIDECAR_DOCKER_IMAGE_PATH}',
+            KGB_SIDECAR_DOCKER_IMAGE_PATH1: '${KGB_SIDECAR_DOCKER_IMAGE_PATH1}'
+            ])
+        .needDockerSocket(true)
+        .toString()
+        
+def bobInCA = new BobCommand()
+        .bobImage(defaultBobImage)
+        .needDockerSocket(true)
+        .envVars([
+            ARM_API_TOKEN: '${ARM_CREDENTIALS_PSW}',
+            CHART_PATH: '${CHART_PATH}',
+            GIT_REPO_URL: '${GIT_REPO_URL}',
+            HELM_INTERNAL_REPO: '${HELM_INTERNAL_REPO}',
+            HELM_DROP_REPO: '${HELM_DROP_REPO}',
+            HELM_RELEASED_REPO: '${HELM_RELEASED_REPO}',
+            GERRIT_USERNAME: '${GERRIT_CREDENTIALS_USR}',
+            GERRIT_PASSWORD: '${GERRIT_CREDENTIALS_PSW}',
+            REQUIREMENTS_FILE: 'requirements.yaml',
+            GIT_BRANCH   : '${KGB_TAG}',
+        ])
+        .toString()        
+        
+def failedStage = ''
+pipeline {
+    agent {
+        label 'Cloud-Native'
+    }
+    
+    environment {
+        KGB_DOCKER_REPO="proj-enm-kgb-dev-docker-local/proj-enm"
+        KGB_DOCKER_REPO1="proj-enm-kgb-dev"
+        KGB_HELM_REPO_URL="https://arm.epk.ericsson.se/artifactory/proj-enm-kgb-dev-helm/"
+        HELM_INTERNAL_REPO="${KGB_HELM_REPO_URL}"
+        HELM_DROP_REPO="${KGB_HELM_REPO_URL}"
+        HELM_RELEASED_REPO="${KGB_HELM_REPO_URL}"
+		//INT_REPO="OSS/com.ericsson.oss.containerisation/eric-enm-infra-integration"
+		INFRA_REPO="OSS/com.ericsson.oss.containerisation/eric-enm-infra-integration"
+        STATELESS_REPO="OSS/com.ericsson.oss.containerisation/eric-enm-stateless-integration"
+        MONITORING_REPO="OSS/com.ericsson.oss.containerisation/eric-enm-monitoring-integration"
+        SG_REPO="OSS/com.ericsson.oss.itpf.modeling/eric-enm-modeldeployservice"        
+        //GIT_REPO_URL="https://gerrit.ericsson.se/a/${INT_REPO}"
+        GERRIT_CREDENTIALS = credentials('cenmbuild_gerrit_api_token')
+        ARM_CREDENTIALS = credentials('cenmbuild_ARM_token')
+        HELM_REPO_TOKEN = credentials('lciadm100')  
+        
+    }
+
+    stages {
+        stage('Init') {
+            steps {
+                //deleteDir()
+                withCredentials([file(credentialsId: 'lciadm100-docker-auth-dev', variable: 'dockerConfig')]) {
+                    sh "install -m 600 ${dockerConfig} ${HOME}/.docker/config.json"
+                    sh 'cat /home/lciadm100/.docker/config.json'
+                }
+                ci_kgb_init()
+            }
+        }
+        stage('Checkout Cloud-Native SG Git Repository') {
+            steps {
+                ci_kgb_checkout()
+            }
+        }
+        // stage('Checkout Cloud-Native Integration Git Repository'){
+        //     steps {
+        //         dir(INT_REPO_ARTIFACT_ID) {
+        //             git branch: 'master',
+        //             url: "${GERRIT_MIRROR}/${INT_REPO}"
+        //             echo 'Inject Integration ruleset file'
+        //             configFileProvider([configFile(fileId: "common_kgb_ruleset", targetLocation: "${env.WORKSPACE}/${INT_REPO_ARTIFACT_ID}/")]) {}
+        //         }
+        //     }
+        // }
+        stage('Common KGB Ruleset') {
+            steps {
+                echo 'Inject KGB common ruleset file'
+                configFileProvider([configFile(fileId: "common_kgb_ruleset", targetLocation: "${env.WORKSPACE}/")]) {}
+            }
+        }
+        stage('Swap out repository path in values.yaml') {
+            steps {
+                script {
+                    SG_REPO_ARTIFACT_ID = SG_REPO.split('/').last()
+                    sh "sed -i 's/repoPath: proj-enm/repoPath: proj-enm-kgb-dev-docker/g' ./chart/${SG_REPO_ARTIFACT_ID}/values.yaml || true"
+                }
+            }
+        }
+        stage('Helm Dep Up ') {
+            steps {
+                echo "tmp rem"
+                //sh "${bob} helm-dep-up"
+            }
+        }
+        /*stage('Merge values files') {
+            steps{
+                 script {
+                     appconfig_values = sh (script: "ls ${WORKSPACE}/chart/${SG_REPO_ARTIFACT_ID}/appconfig/ | grep values.yaml", returnStatus: true)
+                     if (appconfig_values == 0) {
+                          sh("${bob} merge-values-files-with-appconfig")
+                     } else {
+                          sh("${bob} merge-values-files")
+                     }
+                }
+            }
+        }*/
+        stage('Create Yum Repo') {
+            when {
+                expression { env.RPMs != "" || env.GERRIT_REVIEW_URL != ""}
+            }
+            steps {               
+               sh "${bob} create-kgb-enm-repo"
+            }
+        }
+        stage('Update yum repo') {
+             when {
+                expression { env.RPMs != "" || env.GERRIT_REVIEW_URL != ""}
+            }
+            steps {  
+                script {
+                    if (SG_REPO == "OSS/com.ericsson.oss.cloudcommon.models/eric-enm-models") {
+                        sh "${bob} update-yum-repo-kgb-model"
+                    } else {
+                     
+                        sh "${bob} update-yum-repo-kgb"
+                    }
+                }
+            }
+        }
+        stage('Build Image and Chart') {
+            steps {
+                script {
+                    if (SG_REPO == "OSS/com.ericsson.oss.cloudcommon.models/eric-enm-models") {
+                        sh "${bob} generate-new-version-kgb build-image-kgb-model"
+                    } else {
+                        sidecar_docker_file = sh (script: "find . -name \"Dockerfile*\" | grep \"httpd\" | head -1", returnStdout: true)
+                        sidecar_folder = sidecar_docker_file.replaceAll("[\\s \\./]","").replaceAll("Dockerfile","")
+                        if (sidecar_folder) {
+                            env.DOCKER_FILE_SIDECAR_PATH = sidecar_folder
+                            env.KGB_SIDECAR_DOCKER_IMAGE_PATH = "armdevdocker.sero.gic.ericsson.se/${KGB_DOCKER_REPO}/${DOCKER_FILE_SIDECAR_PATH}"
+                            env.KGB_SIDECAR_DOCKER_IMAGE_PATH1 = "armdevdocker.sero.gic.ericsson.se/${KGB_DOCKER_REPO1}/${DOCKER_FILE_SIDECAR_PATH}"
+                            sh "${bob} generate-new-version-kgb build-helm build-image-kgb"
+                        } else {
+                            sh "${bob} generate-new-version-kgb build-helm build-image-kgb:build-docker-image"
+                        }
+                    }
+                }
+            }
+            post {
+                failure {
+                    script {
+                        failedStage = env.STAGE_NAME
+                        if (SG_REPO == "OSS/com.ericsson.oss.cloudcommon.models/eric-enm-models") {
+                            sh "${bob} remove-image-kgb-model"
+                        } else {
+                            if (env.DOCKER_FILE_SIDECAR_PATH) {
+                                sh "${bob} remove-image-kgb"
+                            } else {
+                                sh "${bob} remove-image-kgb:remove-docker-image"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        stage('Publish Images to Artifactory') {
+            steps {
+                script {
+                    if (SG_REPO == "OSS/com.ericsson.oss.cloudcommon.models/eric-enm-models") {
+                        sh "${bob} push-image-kgb-model"
+                    } else {
+                        if (env.DOCKER_FILE_SIDECAR_PATH) {
+                            sh "${bob} push-image-kgb"
+                        } else {
+                            sh "${bob} push-image-kgb:push-docker-image-kgb"
+                        }
+                    }
+                }
+            }
+        }
+        stage('Publish Helm Chart') {
+            steps {
+                script {
+                    sh "${bob} push-helm-kgb"
+                    
+                }
+            }
+        }
+        stage('Generate ADP Parameters') {
+            steps {
+                sh "${bob} generate-output-parameters-kgb"
+                sh "cp artifact.properties artifact_sg.properties"
+                archiveArtifacts 'artifact_sg.properties'
+            }
+        }
+        stage('Generate requirements file') {
+            steps {
+               sh '''
+                   . ./artifact.properties
+                   echo "dependencies:" &gt;requirements.yaml
+                   echo "- name: ${CHART_NAME}"&gt;&gt;requirements.yaml
+                   echo "  repository: ${KGB_HELM_REPO_URL}"&gt;&gt;requirements.yaml
+                   echo "  version: ${CHART_VERSION}"&gt;&gt;requirements.yaml
+               '''
+               archiveArtifacts 'requirements.yaml'
+            }
+        }
+        stage('Inca prepare') {
+            steps{
+                 script {
+                    //sh "cd ${INT_REPO_ARTIFACT_ID} &amp;&amp; cp ../requirements.yaml . &amp;&amp; ${bobInCA} preparewithreq"
+                    //archiveArtifacts "${INT_REPO_ARTIFACT_ID}/artifact.properties"
+                   // env.INFRA_URL = sh(script:'. ./artifact.properties;echo ${INT_CHART_REPO}/${INT_CHART_NAME}/${INT_CHART_NAME}-${INT_CHART_VERSION}.tgz', returnStdout: true).trim()
+                   // def summary = createSummary(icon:"notepad.png", text:"Integration chart links:&lt;br&gt;")
+                   // summary.appendText('PRE DEPLOY:&lt;a href=\"'+env.PRE_DEPLOY_URL+'"&gt;'+env.PRE_DEPLOY_URL+'&lt;/a&gt;&lt;br&gt;', false)
+                   // summary.appendText('STATELESS:&lt;a href=\"'+env.STATELESS_URL+'"&gt;'+env.STATELESS_URL+'&lt;/a&gt;&lt;br&gt;', false)
+                   // summary.appendText('INFRA:&lt;a href=\"'+env.INFRA_URL+'"&gt;'+env.INFRA_URL+'&lt;/a&gt;&lt;br&gt;', false)
+                   // summary.appendText('MONITORING:&lt;a href=\"'+env.MONITORING_URL+'"&gt;'+env.MONITORING_URL+'&lt;/a&gt;&lt;br&gt;', false)
+                  //  summary.appendText('BRO:&lt;a href=\"'+env.BRO_URL+'"&gt;'+env.BRO_URL+'&lt;/a&gt;&lt;br&gt;', false)
+                  if(env.BUILD_INFRA){
+                       env.GIT_REPO_URL="https://gerrit.ericsson.se/a/${INFRA_REPO}"
+                       env.INT_REPO_ARTIFACT_ID = env.INFRA_REPO.split('/').last()
+                    env.CHART_PATH="chart/${INT_REPO_ARTIFACT_ID}"
+                            sh "${bobInCA} preparewithreq"
+                            sh "cp artifact.properties infra_artifact.properties"
+                            archiveArtifacts 'infra_artifact.properties'
+                            env.INFRA_URL = sh(script:'. ./infra_artifact.properties;echo ${INT_CHART_REPO}/${INT_CHART_NAME}/${INT_CHART_NAME}-${INT_CHART_VERSION}.tgz', returnStdout: true).trim()
+                    }   
+                    if(env.BUILD_STATELESS){
+                        
+                       env.INT_REPO_ARTIFACT_ID = env.STATELESS_REPO.split('/').last()
+                    env.CHART_PATH="chart/${INT_REPO_ARTIFACT_ID}"
+                        env.GIT_REPO_URL="https://gerrit.ericsson.se/a/${STATELESS_REPO}"
+                            sh "${bobInCA} preparewithreq"
+                            sh "cp artifact.properties infra_artifact.properties"
+                            archiveArtifacts 'infra_artifact.properties'
+                            env.INFRA_URL = sh(script:'. ./infra_artifact.properties;echo ${INT_CHART_REPO}/${INT_CHART_NAME}/${INT_CHART_NAME}-${INT_CHART_VERSION}.tgz', returnStdout: true).trim()
+                    } 
+                    if(env.BUILD_MONITORING){
+                          
+                       env.INT_REPO_ARTIFACT_ID = env.MONITORING_REPO.split('/').last()
+                    env.CHART_PATH="chart/${INT_REPO_ARTIFACT_ID}"
+                         env.GIT_REPO_URL="https://gerrit.ericsson.se/a/${MONITORING_REPO}"
+                            sh "${bobInCA} preparewithreq"
+                            sh "cp artifact.properties infra_artifact.properties"
+                            archiveArtifacts 'infra_artifact.properties'
+                            env.INFRA_URL = sh(script:'. ./infra_artifact.properties;echo ${INT_CHART_REPO}/${INT_CHART_NAME}/${INT_CHART_NAME}-${INT_CHART_VERSION}.tgz', returnStdout: true).trim()
+                    } 
+                    
+                                        
+                   //def summary = createSummary(icon:"notepad.png", text:"Integration chart links:&lt;br&gt;")
+                   // summary.appendText('PRE DEPLOY:&lt;a href=\"'+env.PRE_DEPLOY_URL+'"&gt;'+env.PRE_DEPLOY_URL+'&lt;/a&gt;&lt;br&gt;', false)
+                   // summary.appendText('STATELESS:&lt;a href=\"'+env.STATELESS_URL+'"&gt;'+env.STATELESS_URL+'&lt;/a&gt;&lt;br&gt;', false)
+                   // summary.appendText('INFRA:&lt;a href=\"'+env.INFRA_URL+'"&gt;'+env.INFRA_URL+'&lt;/a&gt;&lt;br&gt;', false)
+                   // summary.appendText('MONITORING:&lt;a href=\"'+env.MONITORING_URL+'"&gt;'+env.MONITORING_URL+'&lt;/a&gt;&lt;br&gt;', false)
+                   // summary.appendText('BRO:&lt;a href=\"'+env.BRO_URL+'"&gt;'+env.BRO_URL+'&lt;/a&gt;&lt;br&gt;', false)
+          
+                }
+            }
+        }        
+    }
+    post {
+        always {        
+            sh "${bob} delete-kgb-enm-repo"
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>true</disabled>
+</flow-definition>

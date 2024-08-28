@@ -1,0 +1,211 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>&lt;font size=2&gt;&lt;strong&gt;With this job you can add the Code guardian group(s) to the repos&lt;br&gt;&#xd;
+Also, we can add multiple Code Guardian groups to the repo by specifying group names separated by a space.&lt;/strong&gt;&lt;/font&gt;</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.23.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty plugin="leastload@1.0.3">
+      <leastLoadDisabled>false</leastLoadDisabled>
+    </org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>REPO</name>
+          <description>&lt;font size=&quot;2&quot;&gt;Enter the gerrit repo above (Example: OSS/com.ericsson.oss.ci/ciexe_test)&lt;/font&gt;&lt;br&gt;</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>GUARD_GROUP_NAME</name>
+          <description>&lt;font size=2&gt;It is possible to insert an Array of groups. For example : CI_Test_guard enm_Test_guard &lt;br&gt;
+&lt;font color=red size=2&gt;Please make sure only one space is given between two groups, Also make sure no extra space has given in the end of last group&lt;/font&gt;&lt;br&gt;</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>DESCRIPTION</name>
+          <description>&lt;font size=&quot;2&quot;&gt;Enter the description that you find in the repo under general tab&lt;/font&gt;&lt;br&gt;</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit></paramsToUseForLimit>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    <de.pellepelster.jenkins.walldisplay.WallDisplayJobProperty plugin="jenkinswalldisplay@0.6.30"/>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>GridEngine_RHEL7</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <com.ericsson.de.multi.master.EnvironmentBuilder plugin="multi-master@1.0.13">
+      <envVars>
+        <com.ericsson.de.multi.master.EnvVar>
+          <name>PATH</name>
+          <value>/usr/bin/:/bin/</value>
+        </com.ericsson.de.multi.master.EnvVar>
+      </envVars>
+    </com.ericsson.de.multi.master.EnvironmentBuilder>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash -x
+
+mkdir test
+REPO=${REPO// /}
+GUARD_GROUP_NAME=${GUARD_GROUP_NAME}
+Deliverable=${DESCRIPTION}
+cd test
+git init
+
+git pull ssh://staging-gerrit.sero.gic.ericsson.se:29418/$REPO refs/meta/config
+
+IFS=&apos; &apos; read -ra ADDR &lt;&lt;&lt; &quot;$GUARD_GROUP_NAME&quot;
+for group in &quot;${ADDR[@]}&quot;; do
+    ssh -p 29418 staging-gerrit.sero.gic.ericsson.se gerrit ls-groups -v | grep -w $group &gt; output.txt
+    GroupID_Sub=$(grep ^$group output.txt | cut -f 2)
+    rm output.txt
+    echo -e &quot;$GroupID_Sub\t$group&quot; &gt;&gt; groups
+done
+
+git add .
+git commit -m &quot;Added new group&quot;
+git push ssh://staging-gerrit.sero.gic.ericsson.se:29418/$REPO HEAD:refs/meta/config
+
+echo &quot;************* groups file pushed **************&quot;
+echo &quot;*************config file push******************&quot;
+
+echo $(grep &quot;inheritFrom&quot; project.config) &gt;&gt; parent
+
+while read line
+do
+    p=$(echo ${line} | awk -F &quot; &quot; &apos;{print $3}&apos;)
+done &lt; parent
+
+while read line; do
+    if  echo &quot;${line}&quot; | grep -q &quot;owner&quot;; then echo &quot;${line}&quot;&gt;&gt; owner; fi
+done &lt; project.config
+
+while read line
+do
+    owner=$(echo  ${line} | awk -F &quot; &quot; &apos;{print $4}&apos;)
+    echo &quot;${owner}&quot; &gt;&gt; ownername
+done &lt; owner
+
+rm -rf project.config
+
+while read line
+do
+    groupname=$(echo ${line} | awk -F &quot; &quot; &apos;{print $2}&apos;)
+    echo &quot;${groupname}&quot; &gt;&gt; groupname
+done &lt; groups
+
+a=0
+
+while read line
+do 
+    if [ ${a} -ge 2 ]
+    then
+        echo &quot;${line}&quot; &gt;&gt; groupname1
+    fi
+    a=$((a+1))
+done &lt; groupname
+
+echo -e &quot;[access]
+        inheritFrom = $p&quot;  &gt; project.config
+echo -e &quot;[access \&quot;refs/*\&quot;]&quot; &gt;&gt; project.config
+while read line
+do
+echo -e &quot;        owner = group ${line}&quot; &gt;&gt; project.config
+done &lt; ownername
+while read line; do if grep -wq $line ownername; then continue; else echo -e &quot;create = group $line&quot; &gt;&gt; project.config; fi; done &lt; groupname1
+while read line; do if grep -wq $line ownername; then continue; else echo -e &quot;forgeCommitter = group $line&quot; &gt;&gt; project.config; fi; done &lt; groupname1
+while read line; do if grep -wq $line ownername; then continue; else echo -e &quot;pushTag = group $line&quot; &gt;&gt; project.config; fi; done &lt; groupname1
+while read line; do if grep -wq $line ownername; then continue; else echo -e &quot;label-Code-Review = -2..+2 group $line&quot; &gt;&gt; project.config; fi; done &lt; groupname1
+while read line; do if grep -wq $line ownername; then continue; else echo -e &quot;label-Verified = -1..+1 group $line&quot; &gt;&gt; project.config; fi; done &lt; groupname1
+while read line; do if grep -wq $line ownername; then continue; else echo -e &quot;rebase = group $line&quot; &gt;&gt; project.config; fi; done &lt; groupname1
+while read line; do if grep -wq $line ownername; then continue; else echo -e &quot;submit = group $line&quot; &gt;&gt; project.config; fi; done &lt; groupname1
+
+echo -e &quot;[project]
+        description = $Deliverable
+[receive]
+        requireChangeId = true
+[submit]
+        action = fast forward only
+        mergeContent = false
+[access \&quot;refs/for/refs/heads/master\&quot;]&quot; &gt;&gt; project.config
+
+while read line; do if grep -wq $line ownername; then continue; else echo -e &quot;pushMerge = group $line&quot; &gt;&gt; project.config; fi; done &lt; groupname1
+
+echo -e &quot;[access \&quot;refs/heads/master\&quot;]&quot; &gt;&gt; project.config
+
+while read line; do if grep -wq $line ownername; then continue; else echo -e &quot;push = group $line&quot; &gt;&gt; project.config; fi; done  &lt; groupname1
+
+echo -e &quot;[plugin \&quot;eiffel\&quot;]
+        enabled = true
+        rmq-domain = eiffel004.camo.gerrit
+        rmq-exchange = mb401-eiffel004
+        rmq-server = amqp://mb401-eiffel004.mo.ca.am.ericsson.se:5672&quot; &gt;&gt; project.config
+rm -rf groupname
+rm -rf groupname1
+rm -rf owner
+rm -rf ownername
+rm -rf parent
+git add .
+git commit -m &quot;Added access controls&quot;
+git push ssh://staging-gerrit.sero.gic.ericsson.se:29418/$REPO HEAD:refs/meta/config
+
+echo &quot;************* end ******************&quot;</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.37">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+  </buildWrappers>
+</project>

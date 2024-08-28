@@ -1,0 +1,501 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><project>
+  <actions/>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix/>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@4.10.3">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>ssh://gerritmirror-ha.lmera.ericsson.se:29418/OSS/ENM-Parent/SQ-Gate/com.ericsson.oss.mediation.sdk/sdk-csar-buildmanager</url>
+        <credentialsId>lciadm100-user</credentialsId>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>master</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <gitTool>Git 2.20.0</gitTool>
+    <submoduleCfg class="empty-list"/>
+    <extensions/>
+  </scm>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.plugins.python.Python plugin="python@1.3">
+      <command>import sys
+import requests
+import re
+from collections import OrderedDict
+import httplib
+
+AUTH = {'Authorization':
+        'Basic VEtKQVdBSEZCSjpmQCU2ZTRLMzI5cXdYb2tabHJjY2tyRzl3'}
+
+DROP_URL = "https://pdu-oss-tools4.seli.wh.rnd.internal.ericsson.com/" +\
+           "cenm_dashboard/api/data/getENMDrop"
+CENM_URL = "https://pdu-oss-tools4.seli.wh.rnd.internal.ericsson.com/" +\
+           "cenm_dashboard/api/data/getData"
+PUBLISH_URL = "https://fem16s11-eiffel004.eiffel.gic.ericsson.se:8443/" +\
+              "jenkins/job/eric-enm-fmsdk-publish/"
+BUILDMANAGER_URL = "https://fem16s11-eiffel004.eiffel.gic.ericsson.se:8443/" +\
+                   "jenkins/job/sdk-csar-buildmanager/"
+DASHBOARD_URL = "https://pdu-oss-tools4.seli.wh.rnd.internal.ericsson.com/" +\
+                "cenm_dashboard/#dashboard"
+PRODUCT_SET_URL = "https://ci-portal.seli.wh.rnd.internal.ericsson.com/" +\
+                  "cloudnative/getCloudNativeProductSetContent"
+CONFLUENCE_URL = "https://confluence-oss.seli.wh.rnd.internal.ericsson.com/" +\
+                 "rest/api/content/550398751"
+
+
+def _get(url, authentication, json):
+    try:
+        response = requests.get(url, headers=authentication)
+        if httplib.OK == response.status_code:
+            if json:
+                return response.json()
+            else:
+                return response.text
+        else:
+            raise ValueError('Critical error (GET {}): {}'.format(url, response.status_code))
+    except ValueError as err:
+        print(err)
+        sys.exit()
+
+
+def _get_non_critical(url, authentication):
+    try:
+        response = requests.get(url, headers=authentication)
+        if httplib.OK == response.status_code:
+            return response.text
+        else:
+            raise ValueError('Controlled error (GET {}): {}'.format(url, response.status_code))
+    except ValueError as err:
+        print(err)
+
+
+def _post(url, authentication, data):
+    try:
+        response = requests.put(url,
+                                headers=authentication, json=data)
+        if httplib.OK == response.status_code:
+            print("Dashboard successfully updated")
+        else:
+            raise ValueError('Critical error (POST {}): {}'.format(url, response.status_code))
+    except ValueError as err:
+        print(err)
+        sys.exit()
+
+
+def merge_arrays(keys, values):
+    merged_list = OrderedDict()
+    for i in range(len(keys)):
+        merged_list[keys[i]] = values[i]
+    return merged_list
+
+
+def get_status_and_version(data):
+    count = 0
+    statuses = []
+    versions = []
+    for i, _ in enumerate(data):
+        if data[i]["manualStatus"] == "Green":
+            statuses.append("passed")
+            versions.append(data[i]["cenm_product_set_version"])
+            count += 1
+        if data[i]["manualStatus"] == "Red":
+            statuses.append("failed")
+            count += 1
+            versions.append(data[i]["cenm_product_set_version"])
+        if data[i]["manualStatus"] == "Yellow":
+            statuses.append("waiting")
+            count += 1
+            versions.append(data[i]["cenm_product_set_version"])
+    return statuses, versions
+
+
+def get_drop(url, authentication):
+    _data = _get(url, authentication, True)
+    return _data["drop"]
+
+
+def get_cenm_dashboard(url, authentication):
+    _data = _get(url, authentication, True)
+    return get_status_and_version(_data)
+
+
+def get_builds(url, authentication):
+    job_url = url + "api/json?pretty=true"
+    _data = _get(job_url, authentication, True)
+
+    build_numbers = []
+    results = []
+    corresponding_product_set = []
+    current_product_set = ""
+    for item in _data['builds']:
+        got_all = True
+        for version in versions:
+            if version not in corresponding_product_set:
+                got_all = False
+        if got_all:
+            break
+        build_number = item['number']
+        build_url = url + str(build_number) + "/api/json?pretty=true"
+        
+
+        _data = _get(build_url, authentication, True)
+
+        result = _data['result']
+        if result == "FAILURE":
+            result = "failed"
+        if result == "SUCCESS":
+            result = "passed"
+        if result == "null":
+            result = "building"
+        parameters_index = 0
+        for index, _ in enumerate(_data["actions"]):
+            if "parameters" in _data["actions"][index]:
+                parameters_index = index
+                break
+        product_set_version = _data['actions'][parameters_index][
+            'parameters'][2]['value']
+        if product_set_version in versions:
+            results.append(result)
+            corresponding_product_set.append(product_set_version)
+            build_numbers.append(build_number)
+        current_product_set = product_set_version
+    return build_numbers, results, corresponding_product_set, \
+        current_product_set
+
+
+def get_chart_versions(arr, url1, url2, authentication):
+    results = arr
+    job_url = url1 + "api/json?pretty=true"
+    _data = _get(job_url, authentication, True)
+
+    chart_versions = []
+    count = 0
+    skip = False
+    if not results[0]:
+        chart_versions.append(". . .")
+        count += 1
+        skip = True
+
+    for item in _data['builds']:
+        if skip:
+            skip = False
+            continue
+        count += 1
+
+        if count &gt; len(results):
+            break
+        build_number = item['number']
+        console_text_url = url1 + str(build_number) + "/consoleText"
+        sdk_csar_number = ""
+        _text = _get(console_text_url, authentication, False)
+        match = re.search("sdk-csar-buildmanager #(\\d+)", _text)
+        if match:
+            sdk_csar_number = match.group(1)
+        if sdk_csar_number != "":
+            job_url = url2 + sdk_csar_number \
+                      + "/artifact/artifact.properties/*view*/"
+            _text = _get_non_critical(job_url, authentication)
+            if not _text:
+                chart_versions.append(". . .")
+            else:
+                lines = _text.split('\n')
+                for line in lines:
+                    parts = line.split('=')
+                    if len(parts) == 2:
+                        name, value = parts
+                        if name == 'CHART_VERSION':
+                            chart_version = value
+                            chart_versions.append(chart_version)
+        else:
+            chart_versions.append(". . .")
+    return chart_versions
+
+
+def get_baseline(chart_versions, corresponding_product_set, dict1, dict2):
+    build_number_count = 0
+    baseline = ""
+    for i in chart_versions:
+        if dict1[i] == "passed":
+            if dict2[corresponding_product_set[build_number_count]] == "passed":
+                baseline = i
+                break
+        build_number_count += 1
+    return baseline, build_number_count
+
+
+def generate_html(dict1, chart_versions, results):
+    html = "&lt;div style=\"display: flex; flex-wrap: nowrap;\"&gt;&lt;div style=\"flex-basis: 0;\"&gt;" +\
+           "&lt;p&gt;This is the Cloud Native ENM SDKs Dashboard.&lt;/p&gt;" +\
+           "&lt;p&gt;This dashboard is complementary to the Cloud Native ENM Maintrack Dashboard found here:&lt;/p&gt;" + \
+           "&lt;p&gt;&lt;a href='https://pdu-oss-tools4.seli.wh.rnd.internal.ericsson.com/cenm_dashboard/#dashboard'&gt;" +\
+           "https://pdu-oss-tools4.seli.wh.rnd.internal.ericsson.com/cenm_dashboard/#dashboard&lt;/a&gt;&lt;/p&gt;" +\
+           "&lt;h5&gt;Latest Install Baseline is the latest version of FMSDK" +\
+           " for which FMSDK and corresponding cENM Product Set are green&lt;/h5&gt;" + \
+           "&lt;/div&gt;&lt;div style=\"flex-basis: 0; padding-top: 30px;\"&gt;&lt;table&gt;"
+    html += "&lt;th colspan = '2' style='font-family: \"Ericsson Hilda\"," +\
+            "Helvetica, Arial, sans-serif; padding: 10px;" +\
+            "color: white; text-align: center; background-color: #89BA17'&gt;Cloud Native ENM SDK&lt;/th&gt;"
+    html += "&lt;tr&gt;&lt;th width='200' style='font-family: \"Ericsson Hilda\"," +\
+            "Helvetica, Arial, sans-serif; padding: 10px; color: white;" +\
+            "text-align: center; background-color: #333333'&gt;cENM Product Set" +\
+            "&lt;/th&gt;&lt;th width='200' style='font-family: \"Ericsson Hilda\"," +\
+            "Helvetica, Arial, sans-serif; padding: 10px; color: white;" +\
+            "text-align: center; background-color: #333333'&gt;FMSDK&lt;/th&gt;&lt;/tr&gt;"
+    sync = 0
+    dict1_list = list(dict1.items())
+    for i in range(len(dict1)):
+        value1 = dict1_list[i][1]
+        if value1 == "passed":
+            html += "&lt;tr&gt;&lt;td style='font-family: \"Ericsson Hilda\"," +\
+                    "Helvetica, Arial, sans-serif; font-size: 1.4rem;" +\
+                    "padding: 10px; color: white; text-decoration: underline;" +\
+                    "text-align: center; background-color: #89BA17'&gt;&lt;a href='" +\
+                    "https://ci-portal.seli.wh.rnd.internal.ericsson.com/cloudnative/" +\
+                    "getCloudNativeProductSetContent/" + drop + "/" + dict1_list[i][0] + "/'" +\
+                    " style='color:white' target='_blank'&gt;" + dict1_list[i][0] + "&lt;/a&gt;&lt;/td&gt;"
+        elif value1 == "failed":
+            html += "&lt;tr&gt;&lt;td style='font-family: \"Ericsson Hilda\"," +\
+                    "Helvetica, Arial, sans-serif; font-size: 1.4rem;" +\
+                    "padding: 10px; color: white; text-decoration: underline;" +\
+                    "text-align: center; background-color: #E32119'&gt;&lt;a href='" +\
+                    "https://ci-portal.seli.wh.rnd.internal.ericsson.com/cloudnative/" +\
+                    "getCloudNativeProductSetContent/" + drop + "/" + dict1_list[i][0] + "/'" +\
+                    " style='color:white' target='_blank'&gt;" + dict1_list[i][0] + "&lt;/a&gt;&lt;/td&gt;"
+        else:
+            html += "&lt;tr&gt;&lt;td style='font-family: \"Ericsson Hilda\"," +\
+                    "Helvetica, Arial, sans-serif; font-size: 1.4rem;" +\
+                    "padding: 10px; color: white; text-decoration: underline;" +\
+                    "text-align: center; background-color: #D6BC02'&gt;&lt;a href='" +\
+                    "https://ci-portal.seli.wh.rnd.internal.ericsson.com/cloudnative/" +\
+                    "getCloudNativeProductSetContent/" + drop + "/" + dict1_list[i][0] + "/'" +\
+                    " style='color:white' target='_blank'&gt;" + dict1_list[i][0] + "&lt;/a&gt;&lt;/td&gt;"
+
+        if dict1_list[i][0] in corresponding_product_set:
+            value2 = results[i + sync]
+            if value2 == "passed":
+                html += "&lt;td style='font-family: \"Ericsson Hilda\"," +\
+                        " Helvetica, Arial, sans-serif; font-size: 1.4rem;" +\
+                        " padding: 10px; color: white; text-decoration: underline;" +\
+                        " text-align: center; background-color: #89BA17'&gt;" +\
+                        "&lt;a href='https://fem16s11-eiffel004.eiffel.gic.ericsson.se" +\
+                        ":8443/jenkins/job/eric-enm-fmsdk-publish/" + str(build_numbers[i + sync]) + \
+                        "/' style='color:white' target='_blank'&gt;" + chart_versions[i + sync] + "&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;"
+            elif value2 == None:
+                html += "&lt;td style='font-family: \"Ericsson Hilda\"," +\
+                        "Helvetica, Arial, sans-serif; font-size: 1.4rem;" +\
+                        "padding: 10px; color: white; text-decoration: underline;" +\
+                        "text-align: center; background-color: #D6BC02'&gt;" + \
+                        "&lt;a href='https://fem16s11-eiffel004.eiffel.gic.ericsson.se" + \
+                        ":8443/jenkins/job/eric-enm-fmsdk-publish/" + str(build_numbers[i + sync]) + \
+                        "/' style='color:white' target='_blank'&gt;" + chart_versions[i + sync] + "&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;"
+            else:
+                html += "&lt;td style='font-family: \"Ericsson Hilda\"," +\
+                        "Helvetica, Arial, sans-serif; font-size: 1.4rem;" +\
+                        "padding: 10px; color: white; text-decoration: underline;" +\
+                        "text-align: center; background-color: #E32119'&gt;" + \
+                        "&lt;a href='https://fem16s11-eiffel004.eiffel.gic.ericsson.se" + \
+                        ":8443/jenkins/job/eric-enm-fmsdk-publish/" + str(build_numbers[i + sync]) + \
+                        "/' style='color:white' target='_blank'&gt;" + chart_versions[i + sync] + "&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;"
+            curr_prod_set = corresponding_product_set[i + sync]
+            while len(corresponding_product_set) &gt; i + sync + 1 and corresponding_product_set[i + sync + 1] == curr_prod_set:
+                sync += 1
+                if value1 == "passed":
+                    html += "&lt;tr&gt;&lt;td style='font-family: \"Ericsson Hilda\"," + \
+                            "Helvetica, Arial, sans-serif; font-size: 1.4rem;" + \
+                            "padding: 10px; color: white; text-decoration: underline;" + \
+                            "text-align: center; background-color: #89BA17'&gt;&lt;a href='" + \
+                            "https://ci-portal.seli.wh.rnd.internal.ericsson.com/cloudnative/" + \
+                            "getCloudNativeProductSetContent/" + drop + "/" + dict1_list[i][0] + "/'" + \
+                            " style='color:white' target='_blank'&gt;" + dict1_list[i][0] + "&lt;/a&gt;&lt;/td&gt;"
+                elif value1 == "failed":
+                    html += "&lt;tr&gt;&lt;td style='font-family: \"Ericsson Hilda\"," + \
+                            "Helvetica, Arial, sans-serif; font-size: 1.4rem;" + \
+                            "padding: 10px; color: white; text-decoration: underline;" + \
+                            "text-align: center; background-color: #E32119'&gt;&lt;a href='" + \
+                            "https://ci-portal.seli.wh.rnd.internal.ericsson.com/cloudnative/" + \
+                            "getCloudNativeProductSetContent/" + drop + "/" + dict1_list[i][0] + "/'" + \
+                            " style='color:white' target='_blank'&gt;" + dict1_list[i][0] + "&lt;/a&gt;&lt;/td&gt;"
+                else:
+                    html += "&lt;tr&gt;&lt;td style='font-family: \"Ericsson Hilda\"," + \
+                            "Helvetica, Arial, sans-serif; font-size: 1.4rem;" + \
+                            "padding: 10px; color: white; text-decoration: underline;" + \
+                            "text-align: center; background-color: #D6BC02'&gt;&lt;a href='" + \
+                            "https://ci-portal.seli.wh.rnd.internal.ericsson.com/cloudnative/" + \
+                            "getCloudNativeProductSetContent/" + drop + "/" + dict1_list[i][0] + "/'" + \
+                            " style='color:white' target='_blank'&gt;" + dict1_list[i][0] + "&lt;/a&gt;&lt;/td&gt;"
+                value2 = results[i + sync]
+                if value2 == "passed":
+                    html += "&lt;td style='font-family: \"Ericsson Hilda\"," + \
+                            " Helvetica, Arial, sans-serif; font-size: 1.4rem;" + \
+                            " padding: 10px; color: white; text-decoration: underline;" + \
+                            " text-align: center; background-color: #89BA17'&gt;" + \
+                            "&lt;a href='https://fem16s11-eiffel004.eiffel.gic.ericsson.se" + \
+                            ":8443/jenkins/job/eric-enm-fmsdk-publish/" + str(build_numbers[i + sync]) + \
+                            "/' style='color:white' target='_blank'&gt;" + chart_versions[i + sync] + "&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;"
+                else:
+                    html += "&lt;td style='font-family: \"Ericsson Hilda\"," +\
+                        "Helvetica, Arial, sans-serif; font-size: 1.4rem;" +\
+                        "padding: 10px; color: white; text-decoration: underline;" +\
+                        "text-align: center; background-color: #E32119'&gt;" + \
+                        "&lt;a href='https://fem16s11-eiffel004.eiffel.gic.ericsson.se" + \
+                        ":8443/jenkins/job/eric-enm-fmsdk-publish/" + str(build_numbers[i + sync]) + \
+                        "/' style='color:white' target='_blank'&gt;" + chart_versions[i + sync] + "&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;"
+
+        else:
+            html += "&lt;td style='font-family: \"Ericsson Hilda\"," + \
+                    "Helvetica, Arial, sans-serif; font-size: 1.4rem;" + \
+                    "padding: 10px; color: white; text-decoration: underline;" + \
+                    "text-align: center; background-color: #333333'&gt;&lt;/td&gt;&lt;/tr&gt;"
+            sync -= 1
+    html += "&lt;th colspan = '2' style='font-family: \"Ericsson Hilda\"," + \
+            "Helvetica, Arial, sans-serif; padding: 10px;" + \
+            "color: white; text-align: center; background-color:" +\
+            "#333333'&gt;LATEST INSTALL BASELINE:  &lt;a href='https://fem16s11-eiffel004.eiffel.gic.ericsson.se" +\
+            ":8443/jenkins/job/eric-enm-fmsdk-publish/" + str(build_numbers[build_number_count]) + \
+            "/' style='color:white' target='_blank'&gt;" + baseline + "&lt;/a&gt; &lt;/th&gt;"
+    html += "&lt;/table&gt;&lt;/div&gt;&lt;div style=\"flex-basis: 0; padding-top: 30px;\"&gt;" + \
+            "&lt;h4&gt;Legend:&lt;/h4&gt;" + \
+            "&lt;table style=\"border: 1px solid black;\"&gt;" + \
+            "&lt;tr&gt;&lt;td style='font-family: \"Ericsson Hilda\"," + \
+            "Helvetica, Arial, sans-serif; font-size: 1.4rem;" + \
+            "padding: 10px; color: black;" + \
+            "text-align: center;'&gt;Awaiting cENM&lt;/td&gt;" + \
+            "&lt;td style='font-family: \"Ericsson Hilda\"," + \
+            " Helvetica, Arial, sans-serif; font-size: 1.4rem;" + \
+            " padding: 10px; color: white; text-decoration: underline;" + \
+            " text-align: center; background-color: #333333'&gt;" + \
+            "&lt;/td&gt;&lt;/tr&gt;" + \
+            "&lt;tr&gt;&lt;td style='font-family: \"Ericsson Hilda\"," + \
+            "Helvetica, Arial, sans-serif; font-size: 1.4rem;" + \
+            "padding: 10px; color: black;" + \
+            "text-align: center;'&gt;Building&lt;/td&gt;" + \
+            "&lt;td style='font-family: \"Ericsson Hilda\"," + \
+            " Helvetica, Arial, sans-serif; font-size: 1.4rem;" + \
+            " padding: 10px; color: white; text-decoration: underline;" + \
+            " text-align: center; background-color: #D6BC02'&gt;" + \
+            ". . .&lt;/td&gt;&lt;/tr&gt;" + \
+            "&lt;tr&gt;&lt;td style='font-family: \"Ericsson Hilda\"," + \
+            "Helvetica, Arial, sans-serif; font-size: 1.4rem;" + \
+            "padding: 10px; color: black;" + \
+            "text-align: center;'&gt;Pipeline Failed&lt;/td&gt;" + \
+            "&lt;td style='font-family: \"Ericsson Hilda\"," + \
+            " Helvetica, Arial, sans-serif; font-size: 1.4rem;" + \
+            " padding: 10px; color: white; text-decoration: underline;" + \
+            " text-align: center; background-color: #E32119'&gt;" + \
+            ". . .&lt;/td&gt;&lt;/tr&gt;" + \
+            "&lt;tr&gt;&lt;td style='font-family: \"Ericsson Hilda\"," + \
+            "Helvetica, Arial, sans-serif; font-size: 1.4rem;" + \
+            "padding: 10px; color: black;" + \
+            "text-align: center;'&gt;TAF Failed&lt;/td&gt;" + \
+            "&lt;td style='font-family: \"Ericsson Hilda\"," + \
+            " Helvetica, Arial, sans-serif; font-size: 1.4rem;" + \
+            " padding: 10px; color: white; text-decoration: underline;" + \
+            " text-align: center; background-color: #E32119'&gt;" + \
+            "1.4.0-30&lt;/td&gt;&lt;/tr&gt;" + \
+            "&lt;tr&gt;&lt;td style='font-family: \"Ericsson Hilda\"," + \
+            "Helvetica, Arial, sans-serif; font-size: 1.4rem;" + \
+            "padding: 10px; color: black;" + \
+            "text-align: center;'&gt;Build Successful&lt;/td&gt;" + \
+            "&lt;td style='font-family: \"Ericsson Hilda\"," + \
+            " Helvetica, Arial, sans-serif; font-size: 1.4rem;" + \
+            " padding: 10px; color: white; text-decoration: underline;" + \
+            " text-align: center; background-color: #89BA17'&gt;" + \
+            "1.4.0-31&lt;/td&gt;&lt;/tr&gt;" + \
+            "&lt;/table&gt;&lt;/div&gt;&lt;/div&gt;"
+    return html
+
+
+def write_to_confluence(url, authentication):
+    authentication['Content-Type'] = 'application/json'
+    _data = _get(url, authentication, True)
+
+    version = _data['version']['number']
+    version = version + 1
+
+    data = {
+        "id": "550398751",
+        "type": "page",
+        "title": "Cloud Native ENM SDK Dashboard",
+        "space": {
+            "key": "TINH"
+        },
+        "version": {
+            "number": version
+        },
+        "body": {
+            "storage": {
+                "value": html,
+                "representation": "storage"
+            }
+        }
+    }
+    _post(CONFLUENCE_URL, authentication, data)
+
+
+drop = get_drop(DROP_URL, AUTH)
+statuses, versions = get_cenm_dashboard(CENM_URL, AUTH)
+build_numbers, results,\
+        corresponding_product_set, \
+        current_product_set = get_builds(PUBLISH_URL, AUTH)
+
+chart_versions = get_chart_versions(results, PUBLISH_URL,
+                                    BUILDMANAGER_URL, AUTH)
+cenm_dict = merge_arrays(versions, statuses)
+fmsdk_dict = merge_arrays(chart_versions, results)
+baseline, build_number_count = get_baseline(chart_versions,
+                                            corresponding_product_set,
+                                            fmsdk_dict, cenm_dict)
+html = generate_html(cenm_dict, chart_versions, results)
+write_to_confluence(CONFLUENCE_URL, AUTH)
+</command>
+      <configuredLocalRules/>
+    </hudson.plugins.python.Python>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

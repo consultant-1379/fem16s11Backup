@@ -1,0 +1,227 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@2.25">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.3.2"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.3.2">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>This is a Sprint Version Update job for cENM repos to be run at the end of every sprints.&#13;
+&#13;
+This job creates a branch from the given branch/tag (master by default) in the name of the current sprint number (eg print_20.11) and increments the patch version contained in the VERSION_PREFIX. Further, this job also incements the minor version in the master.&#13;
+&lt;h3&gt;Documentation&lt;/h3&gt;&#13;
+&lt;ul&gt;&#13;
+  &lt;li&gt;&lt;a style="font-size: 16px" href="https://confluence-oss.seli.wh.rnd.internal.ericsson.com/display/CI/User+Guide%3A+Sprint+Version+Update+Job" target="_blank" rel="noopener noreferrer"&gt;User Guide&lt;/a&gt;&lt;/li&gt;  &#13;
+  &lt;li&gt;&lt;a style="font-size: 16px" href="https://confluence-oss.seli.wh.rnd.internal.ericsson.com/pages/viewpage.action?pageId=374880120" target="_blank" rel="noopener noreferrer"&gt;Admin Guide&lt;/a&gt;&lt;/li&gt;  &#13;
+&lt;/ul&gt;</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@69.0.3">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.19.2">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@69.0.3">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>SLAVE</name>
+          <description/>
+          <defaultValue>Cloud-Native-Pointfix</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>CURRENT_SPRINT</name>
+          <description>Enter current sprint number Eg: 21.02</description>
+          <defaultValue>21.04</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>CHECKOUT_TAG</name>
+          <description>This is the reference tag based on which pointfix branch would be created. Use refs/tags/SPRINT_[Current Sprint Number] to pick up the latest release. Eg:  refs/tags/SPRINT_21.02.</description>
+          <defaultValue>refs/tags/21.04</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>PUSH_COMMIT</name>
+          <description/>
+          <defaultValue>false</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>EMAIL</name>
+          <description/>
+          <defaultValue>paras.setia@ericsson.com</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.57.2">
+    <script>//Repo's not included: OSS/com.ericsson.oss.containerisation/eric-enm-pre-deploy-integration,OSS/com.ericsson.oss.containerisation/eric-enm-bro-integration,OSS/com.ericsson.oss.containerisation/eric-enmsg-lvsrouter,OSS/com.ericsson.oss.containerisation/eric-enmsg-sso,OSS/com.ericsson.oss.containerisation/eric-enmsg-security-service
+//def cENMImageRepos = ['OSS/com.ericsson.oss.de.containerisation/test-eric-enmsg-kpi-service', 'OSS/com.ericsson.oss.de.containerisation/test-eric-enmsg-kpi-calc-serv']
+//def cENMImageRepos = ['OSS/com.ericsson.oss.de.containerisation/test-eric-enm-rhel6base']
+//def cENMImageRepos = ['OSS/com.ericsson.oss.de.containerisation/test-eric-enm-rhel6base','OSS/com.ericsson.oss.de.containerisation/test-eric-enm-rhel6jboss','OSS/com.ericsson.oss.de.containerisation/test-eric-enm-rhel-jbossconfig','OSS/com.ericsson.oss.de.containerisation/test-eric-enmsg-kpi-calc-serv','OSS/com.ericsson.oss.de.containerisation/test-eric-enmsg-kpi-service','OSS/com.ericsson.oss.de.containerisation/test-httpdconfig-k8s']
+//def cENMImageRepos = ['OSS/com.ericsson.oss.containerisation/eric-enmsg-access-control']
+def cENMImageRepos = ['OSS/com.ericsson.oss.containerisation/eric-enmsg-access-control','OSS/com.ericsson.oss.containerisation/eric-enmsg-amos','OSS/com.ericsson.oss.containerisation/eric-enmsg-auto-id-solr','OSS/com.ericsson.oss.containerisation/eric-enmsg-autoid-service','OSS/com.ericsson.oss.containerisation/eric-enmsg-autoprovisioning','OSS/com.ericsson.oss.containerisation/eric-enmsg-cmevents','OSS/com.ericsson.oss.containerisation/eric-enmsg-cmservice','OSS/com.ericsson.oss.containerisation/eric-enmsg-cmutilities','OSS/com.ericsson.oss.containerisation/eric-enmsg-com-ecim-mscm','OSS/com.ericsson.oss.containerisation/eric-enmsg-comecimpolicy','OSS/com.ericsson.oss.containerisation/eric-enmsg-dc-history','OSS/com.ericsson.oss.containerisation/eric-enmsg-domain-proxy-coordinator','OSS/com.ericsson.oss.containerisation/eric-enmsg-dlms','OSS/com.ericsson.oss.containerisation/eric-enmsg-dpmediation','OSS/com.ericsson.oss.containerisation/eric-enmsg-eventbasedclient','OSS/com.ericsson.oss.containerisation/eric-enmsg-flowautomation','OSS/com.ericsson.oss.containerisation/eric-enmsg-fls','OSS/com.ericsson.oss.containerisation/eric-enm-flsdb-schemamgt','OSS/com.ericsson.oss.containerisation/eric-enmsg-fm-alarm-processing','OSS/com.ericsson.oss.containerisation/eric-enmsg-fm-history','OSS/com.ericsson.oss.containerisation/eric-enmsg-fm-service','OSS/com.ericsson.oss.containerisation/eric-enmsg-general-scripting','OSS/com.ericsson.oss.containerisation/eric-enmsg-gossiprouter-cache','OSS/com.ericsson.oss.containerisation/eric-enmsg-gossiprouter-remoting','OSS/com.ericsson.oss.containerisation/eric-enmsg-gossiprouter-eap7','OSS/com.ericsson.oss.containerisation/eric-enmsg-ha-proxy','OSS/com.ericsson.oss.containerisation/eric-enmsg-import-export-service','OSS/com.ericsson.oss.containerisation/eric-enmsg-ip-service-management','OSS/com.ericsson.oss.containerisation/eric-enmsg-jmsserver','OSS/com.ericsson.oss.containerisation/eric-enmsg-kpi-calc-serv','OSS/com.ericsson.oss.containerisation/eric-enmsg-kpi-service','OSS/com.ericsson.oss.containerisation/eric-enm-kvstore-hc','OSS/com.ericsson.oss.containerisation/eric-enmsg-lcmservice','OSS/com.ericsson.oss.containerisation/eric-enmsg-medrouter','OSS/com.ericsson.oss.containerisation/eric-enmsg-msap','OSS/com.ericsson.oss.containerisation/eric-enmsg-msapgfm','OSS/com.ericsson.oss.containerisation/eric-enmsg-mscm','OSS/com.ericsson.oss.containerisation/eric-enmsg-mscmapg','OSS/com.ericsson.oss.containerisation/eric-enmsg-mscmip','OSS/com.ericsson.oss.containerisation/eric-enmsg-msfm','OSS/com.ericsson.oss.containerisation/eric-enmsg-mskpirt','OSS/com.ericsson.oss.containerisation/eric-enmsg-msnetlog','OSS/com.ericsson.oss.containerisation/eric-enmsg-mspm','OSS/com.ericsson.oss.containerisation/eric-enmsg-mspmip','OSS/com.ericsson.oss.containerisation/eric-enmsg-mssnmpcm','OSS/com.ericsson.oss.containerisation/eric-enmsg-mssnmpfm','OSS/com.ericsson.oss.containerisation/eric-enmsg-nb-alarm-irp-agent-corba','OSS/com.ericsson.oss.containerisation/eric-enmsg-nb-fm-snmp','OSS/com.ericsson.oss.containerisation/eric-enmsg-nbi-bnsi-fm','OSS/com.ericsson.oss.containerisation/eric-enmsg-nedo-serv','OSS/com.ericsson.oss.containerisation/eric-enmsg-networkexplorer','OSS/com.ericsson.oss.containerisation/eric-enmsg-node-plugins','OSS/com.ericsson.oss.containerisation/eric-enmsg-nodecli','OSS/com.ericsson.oss.containerisation/eric-enm-omnidaemon','OSS/com.ericsson.oss.containerisation/eric-enmsg-opendj','OSS/com.ericsson.oss.containerisation/eric-enmsg-openidm','OSS/com.ericsson.oss.containerisation/eric-enmsg-pki-ra-service','OSS/com.ericsson.oss.containerisation/eric-enmsg-pmic-router-policy','OSS/com.ericsson.oss.containerisation/eric-enmsg-pmservice','OSS/com.ericsson.oss.containerisation/eric-enmsg-sa-service','OSS/com.ericsson.oss.containerisation/eric-enmsg-sentinel','OSS/com.ericsson.oss.containerisation/eric-enm-sfwkdb-schemamgt','OSS/com.ericsson.oss.containerisation/eric-enmsg-shm-core-service','OSS/com.ericsson.oss.containerisation/eric-enmsg-shmservice','OSS/com.ericsson.oss.containerisation/eric-enmsg-smrs-service','OSS/com.ericsson.oss.containerisation/eric-enmsg-solr-service','OSS/com.ericsson.oss.containerisation/eric-enmsg-sps-service','OSS/com.ericsson.oss.containerisation/eric-enmsg-supervisionclient','OSS/com.ericsson.oss.containerisation/eric-enm-troubleshooting-utils','OSS/com.ericsson.oss.containerisation/eric-enmsg-uiservice','OSS/com.ericsson.oss.containerisation/eric-enmsg-visinaming-nb','OSS/com.ericsson.oss.containerisation/eric-enmsg-visinaming-sb','OSS/com.ericsson.oss.containerisation/eric-enmsg-vault-service','OSS/com.ericsson.oss.containerisation/eric-enmsg-web-push-service','OSS/com.ericsson.oss.containerisation/eric-enmsg-elex','OSS/com.ericsson.oss.itpf.modeling/eric-enm-modeldeployservice','OSS/com.ericsson.oss.cloudcommon.models/eric-enm-models','OSS/com.ericsson.oss.containerisation/eric-enm-dps-schemamgt','OSS/com.ericsson.oss.containerisation/eric-enmsg-identity-mgmt-service','OSS/com.ericsson.oss.containerisation/eric-enmsg-sso','OSS/com.ericsson.oss.containerisation/eric-enmsg-security-service','OSS/com.ericsson.oss.containerisation/eric-enm-common-helmchart-library']
+//def cENMImageRepos = []
+//def cENMBaseImageRepos = []
+//def cENMOSBaseImageRepos = []
+//def cENMIntegrationRepos = ['OSS/com.ericsson.oss.containerisation/eric-enm-pre-deploy-integration','OSS/com.ericsson.oss.containerisation/eric-enm-bro-integration']
+def cENMCSARRepos = []
+def cENMIntegrationRepos = ['OSS/com.ericsson.oss.containerisation/eric-enm-infra-integration','OSS/com.ericsson.oss.containerisation/eric-enm-stateless-integration','OSS/com.ericsson.oss.containerisation/eric-enm-monitoring-integration','OSS/com.ericsson.oss.containerisation/eric-enm-integration','OSS/com.ericsson.oss.containerisation/eric-enm-pre-deploy-integration','OSS/com.ericsson.oss.containerisation/eric-enm-bro-integration']
+def cENMOSBaseImageRepos = ['OSS/com.ericsson.oss.containerisation/eric-enm-rhel6base','OSS/com.ericsson.oss.containerisation/eric-enm-sles-base','OSS/com.ericsson.oss.containerisation/eric-oss-monitoring-master']
+def cENMBaseImageRepos = ['OSS/com.ericsson.oss.itpf.configuration/httpdconfig-k8s','OSS/com.ericsson.oss.containerisation/eric-enm-init-wait','OSS/com.ericsson.oss.containerisation/eric-enm-monitoring-master','OSS/com.ericsson.oss.containerisation/eric-enm-monitoring-remotewriter','OSS/com.ericsson.oss.containerisation/eric-enm-neo4j-extension-plugin','OSS/com.ericsson.oss.containerisation/eric-enm-rhel6jboss','OSS/com.ericsson.oss.containerisation/eric-enm-securestorage-init-base','OSS/com.ericsson.oss.containerisation/eric-enm-sles-eap6','OSS/com.ericsson.oss.containerisation/eric-enm-sles-eap7','OSS/com.ericsson.oss.containerisation/eric-enm-monitoring-eap6','OSS/com.ericsson.oss.containerisation/eric-enm-monitoring-eap7','OSS/com.ericsson.oss.containerisation/eric-enm-rhel-jbossconfig','OSS/com.ericsson.oss.containerisation/eric-enm-sles-base-scripting','OSS/com.ericsson.oss.containerisation/eric-enm-monitoring-jre','OSS/com.ericsson.oss.containerisation/eric-enm-sles-apache2']
+
+parameters {
+    string(name: 'SLAVE', defaultValue: "Cloud-Native-Pointfix")
+	string(name: 'CURRENT_SPRINT', description: 'Enter current sprint number Eg: 21.01',defaultValue: "21.01")
+    string(name: 'CHECKOUT_TAG', description: 'This is the reference tag based on which pointfix branch would be created. Use refs/tags/SPRINT_[Current Sprint Number] to pick up the latest release. Eg:  refs/tags/SPRINT_20.14.', defaultValue: "*/master")
+    string(name: 'EMAIL', defaultValue: "")
+    booleanParam(name: 'PUSH_COMMIT', defaultValue: false)
+}
+pipeline {
+    agent { label SLAVE }
+    stages {
+        stage('Init') {
+            steps {
+                script {
+                    sh '''
+                        #Remove running containers
+                        running=$(docker ps -a -q| wc -l)
+                        if [ "$running" -gt "0" ];then
+                            echo "Killing containers"
+                            docker rm -f $(docker ps -a -q)
+                        fi
+                    '''
+                    createCsv()
+                }
+            }
+        }
+        stage('Update Image Versions') {
+         steps {
+                script {
+                    callCreatePointFixBranchfunction(cENMImageRepos, 'Image')
+                }
+            }
+        }
+
+        stage('Update CSAR Versions') {
+         steps {
+                script {
+                    callCreatePointFixBranchfunction(cENMCSARRepos, 'CSAR')
+                }
+            }
+        }
+
+        stage('Update Integration Charts Versions') {
+         steps {
+                script {
+                    callCreatePointFixBranchfunction(cENMIntegrationRepos, 'Integration')
+                }
+            }
+        }
+
+        stage('Update OS Base Images Versions') {
+         steps {
+                script {
+                    callCreatePointFixBranchfunction(cENMOSBaseImageRepos, 'Integration')
+                }
+            }
+        }	
+
+        stage('Update Base Images Versions') {
+         steps {
+                script {
+                    callCreatePointFixBranchfunction(cENMBaseImageRepos, 'Integration')
+                }
+            }
+        }			
+    }
+    post {
+        always {
+            archiveArtifacts artifacts: 'report.csv', allowEmptyArchive: true
+            emailext attachmentsPattern: 'report.csv', body: 'cENM Sprint Version Update Completed, See attached file for detailed results.', subject: 'cENM Sprint Version Update Completed', to: EMAIL
+            sh '''
+                #clean workspace
+                echo Workspace ${WORKSPACE}
+                sudo rm -rf ${WORKSPACE}/*
+            '''
+        }
+        //unstable {
+        //     emailext attachmentsPattern: 'report.csv', body: "cENM Sprint Version Update Failed Pipeline: ${currentBuild.fullDisplayName}", subject: 'cENM Sprint Version Update Failed.', to: EMAIL
+        //     archiveArtifacts artifacts: 'report.csv', allowEmptyArchive: true
+        //     sh '''
+        //         #clean workspace
+        //         echo Workspace ${WORKSPACE}
+        //         sudo rm -rf ${WORKSPACE}/*
+        //     '''
+        // }
+        // unsuccessful {
+        //     emailext attachmentsPattern: 'report.csv', body: "cENM Sprint Version Update Failed Pipeline: ${currentBuild.fullDisplayName}", subject: 'cENM Sprint Version Update Failed.', to: EMAIL
+        //     archiveArtifacts artifacts: 'report.csv', allowEmptyArchive: true
+        //     sh '''
+        //         #clean workspace
+        //         echo Workspace ${WORKSPACE}
+        //         sudo rm -rf ${WORKSPACE}/*
+        //     '''
+        // }
+    }
+}
+
+def createCsv() {
+    outString = 'Repository,Repo Type,Old Version,New Version,Pointfix Branch Version,Updated,Status\r\n'
+    writeFile file: 'report.csv', text: outString
+}
+
+def callCreatePointFixBranchfunction(repos, repoType) {
+    jobStatusSuccess = true
+    status = "ERROR"
+    updated = "FALSE"
+    oldVersion = ""
+    newVersion = ""
+    repos.each { item -&gt;
+        def b = build(job: 'eric-cenm-create-pointfix-branch', parameters: [[$class:'StringParameterValue', name:'REPO', value:String.valueOf("${item}")],[$class:'StringParameterValue', name:'CURRENT_SPRINT', value:String.valueOf("${params.CURRENT_SPRINT}")],[$class:'StringParameterValue', name:'CHECKOUT_TAG', value:String.valueOf("${params.CHECKOUT_TAG}")],[$class:'StringParameterValue', name:'EMAIL', value:String.valueOf("${params.EMAIL}")],[$class:'BooleanParameterValue', name:'PUSH_COMMIT', value: "${params.PUSH_COMMIT}"]], propagate: false, wait: true)
+
+        currentBuild.description = "Sprint Version Update Branch: $b.buildVariables.BRANCH_NAME&lt;BR&gt;"
+        currentBuild.description += "Branch based on tag/branch: CHECKOUT_TAG"
+        echo "Repo = ${item}, Result = $b.result"
+        if("$b.result" == 'SUCCESS') {
+            status = "OK"
+            jobStatusSuccess = jobStatusSuccess &amp;&amp; true
+        } else {
+            status = "ERROR"
+            jobStatusSuccess = jobStatusSuccess &amp;&amp; false
+        }
+
+        readContent = readFile 'report.csv'
+        outString = readContent + "${item},$repoType,$b.buildVariables.oldMinorVersion,$b.buildVariables.newMinorVersion,$b.buildVariables.newVersion,$b.buildVariables.updated,$status\r\n"
+        writeFile file: 'report.csv', text: outString
+         if(!jobStatusSuccess) {
+            currentBuild.result = "UNSTABLE"
+            //unstable("Stage unstable")
+        //     error("Error while updating the versions for the repo type: $repoType")
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

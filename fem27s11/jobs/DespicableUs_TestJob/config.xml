@@ -1,0 +1,401 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>Thi is a test job.</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>5</daysToKeep>
+        <numToKeep>20</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.23.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty plugin="leastload@1.0.3">
+      <leastLoadDisabled>false</leastLoadDisabled>
+    </org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>user_name</name>
+          <description>Your username</description>
+          <defaultValue>eandrpa</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.PasswordParameterDefinition>
+          <name>passw</name>
+          <description>Your password to access site.</description>
+          <defaultValue>{AQAAABAAAAAQcys5mVGf1xOK5GQOGpZWQCxO+ZMkj9gpzWPyTYWakuk=}</defaultValue>
+        </hudson.model.PasswordParameterDefinition>
+        <hudson.model.TextParameterDefinition>
+          <name>Distribution_list</name>
+          <description>Distribution list to notify the result to.</description>
+          <defaultValue>andrea.parodi@ericsson.com
+mara.medico@ericsson.com
+filippo.gallo@ericsson.com
+giampiero.torrielli@ericsson.com
+laura.bregante@ericsson.com
+mariaantonia.vaccarello@ericsson.com
+lucia.spoglianti@ericsson.com
+paola.zerega@ericsson.com
+</defaultValue>
+          <trim>false</trim>
+        </hudson.model.TextParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit></paramsToUseForLimit>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    <de.pellepelster.jenkins.walldisplay.WallDisplayJobProperty plugin="jenkinswalldisplay@0.6.30"/>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>ENM-SLAVE-GE-7_3</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <authToken>JenkinsToken</authToken>
+  <triggers>
+    <hudson.triggers.TimerTrigger>
+      <spec>H/20 11-18 * * 1-5</spec>
+    </hudson.triggers.TimerTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.plugins.python.Python plugin="python@1.3">
+      <command>import os.path
+import time
+import requests
+import datetime
+import urllib3
+import json
+from datetime import datetime
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+ses = requests.Session()
+report_file = &quot;report.log&quot;
+prop_file = &quot;despicable.properties&quot;
+va = &quot;&quot;
+va_type = &quot;&quot;
+booking_id = 0
+time_remaining = 0
+extension_count = 0
+distribution_list = os.environ[&apos;Distribution_list&apos;].replace(&quot;\n&quot;, &quot; &quot;)
+base_https_url = &quot;https://141.137.212.126:443/Bookings/&quot;
+
+def cleanup():
+    if os.path.exists(report_file):
+        os.remove(report_file)
+        print(&apos;Found and removed {}&apos;.format(report_file))
+    with open(prop_file, &quot;w&quot;) as propfile:
+        propfile.write(&quot;Distribution_list=&quot; + distribution_list + &quot;\n&quot;)
+        print(&apos;Initialized properties file&apos;)
+
+        
+def exec_login():
+    print(&quot;Login to system&quot;)
+    myn = os.environ[&apos;user_name&apos;]
+    myp = os.environ[&apos;passw&apos;]
+    url_login = &quot;http://141.137.212.126:80/users/login&quot;
+    outp = ses.post(url_login, data={&apos;data[User][username]&apos;: myn.strip(), &apos;data[User][password]&apos;: myp.strip()},
+                    verify=False)
+    if &quot;Login - Test Environment on Demand&quot; in outp.content.decode():
+        print(&quot;Login failure, exiting&quot;)
+        exit(1)
+
+
+def book_va(team, kind):
+    time_now = round(time.time()*1000)
+    url_book = &quot;{}create_api/vapp_type:{}/duration_seconds:18000/team:{}/.json_={}&quot;\
+        .format(base_https_url, kind, team, str(time_now))
+    out = ses.get(url_book, verify=False)
+    print(out.content.decode())
+
+
+def set_user(team):
+    print(&quot;Set user {}&quot;.format(team))
+    time_now = round(time.time()*1000)
+    url_set_team = &quot;{}set_users_team/team:{}/.json?_={}&quot;.format(base_https_url, team, str(time_now))
+    ses.get(url_set_team, verify=False)
+
+
+def reset_globals():
+    global va
+    global va_type
+    global status
+    global booking_id
+    global time_remaining
+    global extension_count
+    va = &quot;&quot;
+    va_type = &quot;&quot;
+    status = &quot;&quot;
+    booking_id = 0
+    time_remaining = 0
+    extension_count = 0
+
+def get_info(team):
+    print(&quot;Get info&quot;)
+    global va
+    global va_type
+    global status
+    global booking_id
+    global time_remaining
+    global extension_countx
+    reset_globals()
+    time_now = round(time.time()*1000)
+    url_get_status = &quot;{}bookings_api/.json?_={}&quot;.format(base_https_url, str(time_now))
+    out = ses.get(url_get_status, verify=False)
+    output = out.content.decode()
+    records = json.loads(output)
+    out_dict = records[&apos;bookings&apos;]
+    first_key = 0
+    if isinstance(out_dict, dict):
+        first_key =list(out_dict.keys())[0]
+    if &quot;status&quot; not in out_dict[first_key]:
+        status = &quot;NA&quot;
+        return
+    status = out_dict[first_key][&apos;status&apos;]
+    if &quot;queued&quot; in status:
+        print(&quot;Queued&quot;)
+        return
+
+    va = out_dict[first_key][&apos;vapp_gateway_hostname&apos;]
+    va_type = out_dict[first_key][&apos;vapp_type&apos;]
+    booking_id = out_dict[first_key][&apos;unique_booking_id&apos;]
+    time_remaining = int(out_dict[first_key][&apos;time_remaining_seconds&apos;])
+    extension_count = int(out_dict[first_key][&apos;extension_count&apos;])
+
+
+def check_time(team):
+    if extension_count &lt; 5:
+        if (time_remaining &lt; 1800):
+            #print(&quot;Ext {}&quot;.format(va))
+            extend(team)
+
+
+def extend(team):
+    time_now = round(time.time()*1000)
+    url_extends = &quot;{}extend_api/unique_booking_id:{}/team:{}/.json?_={}&quot;\
+        .format(base_https_url, booking_id, team, time_now)
+    ses.get(url_extends, verify=False)
+    print(&quot;Ext {}&quot;.format(va[5:]))
+
+
+def notify():
+    global message
+    with open(report_file, &apos;r&apos;) as report:
+        to_be_notif_list = report.readlines()
+        to_be_n_list = [ele.replace(&quot;\n&quot;, &quot;&quot;) for ele in to_be_notif_list]
+    for el in teams:
+        set_user(el)
+        time.sleep(30)
+        get_info(el)
+        if status:
+            if &quot;booked&quot; in status:
+                if el in to_be_n_list:
+                    to_be_n_list.remove(el)
+                    message+= el + &quot; &quot; + va + &quot; &quot; + va_type + &quot; , &quot;
+            else:
+                message += el + &quot; &quot; + status + &quot;, &quot;
+        else:
+            message += &quot;some issue during {} retrieving....&quot;.format(el)
+        time.sleep(30)
+    with open(prop_file, &apos;a&apos;)as propfile:
+        propfile.write(&quot;Subject_message=&quot; + message[:-2])
+        if len(to_be_n_list) == 0:
+            os.remove(report_file)
+        else:
+            with open(report_file, &apos;w&apos;)as report:
+                for elem in to_be_n_list:
+                    report.write(&quot;{}\n&quot;.format(elem))
+
+
+######################### main ############################
+kind = &quot;SSGID&quot;
+teams = [&quot;DespicableUs&quot;]
+message = &quot;&quot;
+fill_report = False
+exec_login()
+print(&quot;It&apos;s {}.&quot;.format(datetime.now().hour))
+
+if datetime.now().hour &lt;= 7:
+    print(&quot;FIRST STEP&quot;)
+    cleanup()
+    for el in teams:
+        #if &quot;DespicableUs&quot; in el:
+        #    kind = &apos;FULL&apos;
+        #else:
+        #    kind = &apos;SSGID&apos;
+        book_va(el, kind)
+        time.sleep(60)
+    #better wait a little before retrieving info because of the server slowness
+    time.sleep(60)
+    for el in teams:
+        set_user(el)
+        time.sleep(30)
+        get_info(el)
+        #print(&quot;{} STATUS:{}&quot;.format(el, status)) 
+        if status:
+            if &quot;booked&quot; in status:
+                message+= el + &quot; &quot; + va + &quot; &quot; + va_type + &quot; , &quot;
+                time.sleep(30)
+                continue
+        fill_report = True
+        time.sleep(30)    
+    with open(prop_file, &apos;a&apos;)as propfile:
+        if fill_report:#I should not send mail...waiting for next run
+            propfile.write(&apos;Distribution_list=&apos;)
+            with open(report_file, &apos;w&apos;) as report:
+                for user in teams:
+                    report.write(&quot;{}\n&quot;.format(user))
+        else:
+            propfile.write(&quot;Subject_message=&quot; + message[:-2])
+    exit(0)
+elif datetime.now().hour == 8:
+    if not os.path.exists(report_file):
+        with open(prop_file, &apos;w&apos;) as propfile:
+            propfile.write(&apos;Distribution_list=&apos;)
+        exit(0)#Nothing to do, already notified
+    print(&quot;NOTIFY&quot;)
+    notify()
+    exit(0)            
+elif 10 &lt;= datetime.now().hour &lt; 19:
+    print(&quot;MANAGE&quot;)
+    to_be_n_list = []
+    if os.path.exists(report_file):
+        with open(report_file, &apos;r&apos;) as report:
+            to_be_notif_list = report.readlines()
+            to_be_n_list = [ele.replace(&quot;\n&quot;, &quot;&quot;) for ele in to_be_notif_list]
+    for el in teams:
+        set_user(el)
+        get_info(el)
+        #print(&quot;EL {} status {}&quot;.format(el, status))
+        if &quot;booked&quot; in status:
+            if el in to_be_n_list:
+                print(&quot;Removing {}&quot;.format(el))
+                #to_be_n_list.remove(el)
+                message+= el + &quot; &quot; + va + &quot; &quot; + va_type + &quot; , &quot;
+            check_time(el)
+        elif &quot;NA&quot; in status:
+            print(&quot;Something went wrong during the get info, skipping&quot;)
+            continue
+        else:
+            message += &quot;NO way of retrieving the &quot; + el +&quot; one, or still &quot; + status + &quot; ,&quot;
+            print(&quot;nothing to do...&quot;)
+    with open(prop_file, &apos;w&apos;) as propfile:
+        #print(&quot;Message len {}&quot;.format(len(to_be_n_list)))
+        if len(message) &gt; 0:#there is something to notify
+            if os.path.exists(report_file):
+                print(&quot;Removing report file&quot;)
+                os.remove(report_file)
+                #notify for the last time today
+                propfile.write(&quot;Subject_message=&quot; + message[:-2])
+            else:
+                propfile.write(&apos;Distribution_list=&apos;)
+        else:
+            propfile.write(&apos;Distribution_list=&apos;)
+else:
+    with open(prop_file, &apos;w&apos;) as propfile:
+        propfile.write(&apos;Distribution_list=&apos;)</command>
+      <configuredLocalRules/>
+    </hudson.plugins.python.Python>
+    <EnvInjectBuilder plugin="envinject@2.1.5">
+      <info>
+        <propertiesFilePath>despicable.properties</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+  </builders>
+  <publishers>
+    <hudson.plugins.emailext.ExtendedEmailPublisher plugin="email-ext@2.63">
+      <recipientList>$Distribution_list</recipientList>
+      <configuredTriggers>
+        <hudson.plugins.emailext.plugins.trigger.AlwaysTrigger>
+          <email>
+            <subject>$PROJECT_DEFAULT_SUBJECT</subject>
+            <body>$PROJECT_DEFAULT_CONTENT</body>
+            <recipientProviders>
+              <hudson.plugins.emailext.plugins.recipients.DevelopersRecipientProvider/>
+              <hudson.plugins.emailext.plugins.recipients.ListRecipientProvider/>
+            </recipientProviders>
+            <attachmentsPattern></attachmentsPattern>
+            <attachBuildLog>false</attachBuildLog>
+            <compressBuildLog>false</compressBuildLog>
+            <replyTo>$PROJECT_DEFAULT_REPLYTO</replyTo>
+            <contentType>project</contentType>
+          </email>
+        </hudson.plugins.emailext.plugins.trigger.AlwaysTrigger>
+      </configuredTriggers>
+      <contentType>default</contentType>
+      <defaultSubject>$Subject_message</defaultSubject>
+      <defaultContent>$DEFAULT_CONTENT</defaultContent>
+      <attachmentsPattern></attachmentsPattern>
+      <presendScript>$DEFAULT_PRESEND_SCRIPT</presendScript>
+      <postsendScript>$DEFAULT_POSTSEND_SCRIPT</postsendScript>
+      <attachBuildLog>false</attachBuildLog>
+      <compressBuildLog>false</compressBuildLog>
+      <replyTo>$DEFAULT_REPLYTO</replyTo>
+      <from>DespicableUs</from>
+      <saveOutput>false</saveOutput>
+      <disabled>false</disabled>
+    </hudson.plugins.emailext.ExtendedEmailPublisher>
+    <hudson.plugins.ws__cleanup.WsCleanup plugin="ws-cleanup@0.37">
+      <patterns>
+        <hudson.plugins.ws__cleanup.Pattern>
+          <pattern>*despicable*properties</pattern>
+          <type>INCLUDE</type>
+        </hudson.plugins.ws__cleanup.Pattern>
+      </patterns>
+      <deleteDirs>false</deleteDirs>
+      <skipWhenFailed>false</skipWhenFailed>
+      <cleanWhenSuccess>true</cleanWhenSuccess>
+      <cleanWhenUnstable>true</cleanWhenUnstable>
+      <cleanWhenFailure>true</cleanWhenFailure>
+      <cleanWhenNotBuilt>true</cleanWhenNotBuilt>
+      <cleanWhenAborted>true</cleanWhenAborted>
+      <notFailBuild>false</notFailBuild>
+      <cleanupMatrixParent>false</cleanupMatrixParent>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.WsCleanup>
+  </publishers>
+  <buildWrappers/>
+</project>

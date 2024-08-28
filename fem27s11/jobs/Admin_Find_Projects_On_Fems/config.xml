@@ -1,0 +1,500 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><project>
+  <actions/>
+  <description>https://jira-oss.seli.wh.rnd.internal.ericsson.com/browse/CIP-35821&#13;
+Identify repos and their Jenkins jobs + job status from all fems   - collect information whether Repos has migrated to Pipeline (is it in live or background)&#13;
+&lt;br&gt;&#13;
+Workspace files:&lt;br&gt;&#13;
+&lt;b&gt;repoNotInProjectsFile.txt&lt;/b&gt; -&gt; list of repos not migrated to pipeline with their ENABLED old Jenkins Jobs&lt;br&gt;&#13;
+&lt;b&gt;reposInProjectsFileLive.txt&lt;/b&gt; -&gt; list of repos migrated to pipeline (status LIVE) and any ENABLED old Jenkins Jobs grouped by FEM &lt;br&gt;&#13;
+&lt;b&gt;PipelineRepos.txt&lt;/b&gt; -&gt; Repos migrated  to Pipeline (both silent and Live) and their Jenkins Jobs in all fems (both enabled and disabled) grouped by repo name&lt;br&gt;&#13;
+&lt;a style="font-size:16px" href="http://atvts3459.athtem.eei.ericsson.se:5000/find_projects"&gt;http://atvts3459.athtem.eei.ericsson.se:5000/find_projects&lt;/a&gt;&lt;br&gt;</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@69.0.3">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>20</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.24.1">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@69.0.3">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@69.0.3">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@69.0.3">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty plugin="leastload@1.0.3">
+      <leastLoadDisabled>false</leastLoadDisabled>
+    </org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit/>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@69.0.3">
+      <enabled>false</enabled>
+      <userDomainSuffix/>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    <de.pellepelster.jenkins.walldisplay.WallDisplayJobProperty plugin="jenkinswalldisplay@0.6.30"/>
+    
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>GridEngine_RHEL7</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+echo 
+[ -d ci-pipeline-jenkins-config ] &amp;&amp; rm -rf ci-pipeline-jenkins-config
+git clone ssh://staging-gerritmirror.sero.gic.ericsson.se:29418/OSS/com.ericsson.oss.de/ci-pipeline-jenkins-config
+echo "finished cloning"
+echo "Gathering info from all fems.... Be patient it takes time"</command>
+    </hudson.tasks.Shell>
+    <hudson.plugins.groovy.Groovy plugin="groovy@2.2">
+      <scriptSource class="hudson.plugins.groovy.StringScriptSource">
+        <command>#!/usr/bin/env groovy
+import groovy.json.JsonSlurper;
+
+
+def repoInProjectsFile = []
+def validReposSet = []
+def JIRA_API_KEY = "Y2lleGFkbTEwMDpjaWV4YWRtMTAw"
+def JIRA_URL = "https://jira-oss.seli.wh.rnd.internal.ericsson.com/"
+
+
+repoInProjectsFile= find_projectsFileRepo()
+println "# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #"
+println "#                Number of Repos in the projects file --&gt;  ${repoInProjectsFile.size()} "
+println "# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #"
+println "#                Scanning Jira Kanban Board 'Won't Do' column "
+(wontdo, validReposSet) = getReposFromWontDo(JIRA_URL, JIRA_API_KEY)
+println "#   Total Number of Tickets in 'Won't Do' --&gt; " + wontdo.size()+ "    :   Valid Tickets --&gt; " + validReposSet.size()
+println "# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #"
+println "#                            Searching Repos NOT in projects file "
+reposNotInPR = getReposNotInProjectsFile(validReposSet, repoInProjectsFile)
+println "#   Total Number of Repos NOT in projects file --&gt; " + reposNotInPR.size()
+//println "Repos NOT in projects file ** ==&gt; " + reposNotInPR
+
+println "# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #"
+println "#               Gathering info from all fems.... Be patient it takes time "
+
+
+
+
+def getReposNotInProjectsFile(validReposSet, repoInProjectsFile) {
+    wontDoReposNotInPR = []
+    FileWriter writer = new FileWriter("WontDoReposNotInPR.txt")
+    //println "# Repos NOT in projects file: "
+    for (String repoWontDo in validReposSet) {
+        if (!repoInProjectsFile.contains(repoWontDo)) {
+            wontDoReposNotInPR.add(repoWontDo)
+            writer.write(repoWontDo +"\n") 
+            println repoWontDo
+        }
+    }
+    writer.close()
+    return wontDoReposNotInPR
+  //WontDoReposNotInPR.txt not archieved it is duplicate of WontDoReposJOBS.txt which has more additional info
+}
+
+
+def find_projectsFileRepo() {
+  	File projectsFile = new File('ci-pipeline-jenkins-config/ci-jenkins-config/projects')
+    def lines = projectsFile.readLines()
+    def repoFromFrojectsFile2 = []
+  
+    for(line in projectsFile.readLines()){
+        repoToCheckLine = line.replace("\r", "")
+        repo = repoToCheckLine.split(',').first() // to remove Fem and other reference after first ","
+        repoFromFrojectsFile2.add(repo)
+    }
+    return repoFromFrojectsFile2
+}
+
+def getReposFromWontDo(JIRA_URL, JIRA_API_KEY) {
+    def startAt = 0
+    def results = 1
+
+    Set validReposSet = []
+    def wontdo = []
+    def nullName = []
+    def validRepos = []
+    
+    while (startAt &lt; results) {
+        def baseUrl = JIRA_URL +"rest/agile/latest/board/6758/issue?startAt=" + startAt + "&amp;maxResults=3000"
+        def raw = getTicketInfo(baseUrl, JIRA_API_KEY);
+        def data = new JsonSlurper().parseText(raw);
+
+        for (ticket in data["issues"]) {
+            if (ticket["fields"]["issuetype"]["name"] == "Sub-task") {
+                if (ticket["fields"]["status"]["name"] == "Wont Do" || ticket["fields"]["status"]["name"] == "Won't Do") {
+                    def repo = ticket["fields"]["customfield_30812"]
+                    if (repo == null) {
+                        def desc = ticket["fields"]["description"]
+                        if (desc == null ) {
+                            nullName.push(["key": ticket["key"]])
+                        }
+                        repo = "repo name not found"
+                    }
+
+                    //Get rid of rubbish text
+                    repo = repo.replace("*", "").replace(" ", "")
+                    repo = repo.replaceAll("^.*OSS/", "").replaceAll("^_", "").replaceAll("_\$", "")
+                    repo = repo.replaceAll("^\\{.*?\\}", "").replaceAll("\\{.*?\\}\$", "").replaceAll("Â", "").replaceAll("\\.\$", "")
+                    repo = repo.replaceAll("]", "").replaceAll("\\s+", "").trim().replace("ServiceType:Model", "").replace("(code)", "")
+					repo = repo.replaceAll(" / ","/")
+                    //repo = repo.replaceAll(~/\s/,"")
+                  
+                    wontdo.push(["key": ticket["key"], "repo": repo])
+
+                    if (!repo.startsWith("LITP/") &amp;&amp; repo.startsWith("com.ericsson.")) {
+                        repo = "OSS/" + repo
+                       
+                    }
+                    if (repo.startsWith("OSS/com.ericsson.") || repo.startsWith("LITP/") ) {
+                        validRepos.push(["key": ticket["key"], "repo": repo])
+                        validReposSet.add(repo)
+                    }
+                }
+            }
+        }
+
+        startAt = startAt + data["maxResults"]
+        results = data["total"]
+    }
+    //println "nullName size ** ==&gt; " + nullName.size()
+    //println "wontdo size ** ==&gt; " + wontdo.size()
+    println "\nvalidRepos size ==&gt; " + validRepos.size()
+    println "validReposSet size ==&gt; " + validReposSet.size()
+    return [wontdo, validReposSet]
+}
+
+
+
+
+
+def getTicketInfo(url, key) {
+    def post = new URL(url).openConnection();
+    post.setRequestMethod("GET")
+    post.setDoOutput(true)
+    post.setRequestProperty("Content-Type", "application/json")
+    post.setRequestProperty("Authorization", "Basic $key")
+    def postRC = post.getResponseCode();
+
+    if(postRC.equals(200)) {
+        def raw = post.getInputStream().getText();
+        return raw
+    }
+
+    return postRC
+}
+</command>
+      </scriptSource>
+      <groovyName>(Default)</groovyName>
+      <parameters/>
+      <scriptParameters/>
+      <properties/>
+      <javaOpts/>
+      <classPath/>
+    </hudson.plugins.groovy.Groovy>
+    <hudson.tasks.Shell>
+      <command>#!/usr/bin/python
+import sys
+import os
+from os import listdir
+from os.path import isdir, join
+from xml.dom import minidom
+import urllib2
+import xml.parsers.expat
+from xml.etree import ElementTree as ET
+sys.path.insert(0, '/proj/ciexadm200/tools/utils/scripts/Monitoring_tools/Various_methods')
+from getXMLvalues import getValueFromTag
+
+
+def getFems():
+    tree = ET.parse("/proj/ciexadm200/tools/utils/scripts/Monitoring_tools/Configuration/JenkinsInstances_e2c.xml")
+    roots = tree.getroot()
+    fems = []
+    for elem in roots.getiterator():
+        if not elem.tag =="maven2-moduleset":
+            fems.append(elem.tag)
+    print "Fems from JenkinsInstances_e2c.xml\n", fems
+    return fems
+
+def getJobsInfo(fems):
+    jobs = []
+    for fem in fems:
+        print "********", fem
+        jenkins_job_home = "/proj/eiffel004_config_" + fem + "/eiffel_home/jobs/"
+        jenkins_jobs = [d for d in listdir(jenkins_job_home) if isdir(join(jenkins_job_home, d))]
+        for jenkins_job in jenkins_jobs:
+            config_job_file = jenkins_job_home + jenkins_job + "/config.xml"
+            if os.path.isfile(config_job_file):
+                jobInfo = getJobInfoFromConfig(fem, jenkins_job, config_job_file)
+                jobs.append(jobInfo)
+    return jobs
+
+def getJobInfoFromConfig(fem, jenkins_job, config_job_file):
+    jobInfo={}
+    repoName = "repo not set"
+    try:
+        propCont = getValueFromTag(config_job_file, "propertiesContent")
+        tagValue = propCont[0].firstChild.nodeValue.rstrip()
+        for line in str(tagValue).split("\n"):
+            if line.startswith("REPO="):
+                repoName = line.replace("REPO=","").rstrip()
+    #except (AttributeError, IndexError, TypeError, IOError) as ex:            
+    except Exception as ex:
+            #template = "propertiesContent - an exception of type {0} occurred. "
+            #message = template.format(type(ex).__name__ )
+            #print message
+            pass
+
+    if repoName == "repo not set":
+        try:
+            repoURL = getValueFromTag(config_job_file, "url")
+            repoName = repoURL[0].firstChild.nodeValue.rstrip().split("/", 1)[1]
+        #except (AttributeError, IndexError, TypeError):
+        except Exception as ex:
+            #template = "repoName not set - an exception of type {0} occurred. "
+            #message = template.format(type(ex).__name__ )
+            #print message
+            pass
+
+    jobStatus = "not set"
+    try:
+        jobStatusElm = getValueFromTag(config_job_file, "disabled")
+        jobStatus = jobStatusElm[0].firstChild.nodeValue.rstrip().encode("utf-8")
+        if jobStatus == "true":
+            jobStatus = "disabled"
+        else:
+            jobStatus = "enabled"
+    #except (AttributeError, IndexError, TypeError):
+    except Exception as ex:
+        #template = "jobStatus - an exception of type {0} occurred. "
+        #message = template.format(type(ex).__name__ )
+        #print message
+        pass
+    jobInfo.update({"fem":fem})
+    jobInfo.update({"name":jenkins_job})
+    jobInfo.update({"status":jobStatus})
+    jobInfo.update({"repo":repoName.encode("utf-8")})
+    return jobInfo
+
+
+def getJobsInfoFromProjectsFile(jobs, prFileLines):
+    if prFileLines:  ## check if projects file line is not empty
+        for job in jobs:
+            inProjectsFile = False
+            for prLine in  prFileLines:
+                splitline = prLine.split(",")
+                if job.get("repo") == splitline[0]:
+                    job.update({"in_projects_file" : True})
+                    for elem in splitline:
+                        if elem.startswith("SILENT_MODE="):
+                            silentMode = elem.replace("SILENT_MODE=","").rstrip()
+                            job.update({"silent_mode" : silentMode})
+                    inProjectsFile = True
+            if not inProjectsFile:
+                job.update({"in_projects_file" : False})
+                job.update({"silent_mode" : "N/A"})
+            #print job
+    return jobs
+
+
+def writeToTable(allJobs):
+    with open('jenkinsProjectsTable.csv', 'w') as file:
+        file.write("fem,repo_name,in_projects_file,silent_mode,job_name,status\n")
+        for job in allJobs:
+            file.write(job.get("fem").replace("fem", "") + "," + job.get("repo") + "," + str(job.get("in_projects_file")) + "," + job.get("silent_mode") + "," + job.get("name") + "," + job.get("status") + "\n")
+
+
+def writeToFile(fileName, heading, allJobs, fems, inProjectsFile):
+    with open(fileName, 'w') as file:
+        file.write("# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #\n")
+        file.write(heading)
+        file.write("# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #\n")
+        
+        
+        for fem in fems:
+            pipelineFems = ["fem6s11","fem21s11","fem22s11","fem23s11","fem25s11","fem26s11","fem31s11","fem32s11"] # + LITP fems 
+            if not fem in pipelineFems:
+                file.write("\n" + fem)
+                repos = getReposByFem(fem, allJobs, inProjectsFile)
+                for repo in repos:
+                    jobsToPrint = getJobsToPrint(fem, repo, allJobs, inProjectsFile)
+                    if len(jobsToPrint) &gt; 0:
+                        file.write( "\n\t" + repo)
+                        for job in jobsToPrint:
+                            file.write(  "\n\t\t" + job.get("name"))
+                        file.write( "\n" )
+       
+
+def getJobsToPrint(fem, repo, allJobs, inProjectsFile):
+    jobsToPrint = []
+    for job in allJobs:
+        if job.get("fem") == fem and job.get("repo") == repo:
+            if "enabled" == job.get("status"):
+                if (inProjectsFile and "false" == job.get("silent_mode")) or not inProjectsFile:
+                    jobsToPrint.append(job)
+    return jobsToPrint
+
+
+def getReposByFem(fem, jobs, inProjectsFile):
+    repos = [] 
+    for job in jobs:
+        if fem == job.get("fem") and inProjectsFile == job.get("in_projects_file"):
+            repos.append(job.get("repo"))
+    return set(repos)
+
+
+def getReposInProjectsFile(jobs):
+    repos = {}
+    for job in jobs:
+        if job.get("in_projects_file") == True:
+            repos.update({job.get("repo") : job.get("silent_mode")})
+    return repos
+
+
+
+
+def writeToPipelineJobsFile(allJobs):
+    with open('PipelineRepos.txt', 'w') as file:
+        file.write("# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #\n")
+        file.write("# Pipeline Repos in all fems grouped by repo name                                              #\n")
+        file.write("# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #\n")
+
+        repos = getReposInProjectsFile(allJobs)
+        file.write("\nNumber of repos in the projects file: "+ str(len(repos))) 
+        for repo, silent_mode in repos.items():
+            file.write("\n\n{0} : 'silent_mode={1}'".format(repo, silent_mode))
+            for fem in getFemSet(repo, allJobs):
+                file.write("\n    " + fem)
+                for job in allJobs:
+                    if job.get("fem") ==fem  and job.get("repo") == repo:
+                        file.write("\n\t{1} : {0}".format(job.get("name"), job.get("status")))
+                file.write( "\n" )
+
+def getFemSet(repo, jobs):
+    fems = []
+    for job in jobs:
+        if repo == job.get("repo"):
+            fems.append(job.get("fem"))
+    return set(fems)
+
+def writeToWontDoReposJOBS(allJobs):
+    with open('WontDoReposJOBS.txt', 'w') as file:
+        file.write("# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #\n")
+        file.write("# 'Won't Do' Repos not in Projects file with jobs in all fems grouped by repo name                                  #\n")
+        file.write("# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ #\n")
+
+        wdRepos = open("WontDoReposNotInPR.txt", 'rU')
+        wdFileLines = wdRepos.readlines()
+        wdRepos.close()
+        file.write("\nNumber of repos not in the projects file: "+ str(len(wdFileLines))) 
+        for repo in wdFileLines:
+            repo = repo.split("\n")[0]
+            file.write("\n\n" + repo)
+            for fem in getFemSet(repo, allJobs):
+                file.write("\n    " + fem)
+                for job in allJobs:
+                    if job.get("fem") == fem  and job.get("repo") == repo:
+                        file.write("\n\t{1} : {0}".format(job.get("name"), job.get("status")))
+                file.write( "\n" )
+
+
+def main():
+	
+    projectsFile = "ci-pipeline-jenkins-config/ci-jenkins-config/projects"
+    textHeading1 = "# Repos NOT IN the projects file with jobs ENABLED                                             #\n"
+    textHeading2 = "# Repos IN the projects file with 'SILENT_MODE=false' and jobs ENABLED elsewhere #\n"
+    fems = getFems()
+
+    prFile = open(projectsFile, 'rU')
+    prFileLines = prFile.readlines()
+    prFile.close()
+
+    allJobs= getJobsInfoFromProjectsFile(getJobsInfo(fems), prFileLines)
+    writeToTable(allJobs)
+    writeToFile('repoNotInProjectsFile.txt', textHeading1, allJobs, fems, False)
+    writeToFile('reposInProjectsFileLive.txt', textHeading2, allJobs, fems, True)
+    writeToPipelineJobsFile(allJobs)
+    writeToWontDoReposJOBS(allJobs)
+
+if __name__ == '__main__':
+    main()
+</command>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+echo
+echo "***Update mongoDB collections with the new informations obtained by the script***"
+#echo "getting - Permission denied, please try again - on atvts3459.athtem.eei.ericsson.se"
+
+scp jenkinsProjectsTable.csv root@atvts3459.athtem.eei.ericsson.se:dashboard
+
+
+ssh root@atvts3459.athtem.eei.ericsson.se &lt;&lt;EOF
+mongo
+use jenkins;
+show collections;
+db.projects_on_fems.drop();
+EOF
+
+ssh root@atvts3459.athtem.eei.ericsson.se &lt;&lt;EOF
+mongoimport -d jenkins -c projects_on_fems --headerline --type csv --file dashboard/jenkinsProjectsTable.csv
+
+EOF</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <hudson.tasks.ArtifactArchiver>
+      <artifacts>PipelineRepos.txt, WontDoReposJOBS.txt, repoNotInProjectsFile.txt, reposInProjectsFileLive.txt, jenkinsProjectsTable.csv</artifacts>
+      <allowEmptyArchive>false</allowEmptyArchive>
+      <onlyIfSuccessful>false</onlyIfSuccessful>
+      <fingerprint>false</fingerprint>
+      <defaultExcludes>true</defaultExcludes>
+      <caseSensitive>true</caseSensitive>
+    </hudson.tasks.ArtifactArchiver>
+  </publishers>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.37">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter/>
+      <externalDelete/>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+  </buildWrappers>
+</project>

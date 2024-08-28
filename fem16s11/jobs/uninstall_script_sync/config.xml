@@ -1,0 +1,104 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <org.jvnet.jenkins.plugins.nodelabelparameter.LabelParameterDefinition plugin="nodelabelparameter@1.10.3">
+          <name>slave</name>
+          <defaultValue>Jenkins_Trojan_CSAR_Slave_12</defaultValue>
+          <allNodesMatchingLabel>false</allNodesMatchingLabel>
+          <triggerIfResult>allCases</triggerIfResult>
+          <nodeEligibility class="org.jvnet.jenkins.plugins.nodelabelparameter.node.AllNodeEligibility"/>
+        </org.jvnet.jenkins.plugins.nodelabelparameter.LabelParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>#!/usr/bin/env groovy
+
+/* IMPORTANT:
+ *
+ * In order to make this pipeline work, the following configuration on Jenkins is required:
+ * - slave with a specific label (see pipeline.agent.label below)
+ * - credentials plugin should be installed and have the secrets with the following names:
+ *   + lciadm100credentials (token to access Artifactory)
+ */
+
+
+pipeline {
+    agent {
+        label slave
+    }
+    environment {
+        repositoryUrl = "https://arm902-eiffel004.athtem.eei.ericsson.se:8443/nexus/content/repositories/ci-internal"
+        CSAR_PACKAGE_NAME = "${params.BUILD_SNAPSHOT == true ? "enm-lite-installation-package-kgb" : "enm-lite-installation-package"}"
+        PACKAGE_TYPE = "${params.BUILD_SNAPSHOT == true ? "csar-lite-kgb" : "csar-lite"}"
+    }
+
+    stages {
+        stage('Clean workspace') {
+            steps {
+                script {
+                    sh "docker image prune -fa"
+                }
+                deleteDir()
+            }
+        }
+        stage('Checkout Integration Pipeline Git Repository') {
+            steps {
+                git branch: 'master',
+                        url: '${GERRIT_MIRROR}/OSS/com.ericsson.oss.containerisation/eric-enm-installation'
+                sh '''
+                    git remote set-url origin --push ${GERRIT_CENTRAL}/OSS/com.ericsson.oss.containerisation/eric-enm-installation
+                '''
+                sh "mkdir ${WORKSPACE}/csar_repo"
+                dir("${WORKSPACE}/csar_repo"){
+                    git branch: 'master',
+                        url: '${GERRIT_MIRROR}/OSS/com.ericsson.oss.containerisation/eric-enm-csar-package'
+                    sh '''
+                        git remote set-url origin --push ${GERRIT_CENTRAL}/OSS/com.ericsson.oss.containerisation/eric-enm-csar-package
+                    '''
+                }
+                sh "rm -rf ${WORKSPACE}/scripts/cenm_uninstall.sh"
+                sh "cp ${WORKSPACE}/csar_repo/scripts/cenm_uninstall.sh ${WORKSPACE}/scripts/"
+            }
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

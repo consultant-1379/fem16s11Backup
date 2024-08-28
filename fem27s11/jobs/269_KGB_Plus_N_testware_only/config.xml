@@ -1,0 +1,719 @@
+<?xml version="1.1" encoding="UTF-8"?><project>
+  <actions/>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.security.AuthorizationMatrixProperty>
+      <inheritanceStrategy class="org.jenkinsci.plugins.matrixauth.inheritance.InheritParentStrategy"/>
+      <permission>com.cloudbees.plugins.credentials.CredentialsProvider.Create:ebrocon</permission>
+      <permission>com.cloudbees.plugins.credentials.CredentialsProvider.Create:ekaragh</permission>
+      <permission>com.cloudbees.plugins.credentials.CredentialsProvider.Delete:ebrocon</permission>
+      <permission>com.cloudbees.plugins.credentials.CredentialsProvider.Delete:ekaragh</permission>
+      <permission>com.cloudbees.plugins.credentials.CredentialsProvider.ManageDomains:ebrocon</permission>
+      <permission>com.cloudbees.plugins.credentials.CredentialsProvider.ManageDomains:ekaragh</permission>
+      <permission>com.cloudbees.plugins.credentials.CredentialsProvider.Update:ebrocon</permission>
+      <permission>com.cloudbees.plugins.credentials.CredentialsProvider.Update:ekaragh</permission>
+      <permission>com.cloudbees.plugins.credentials.CredentialsProvider.View:ebrocon</permission>
+      <permission>com.cloudbees.plugins.credentials.CredentialsProvider.View:ekaragh</permission>
+      <permission>hudson.model.Item.Build:ebrocon</permission>
+      <permission>hudson.model.Item.Build:ekaragh</permission>
+      <permission>hudson.model.Item.Build:xpylcha</permission>
+      <permission>hudson.model.Item.Build:xravrou</permission>
+      <permission>hudson.model.Item.Build:XSHREYA</permission>
+      <permission>hudson.model.Item.Build:ZAGAANK</permission>
+      <permission>hudson.model.Item.Build:zahbakl</permission>
+      <permission>hudson.model.Item.Build:zkmhsua</permission>
+      <permission>hudson.model.Item.Build:ZRXXROK</permission>
+      <permission>hudson.model.Item.Build:zsakmeg</permission>
+      <permission>hudson.model.Item.Build:ZUTHPRA</permission>
+      <permission>hudson.model.Item.Build:zvenpar</permission>
+      <permission>hudson.model.Item.Cancel:ebrocon</permission>
+      <permission>hudson.model.Item.Cancel:ekaragh</permission>
+      <permission>hudson.model.Item.Cancel:xpylcha</permission>
+      <permission>hudson.model.Item.Cancel:xravrou</permission>
+      <permission>hudson.model.Item.Cancel:XSHREYA</permission>
+      <permission>hudson.model.Item.Cancel:ZAGAANK</permission>
+      <permission>hudson.model.Item.Cancel:zahbakl</permission>
+      <permission>hudson.model.Item.Cancel:zkmhsua</permission>
+      <permission>hudson.model.Item.Cancel:ZRXXROK</permission>
+      <permission>hudson.model.Item.Cancel:zsakmeg</permission>
+      <permission>hudson.model.Item.Cancel:ZUTHPRA</permission>
+      <permission>hudson.model.Item.Cancel:zvenpar</permission>
+      <permission>hudson.model.Item.Configure:ebrocon</permission>
+      <permission>hudson.model.Item.Configure:ekaragh</permission>
+      <permission>hudson.model.Item.Configure:xpylcha</permission>
+      <permission>hudson.model.Item.Configure:xravrou</permission>
+      <permission>hudson.model.Item.Configure:XSHREYA</permission>
+      <permission>hudson.model.Item.Configure:ZAGAANK</permission>
+      <permission>hudson.model.Item.Configure:zahbakl</permission>
+      <permission>hudson.model.Item.Configure:zkmhsua</permission>
+      <permission>hudson.model.Item.Configure:ZRXXROK</permission>
+      <permission>hudson.model.Item.Configure:zsakmeg</permission>
+      <permission>hudson.model.Item.Configure:ZUTHPRA</permission>
+      <permission>hudson.model.Item.Configure:zvenpar</permission>
+      <permission>hudson.model.Item.Discover:anonymous</permission>
+      <permission>hudson.model.Item.Discover:authenticated</permission>
+      <permission>hudson.model.Item.Discover:ebrocon</permission>
+      <permission>hudson.model.Item.Discover:ekaragh</permission>
+      <permission>hudson.model.Item.Discover:xpylcha</permission>
+      <permission>hudson.model.Item.Discover:xravrou</permission>
+      <permission>hudson.model.Item.Discover:XSHREYA</permission>
+      <permission>hudson.model.Item.Discover:ZAGAANK</permission>
+      <permission>hudson.model.Item.Discover:zahbakl</permission>
+      <permission>hudson.model.Item.Discover:zkmhsua</permission>
+      <permission>hudson.model.Item.Discover:ZRXXROK</permission>
+      <permission>hudson.model.Item.Discover:zsakmeg</permission>
+      <permission>hudson.model.Item.Discover:ZUTHPRA</permission>
+      <permission>hudson.model.Item.Discover:zvenpar</permission>
+      <permission>hudson.model.Item.ExtendedRead:ebrocon</permission>
+      <permission>hudson.model.Item.ExtendedRead:ekaragh</permission>
+      <permission>hudson.model.Item.ExtendedRead:xpylcha</permission>
+      <permission>hudson.model.Item.ExtendedRead:xravrou</permission>
+      <permission>hudson.model.Item.ExtendedRead:XSHREYA</permission>
+      <permission>hudson.model.Item.ExtendedRead:ZAGAANK</permission>
+      <permission>hudson.model.Item.ExtendedRead:ZRXXROK</permission>
+      <permission>hudson.model.Item.ExtendedRead:zsakmeg</permission>
+      <permission>hudson.model.Item.ExtendedRead:ZUTHPRA</permission>
+      <permission>hudson.model.Item.ExtendedRead:zvenpar</permission>
+      <permission>hudson.model.Item.Read:authenticated</permission>
+      <permission>hudson.model.Item.Read:ebrocon</permission>
+      <permission>hudson.model.Item.Read:ekaragh</permission>
+      <permission>hudson.model.Item.Read:xpylcha</permission>
+      <permission>hudson.model.Item.Read:xravrou</permission>
+      <permission>hudson.model.Item.Read:XSHREYA</permission>
+      <permission>hudson.model.Item.Read:ZAGAANK</permission>
+      <permission>hudson.model.Item.Read:zahbakl</permission>
+      <permission>hudson.model.Item.Read:zkmhsua</permission>
+      <permission>hudson.model.Item.Read:ZRXXROK</permission>
+      <permission>hudson.model.Item.Read:zsakmeg</permission>
+      <permission>hudson.model.Item.Read:ZUTHPRA</permission>
+      <permission>hudson.model.Item.Read:zvenpar</permission>
+      <permission>hudson.model.Item.Workspace:ebrocon</permission>
+      <permission>hudson.model.Item.Workspace:ekaragh</permission>
+      <permission>hudson.model.Item.Workspace:xpylcha</permission>
+      <permission>hudson.model.Item.Workspace:xravrou</permission>
+      <permission>hudson.model.Item.Workspace:XSHREYA</permission>
+      <permission>hudson.model.Item.Workspace:ZAGAANK</permission>
+      <permission>hudson.model.Item.Workspace:zahbakl</permission>
+      <permission>hudson.model.Item.Workspace:zkmhsua</permission>
+      <permission>hudson.model.Item.Workspace:ZRXXROK</permission>
+      <permission>hudson.model.Item.Workspace:zsakmeg</permission>
+      <permission>hudson.model.Item.Workspace:ZUTHPRA</permission>
+      <permission>hudson.model.Item.Workspace:zvenpar</permission>
+    </hudson.security.AuthorizationMatrixProperty>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>UNDEFINED</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>50</daysToKeep>
+        <numToKeep>20</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.23.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>true</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.chikli.hudson.plugin.naginator.NaginatorOptOutProperty plugin="naginator@1.17">
+      <optOut>false</optOut>
+    </com.chikli.hudson.plugin.naginator.NaginatorOptOutProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.25">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>ra</name>
+          <description>&lt;p&gt;Please provide the name of your &lt;b&gt;RA&lt;/b&gt;. &lt;b&gt;&lt;font color="red"&gt;Job will FAIL without this information&lt;/font&gt;&lt;/b&gt;&lt;/p&gt;</description>
+          <defaultValue>A&amp;O</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>team</name>
+          <description>&lt;p&gt;Please provide the name of your &lt;b&gt;Team&lt;/b&gt;. &lt;b&gt;&lt;font color="red"&gt;Job will FAIL without this information&lt;/font&gt;&lt;/b&gt;&lt;/p&gt;
+</description>
+          <defaultValue>A&amp;O</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>jobType</name>
+          <description>&lt;p&gt;To run a KGB + N initial install select &lt;b&gt;"initial_install_testware"&lt;/b&gt;&lt;br&gt;
+&lt;br&gt;
+  To run a KGB + N upgrade select &lt;b&gt;"upgrade_testware"&lt;/b&gt;. (&lt;font color="red"&gt;NOTE: your deployment should be in a good state before the upgrade.&lt;/font&gt; There is a &lt;a href="https://fem134-eiffel004.lmera.ericsson.se:8443/jenkins/view/S2_Team/job/Quick_Health_Check/"&gt;pre-upgrade check job&lt;/a&gt; to run to ensure health is ok.)&lt;br&gt;
+  &lt;br&gt;
+  To run your testware on an already installed or upgraded deployment select &lt;b&gt;"testware_only"&lt;/b&gt;
+&lt;/p&gt;</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>testware_only</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.TextParameterDefinition>
+          <name>deployPackage</name>
+          <description>&lt;p&gt;To crack the iso, &lt;b&gt;add your packages here&lt;/b&gt; in the following format:&lt;/p&gt;
+&lt;blockquote&gt;&lt;p&gt;&lt;font color="blue"&gt;&lt;b&gt;&amp;lt;deliverable name&amp;gt;::&amp;lt;version&amp;gt;&lt;/b&gt;&lt;/font&gt;, where version is in maven version format or "Latest". There is also an option to add a package that that has not been officially delivered as a complete URL.
+  &lt;br&gt;ERICrpm::1.2.3
+  &lt;br&gt;ERICrpm::Latest
+  &lt;br&gt;ERICrpm::https://ci-portal.seli.wh.rnd.internal.ericsson.com/static/tmpUploadSnapshot/2015-08-17_14-44-56/ERICapdatamacro_CXP9030537-1.22.9-SNAPSHOT20150817134050.noarch.rpm
+  &lt;/p&gt;&lt;/blockquote&gt;
+  
+&lt;blockquote&gt;&lt;p&gt;&lt;b&gt;When adding multiple rpms, use @@ as the separator:&lt;/b&gt;
+  &lt;br&gt;
+  &amp;lt;deliverable name&amp;gt;::&amp;lt;version&amp;gt;&lt;font color="blue"&gt;&lt;b&gt;@@&lt;/b&gt;&lt;/font&gt;&amp;lt;deliverable name&amp;gt;::&amp;lt;version&amp;gt;
+  &lt;br&gt;ERICrpm::1.0.25@@ERICrpm::Latest
+  &lt;/p&gt;&lt;/blockquote&gt;</description>
+          <defaultValue/>
+          <trim>false</trim>
+        </hudson.model.TextParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>xmlFile</name>
+          <description>&lt;p&gt;Please check you are using the correct Deployment Description for your deployment based on layout and if ipv6 enabled. &lt;/p&gt;
+&lt;p&gt;Alternatively a locally generated DeploymentDescription can be substituted in here using the &lt;a href="https://ci-portal.seli.wh.rnd.internal.ericsson.com/dmt/uploadSnapshot"&gt;Pre-Commit Staging Area available on the CI Portal&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;&lt;font color="red"&gt;Not needed for &lt;b&gt;testware_only&lt;/b&gt; job&lt;/font&gt;&lt;/p&gt;</description>
+          <defaultValue>/ericsson/deploymentDescriptions/test/4svc__production_dualStack__2evt_dd.xml</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>productSet</name>
+          <description>&lt;p&gt;--productSet 16.13 -&gt; Gets latest Product Set Version from 16.13 drop&lt;/p&gt;
+&lt;p&gt;--productSet 16.13::GREEN -&gt; Gets latest GREEN Product Set Version from 16.13 drop&lt;/p&gt;
+&lt;p&gt;--productSet 16.13::16.13.13 -&gt; Gets Version 16.13.13 of the Product Set Product Set Version&lt;/p&gt;</description>
+          <defaultValue>21.15::GREEN</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>setSED</name>
+          <description>&lt;p&gt; By default version of SED will be MASTER. Please update this parameter if you want to use a specific version of SED. &lt;/p&gt;
+&lt;p&gt; Version of SED should align with the above Product Set &lt;/p&gt;
+&lt;p&gt; Alternatively a custom SED can be substituted in here using the &lt;a href="https://ci-portal.seli.wh.rnd.internal.ericsson.com/dmt/uploadSnapshot"&gt;Staging Area available on the CI Portal&lt;/a&gt;&lt;/p&gt;
+</description>
+          <defaultValue>MASTER</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>skipLitpInstall</name>
+          <description>&lt;p&gt;&lt;b&gt;&lt;font color="red"&gt;Applicable for Upgrade only&lt;/font&gt;&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt; By default, LITP upgrade will be skipped. &lt;/p&gt;
+&lt;p&gt; Please check your &lt;u&gt;from&lt;/u&gt; Product Set vs. your &lt;u&gt;to&lt;/u&gt; Product Set to see if there is a change in the LITP version &lt;/p&gt;
+
+</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>NO</string>
+              <string>YES</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>skipPatchInstall</name>
+          <description>&lt;p&gt;&lt;b&gt;&lt;font color="red"&gt;Applicable for Upgrade only&lt;/font&gt;&lt;/b&gt;&lt;/p&gt;
+&lt;p&gt; By default, RHEL Patch upgrade will be skipped. &lt;/p&gt;
+&lt;p&gt; Please check your &lt;u&gt;from&lt;/u&gt; Product Set vs. your &lt;u&gt;to&lt;/u&gt; Product Set to see if there is a change in the RHEL Patch version &lt;/p&gt;
+
+</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>NO</string>
+              <string>YES</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix/>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    <de.pellepelster.jenkins.walldisplay.WallDisplayJobProperty plugin="jenkinswalldisplay@0.6.30"/>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>FEM134_POD_D_PM_4_Node_TE_slave</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>true</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>true</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>set +x
+#if ra or team parameter is empty, fail build.
+if [ -z "$ra" ] || [ -z "$team" ]
+then
+   echo "**********************************************************************"
+   echo "**********************************************************************"
+   echo "**********************************************************************"
+   echo "PLEASE ENTER YOUR RA &amp; TEAM NAME"
+   echo "**********************************************************************"
+   echo "**********************************************************************"
+   echo "**********************************************************************"
+   exit 1
+fi
+
+clusterId=`echo ${JOB_NAME}  | awk -F"_" '{print $1}'`
+echo "clusterId=$clusterId" &gt; envVariables
+
+wget -q "https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/service/local/artifact/maven/redirect?r=releases&amp;g=com.ericsson.ci.kgb&amp;a=kgb-scripts&amp;p=jar&amp;v=RELEASE" -O kgb-scripts.jar
+jar -xvf kgb-scripts*.jar 2&gt;&amp;1 &gt;/dev/null
+chmod +x kgb_logic_TEaaS_S2.sh
+bash kgb_logic_TEaaS_S2.sh set_env
+
+#Script that checks if the (virtual) LMS of the clusterId is located in vcentre1 or vcentre6 and updates the config file on the slave
+#/export/scripts/CLOUD/bin/dmt_vcenter_setter.sh ${clusterId}
+
+cat envVariables</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <EnvInjectBuilder plugin="envinject@1.92.1">
+      <info>
+        <propertiesFilePath>$WORKSPACE/envVariables</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+    <hudson.plugins.descriptionsetter.DescriptionSetterBuilder plugin="description-setter@1.10">
+      <regexp/>
+      <description>jobType = ${jobType}&lt;br&gt; Product Set = ${drop}::${ProductSetVer}&lt;br&gt; ENM ISO = ${ENM_iso}&lt;/b&gt;</description>
+    </hudson.plugins.descriptionsetter.DescriptionSetterBuilder>
+    <com.ericsson.duraci.messaging.EiffelMessageDispatcherBuildStep plugin="eiffel-core@75.0.1">
+      <baselineId/>
+      <flowContext>${flowContext}</flowContext>
+      <optionalParameters>
+        <list>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>artifactList</key>
+            <value>${gavs}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>team</key>
+            <value>${team}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>ra</key>
+            <value>${ra}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>installType</key>
+            <value>${cluType}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>clusterId</key>
+            <value>${clusterId}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>baseIso</key>
+            <value>${ENM_iso}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+        </list>
+      </optionalParameters>
+      <eiffelEventType class="com.ericsson.duraci.messaging.events.EiffelConfidenceLevelModifiedEventType">
+        <confidenceLevels>
+          <map>
+            <entry>
+              <string>MULTI_KGB_TESTING_STARTED</string>
+              <string>SUCCESS</string>
+            </entry>
+          </map>
+        </confidenceLevels>
+        <gav class="com.ericsson.duraci.messaging.events.params.ArtifactGavWrapper">
+          <groupId>na</groupId>
+          <artifactId>na</artifactId>
+          <version>na</version>
+        </gav>
+        <confidenceLevelAsString>MULTI_KGB_TESTING_STARTED: SUCCESS</confidenceLevelAsString>
+      </eiffelEventType>
+      <inputEventIdAsString/>
+    </com.ericsson.duraci.messaging.EiffelMessageDispatcherBuildStep>
+    <org.jenkinsci.plugins.conditionalbuildstep.ConditionalBuilder plugin="conditional-buildstep@1.3.3">
+      <runner class="org.jenkins_ci.plugins.run_condition.BuildStepRunner$Unstable" plugin="run-condition@1.0"/>
+      <runCondition class="org.jenkins_ci.plugins.run_condition.logic.Or" plugin="run-condition@1.0">
+        <conditions>
+          <org.jenkins__ci.plugins.run__condition.logic.ConditionContainer>
+            <condition class="org.jenkins_ci.plugins.run_condition.core.AlwaysRun"/>
+          </org.jenkins__ci.plugins.run__condition.logic.ConditionContainer>
+          <org.jenkins__ci.plugins.run__condition.logic.ConditionContainer>
+            <condition class="org.jenkins_ci.plugins.run_condition.core.NeverRun"/>
+          </org.jenkins__ci.plugins.run__condition.logic.ConditionContainer>
+          <org.jenkins__ci.plugins.run__condition.logic.ConditionContainer>
+            <condition class="org.jenkins_ci.plugins.run_condition.core.NeverRun"/>
+          </org.jenkins__ci.plugins.run__condition.logic.ConditionContainer>
+        </conditions>
+      </runCondition>
+      <conditionalbuilders>
+        <hudson.tasks.Shell>
+          <command>#!/bin/bash +x
+
+if [ "$jobType" == upgrade_testware ]
+then
+      #shell for upgrade_install setup
+      echo "Removing snapshots before Upgrade"
+      ssh -o UserKnownHostsFile=/dev/null -o CheckHostIP=no -o StrictHostKeyChecking=no root@$msip "/opt/ericsson/enminst/bin/enm_snapshots.bsh --action remove_snapshot"
+      echo "Finished removing snapshots"
+      else 
+      echo "removal of snapshots not needed for $jobType"
+fi</command>
+          <configuredLocalRules/>
+        </hudson.tasks.Shell>
+        <hudson.plugins.parameterizedtrigger.TriggerBuilder plugin="parameterized-trigger@2.30">
+          <configs>
+            <hudson.plugins.parameterizedtrigger.BlockableBuildTriggerConfig>
+              <configs>
+                <hudson.plugins.parameterizedtrigger.PredefinedBuildParameters>
+                  <properties>Product_Set_Version=$productSet
+DROP=${drop}
+clusterId=${clusterId}
+Test_CM=false
+Test_FM=false
+Test_NetEx=false
+Test_UM=false
+Test_SHM=false
+Test_CMB=false
+Test_NBI=false</properties>
+                </hudson.plugins.parameterizedtrigger.PredefinedBuildParameters>
+              </configs>
+              <projects>Upgrade-Availability-TE</projects>
+              <condition>ALWAYS</condition>
+              <triggerWithNoParameters>false</triggerWithNoParameters>
+              <buildAllNodesWithLabel>false</buildAllNodesWithLabel>
+            </hudson.plugins.parameterizedtrigger.BlockableBuildTriggerConfig>
+          </configs>
+        </hudson.plugins.parameterizedtrigger.TriggerBuilder>
+        <hudson.tasks.Shell>
+          <command>#!/bin/bash +x
+
+if [ "$jobType" == initial_install_testware ]
+then
+    echo "Running ${installTypeAnswer}"
+    #print command for verification
+    echo "/proj/lciadm100/cifwk/latest/bin/cicmd deployment --clusterid ${clusterId} --productSet ${drop}::${ProductSetVer} --product ENM --environment physical --installType ${installTypeAnswer} --setSED ${setSED} --xmlFile ${xmlFile} ${deployPackagePopulated}"
+
+    /proj/lciadm100/cifwk/latest/bin/cicmd deployment --clusterid ${clusterId} --productSet ${drop}::${ProductSetVer} --product ENM --environment physical --installType ${installTypeAnswer} --setSED ${setSED} --xmlFile ${xmlFile} ${deployPackagePopulated} --skipTearDown YES --updateNASconfig NO --extraParameter \"--thin\" 
+
+ elif [ "$jobType" == upgrade_testware ]
+ then
+    echo "Running ${installTypeAnswer}"
+    #print command for verification
+    echo "/proj/lciadm100/cifwk/latest/bin/cicmd deployment --clusterid ${clusterId} --productSet ${drop}::${ProductSetVer} --product ENM --environment physical --installType ${installTypeAnswer} --setSED ${setSED} --xmlFile ${xmlFile} ${deployPackagePopulated}"
+
+    /proj/lciadm100/cifwk/latest/bin/cicmd deployment --clusterid ${clusterId} --productSet ${drop}::${ProductSetVer} --product ENM --environment physical --installType ${installTypeAnswer} --skipOsInstall NO --skipLitpInstall NO --skipPatchInstall NO --skipEnmInstall NO --setSED ${setSED} --xmlFile ${xmlFile} ${deployPackagePopulated} --skipTearDown ${skipTearDown} --updateNASconfig NO
+else
+    echo "skipping install or upgrade as not needed for $jobType"
+fi</command>
+          <configuredLocalRules/>
+        </hudson.tasks.Shell>
+        <hudson.tasks.Shell>
+          <command>#!/bin/bash +x
+
+LMS_hostname=$(ssh -q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@$msip 'hostname')
+echo LMS_hostname=${LMS_hostname} &gt;&gt; envVariables
+
+if [ "$jobType" == initial_install_testware ]
+then
+   #shell for initial_install crontab setup
+   echo "Initial_install crontab setup for MS"
+   ssh -o UserKnownHostsFile=/dev/null -o CheckHostIP=no -o StrictHostKeyChecking=no root@$msip 'echo "0 */2 * * * /opt/ericsson/ERICddc/bin/ddcDataUpload -s ENM'${clusterId}'" &gt; /var/spool/cron/root'
+   ssh -o UserKnownHostsFile=/dev/null -o CheckHostIP=no -o StrictHostKeyChecking=no root@$msip 'cat /var/spool/cron/root'
+   echo "Finished Initial_install crontab setup for MS"
+else
+    echo "ddc cron not needed for $jobType"
+fi</command>
+          <configuredLocalRules/>
+        </hudson.tasks.Shell>
+        <hudson.tasks.Shell>
+          <command>#!/bin/bash +x
+
+ENM_base_iso=$(ssh -q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@$msip 'cat /etc/enm-version | cut -d" " -f5 | sed s/\)//g')
+echo ENM_base_iso=${ENM_base_iso}
+testware_iso_content=$(wget -q -O - --no-check-certificate "https://ci-portal.seli.wh.rnd.internal.ericsson.com/getPackagesInISO/?isoName=ERICenm_CXP9027091&amp;isoVersion=${ENM_base_iso}&amp;pretty=true&amp;showTestware=true")
+associated_MTEL_testware_version=$(echo ${testware_iso_content} | egrep -o "ERICTAFkvmmaintracktestsuite_CXP9031820-[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" | cut -d"-" -f2)
+echo associated_MTEL_testware_version=${associated_MTEL_testware_version}
+echo associated_MTEL_testware_version=${associated_MTEL_testware_version} &gt;&gt; envVariables
+
+</command>
+          <configuredLocalRules/>
+        </hudson.tasks.Shell>
+        <EnvInjectBuilder plugin="envinject@1.92.1">
+          <info>
+            <propertiesFilePath>$WORKSPACE/envVariables</propertiesFilePath>
+          </info>
+        </EnvInjectBuilder>
+        <hudson.tasks.Shell>
+          <command>re=vmlms
+echo re=$re &gt;&gt; envVariables
+
+if [[ $LMS_hostname =~ $re ]] &amp;&amp; [ $jobType == "initial_install_testware" ]
+then
+   echo "Creating bridgeaging Script on the MS"
+   if scp -P 22 -o "StrictHostKeyChecking no" create_bridgeaging_on_lms.sh root@$msip:/var/tmp; then
+      ssh -o UserKnownHostsFile=/dev/null -o CheckHostIP=no -o StrictHostKeyChecking=no root@$msip "bash /var/tmp/create_bridgeaging_on_lms.sh"
+      echo "Finished Creating bridgeaging Script"
+   fi
+elif  [ $jobType == "upgrade_testware" ] || [ $jobType == "testware_only" ]
+then
+   echo "bridgeaging Script not needed for $jobType"
+else
+   echo "LMS is physical so no need to run Creating bridgeaging Script on the MS"
+fi</command>
+          <configuredLocalRules/>
+        </hudson.tasks.Shell>
+        <EnvInjectBuilder plugin="envinject@1.92.1">
+          <info>
+            <propertiesFilePath>$WORKSPACE/envVariables</propertiesFilePath>
+          </info>
+        </EnvInjectBuilder>
+        <com.ericsson.oss.axis.BaselineDefinedMessageDispatcher plugin="taf-trigger@1.0.60">
+          <ciArtifacts>
+            <jobType>KGB+N</jobType>
+            <teamName>${team}</teamName>
+            <artifactsClassName>com.ericsson.oss.axis.BaselineDefinedMessageDispatcher$ArtifactAsPackage$1</artifactsClassName>
+          </ciArtifacts>
+          <schedule>
+            <xml>&lt;?xml version="1.0"?&gt;
+&lt;schedule xmlns="http://taf.lmera.ericsson.se/schema/te"
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+xsi:schemaLocation="http://taf.lmera.ericsson.se/schema/te http://taf.lmera.ericsson.se/schema/te/schedule/xml"&gt;
+
+&lt;item timeout-in-seconds="3600"&gt;
+&lt;name&gt;PM_EBS - Gryffindors &lt;/name&gt;
+&lt;component&gt;com.ericsson.oss.mediation.pm.ebs:ERICTAFebsmflow_CXP9031857&lt;/component&gt;
+
+&lt;suites&gt;PM_EBS.xml&lt;/suites&gt;
+
+&lt;env-properties&gt;
+
+&lt;property type="system" key="startNodes"&gt;true&lt;/property&gt;
+
+&lt;property type="jvm" key="version"&gt;8&lt;/property&gt;
+
+&lt;/env-properties&gt;
+
+&lt;/item&gt;
+
+&lt;item timeout-in-seconds="3000"&gt;
+&lt;name&gt;PM_CCTR_TEST_CASES&lt;/name&gt;
+&lt;component&gt;com.ericsson.oss.testware.pm:ERICTAFpm-temp-acceptance_CXP88888888&lt;/component&gt;
+&lt;suites&gt;PmCCTRUiTestCase.xml&lt;/suites&gt;
+&lt;env-properties&gt;
+&lt;property type="jvm" key="version"&gt;8&lt;/property&gt;
+&lt;/env-properties&gt;
+&lt;/item&gt;
+
+&lt;item timeout-in-seconds="2400"&gt;
+
+&lt;name&gt;PM_STATISTICAL_CBS-Warriors&lt;/name&gt;
+
+&lt;component&gt;com.ericsson.oss.testware.pm:ERICTAFpmsubstatistical_CXP9033208&lt;/component&gt;
+
+&lt;suites&gt;PM_STATISTICAL_CBS_Warriors.xml&lt;/suites&gt;
+
+&lt;env-properties&gt;
+
+&lt;property type="system" key="startNodes"&gt;true&lt;/property&gt;
+
+&lt;property type="jvm" key="version"&gt;8&lt;/property&gt;
+
+&lt;/env-properties&gt;
+
+&lt;/item&gt;
+
+&lt;item timeout-in-seconds="2400"&gt;
+
+&lt;name&gt;PM_CELLTRACE_CBS&lt;/name&gt;
+
+&lt;component&gt;com.ericsson.oss.testware.pm:ERICTAFpmsubcelltracetestware_CXP9033822&lt;/component&gt;
+
+&lt;suites&gt;PM_CELLTRACE_CBS_Warriors.xml&lt;/suites&gt;
+
+&lt;env-properties&gt;
+
+&lt;property type="system" key="startNodes"&gt;true&lt;/property&gt;
+
+&lt;property type="jvm" key="version"&gt;8&lt;/property&gt;
+
+&lt;/env-properties&gt;
+
+&lt;/item&gt;
+
+&lt;item timeout-in-seconds="3000"&gt;
+&lt;name&gt;PM_UI_STATS_TEST_CASES&lt;/name&gt;
+&lt;component&gt;com.ericsson.oss.testware.pm:ERICTAFpm-temp-acceptance_CXP88888888&lt;/component&gt;
+&lt;suites&gt;PmStatisticalUiTestCases.xml&lt;/suites&gt;
+&lt;env-properties&gt;
+&lt;property type="jvm" key="version"&gt;8&lt;/property&gt;
+&lt;/env-properties&gt;
+&lt;/item&gt;
+
+&lt;item timeout-in-seconds="2400"&gt;
+&lt;name&gt;FLS Functional - Chanakya&lt;/name&gt;
+&lt;component&gt;com.ericsson.oss.services.fls:ERICTAFflstestware_CXP9033306&lt;/component&gt;
+&lt;suites&gt;FLS_CTUM.xml&lt;/suites&gt;
+&lt;env-properties&gt;
+&lt;property type="system" key="taf.profiles"&gt;kgb&lt;/property&gt;
+&lt;property type="jvm" key="version"&gt;8&lt;/property&gt;
+&lt;/env-properties&gt;
+&lt;/item&gt;
+
+&lt;item timeout-in-seconds="3000"&gt;
+&lt;name&gt;PM_UI_CELL_TRACE_TEST_CASES&lt;/name&gt;
+&lt;component&gt;com.ericsson.oss.testware.pm:ERICTAFpm-temp-acceptance_CXP88888888&lt;/component&gt;
+&lt;suites&gt;PmCellTraceUiTestCases.xml&lt;/suites&gt;
+&lt;env-properties&gt;
+&lt;property type="jvm" key="version"&gt;8&lt;/property&gt;
+&lt;/env-properties&gt;
+&lt;/item&gt;
+
+&lt;item timeout-in-seconds="7400"&gt;
+&lt;name&gt;PMIC_EBM - Warriors&lt;/name&gt;
+&lt;component&gt;com.ericsson.oss.pmic:ERICTAFpmicebm_CXP9031858&lt;/component&gt;
+&lt;suites&gt;PMIC_EBM_MME_Warriors.xml&lt;/suites&gt;
+&lt;env-properties&gt;
+&lt;property type="system" key="startNodes"&gt;true&lt;/property&gt;
+&lt;property type="jvm" key="version"&gt;8&lt;/property&gt;
+&lt;/env-properties&gt;
+&lt;/item&gt;
+
+&lt;item timeout-in-seconds="3600"&gt;
+&lt;name&gt;PMIC_CTUM - Europa&lt;/name&gt;
+&lt;component&gt;com.ericsson.oss.testware.pm:ERICTAFpmsubctumtestware_CXP9034245&lt;/component&gt;
+&lt;suites&gt;PMIC_CTUM.xml&lt;/suites&gt;
+&lt;env-properties&gt;
+&lt;property type="system" key="startNodes"&gt;true&lt;/property&gt;
+&lt;property type="jvm" key="version"&gt;8&lt;/property&gt;
+&lt;/env-properties&gt;
+&lt;/item&gt;
+
+&lt;item timeout-in-seconds="3000"&gt;
+&lt;name&gt;PM_UI_UE_TRACE_TEST_CASES&lt;/name&gt;
+&lt;component&gt;com.ericsson.oss.testware.pm:ERICTAFpm-temp-acceptance_CXP88888888&lt;/component&gt;
+&lt;suites&gt;PmUeTraceUiTestCases.xml&lt;/suites&gt;
+&lt;env-properties&gt;
+&lt;property type="jvm" key="version"&gt;8&lt;/property&gt;
+&lt;/env-properties&gt;
+&lt;/item&gt;
+
+&lt;item timeout-in-seconds="3000"&gt;
+&lt;name&gt;PM_UI_MO_TEST_CASES&lt;/name&gt;
+&lt;component&gt;com.ericsson.oss.testware.pm:ERICTAFpm-temp-acceptance_CXP88888888&lt;/component&gt;
+&lt;suites&gt;PmMoInstanceUiTestCases.xml&lt;/suites&gt;
+&lt;env-properties&gt;
+&lt;property type="jvm" key="version"&gt;8&lt;/property&gt;
+&lt;/env-properties&gt;
+&lt;/item&gt;
+&lt;/schedule&gt;</xml>
+            <testPropertiesAsString/>
+            <scheduleClassName>com.ericsson.oss.axis.BaselineDefinedMessageDispatcher$ScheduleAsXml$1</scheduleClassName>
+          </schedule>
+          <testwarePropertiesFile/>
+          <tunnellingOn>true</tunnellingOn>
+          <breakBuildOnTestsFailure>true</breakBuildOnTestsFailure>
+          <sutClusterId>${clusterId}</sutClusterId>
+          <citeHostPropertiesFile/>
+          <globalTestGroups/>
+          <tafVersion>2.67.2</tafVersion>
+          <userDefinedGAVs/>
+          <additionalTestProperties>
+            <property name="host.UiTestGrid.user.root.pass" value="shroot"/>
+            <property name="taf_ui.default_OS" value="LINUX"/>
+            <property name="host.UiTestGrid.port.ssh" value="22"/>
+            <property name="taf_profiles" value="maintrack"/>
+            <property name="MT_CSV_FILE_URI" value="https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/sites/tor/enm-maintrack-central-test-datasource/latest/maintrack/csv/nodeToAdd_15K.csv"/>
+            <property name="host.UiTestGrid.ip" value="141.137.173.252"/>
+            <property name="host.UiTestGrid.user.root.type" value="ADMIN"/>
+            <property name="host.UiTestGrid.type" value="SELENIUM_GRID"/>
+            <property name="host.UiTestGrid.port.http" value="4444"/>
+          </additionalTestProperties>
+          <arm>
+            <id/>
+            <description/>
+            <httpString>https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/groups/public</httpString>
+            <credentials>
+              <username/>
+              <password/>
+            </credentials>
+          </arm>
+          <ciFwkHost>https://ci-portal.seli.wh.rnd.internal.ericsson.com/</ciFwkHost>
+          <tafTestExecutorHostname/>
+          <tafTestExecutorPort>8080</tafTestExecutorPort>
+        </com.ericsson.oss.axis.BaselineDefinedMessageDispatcher>
+      </conditionalbuilders>
+    </org.jenkinsci.plugins.conditionalbuildstep.ConditionalBuilder>
+  </builders>
+  <publishers>
+    <hudson.plugins.claim.ClaimPublisher plugin="claim@2.8"/>
+    <com.ericsson.duraci.messaging.ConfidenceLevelMessageDispatcher plugin="eiffel-core@75.0.1">
+      <gav class="com.ericsson.duraci.messaging.events.params.ArtifactGavWrapper">
+        <groupId>na</groupId>
+        <artifactId>na</artifactId>
+        <version>na</version>
+      </gav>
+      <confidenceLevels>
+        <map>
+          <entry>
+            <string>MULTI_KGB_TESTING_COMPLETED</string>
+            <string>DYNAMIC</string>
+          </entry>
+        </map>
+      </confidenceLevels>
+      <optionalParameters>
+        <list>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>teAllureLogUrl</key>
+            <value>${TE_ALLURE_LOG_URL}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>teTestWare</key>
+            <value>${TE_TESTWARE}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>artifactList</key>
+            <value>${gavs}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>team</key>
+            <value>${team}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>ra</key>
+            <value>${ra}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>installType</key>
+            <value>${cluType}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>clusterId</key>
+            <value>${clusterId}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>baseIso</key>
+            <value>${ENM_iso}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+        </list>
+      </optionalParameters>
+      <baselineId/>
+      <flowContext>${flowContext}</flowContext>
+      <extraInputEventIdsAsString/>
+    </com.ericsson.duraci.messaging.ConfidenceLevelMessageDispatcher>
+  </publishers>
+  <buildWrappers>
+    <hudson.plugins.timestamper.TimestamperBuildWrapper plugin="timestamper@1.8.10"/>
+  </buildWrappers>
+</project>

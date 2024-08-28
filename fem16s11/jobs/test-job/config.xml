@@ -1,0 +1,207 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>REPO_NAME</name>
+          <description></description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>INCLUDED</name>
+          <description></description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>HCL</string>
+              <string>NO HCL</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>TYPE</name>
+          <description></description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>BaseImage</string>
+              <string>SG</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@4.10.3">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>ssh://gerritmirror-ha.lmera.ericsson.se:29418/OSS/com.ericsson.oss.containerisation/enm-containerisation-ci-pipeline</url>
+        <credentialsId>lciadm100_private_key</credentialsId>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>*/master</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <submoduleCfg class="list"/>
+    <extensions/>
+  </scm>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <javaposse.jobdsl.plugin.ExecuteDslScripts plugin="job-dsl@1.78.3">
+      <scriptText>createPipelineBuildJob(REPO_NAME)
+createPipelinePrecommitJob(REPO_NAME)
+createPipelineBuildPointfixJob(REPO_NAME)
+
+String pipeline_name
+def createPipelineBuildJob(project_name) {
+    pipeline_name = project_name.split(&apos;/&apos;).last()
+    if(TYPE == &quot;BaseImage&quot;) {
+        jenkinsfile = &apos;jenkins/jobDSL/common_pointfix_baseImages&apos;
+    }
+    else {
+        if(INCLUDED == &quot;HCL&quot;) {
+            jenkinsfile = &apos;jenkins/jobDSL/common_pointfix_sg&apos;
+        }
+        else(INCLUDED == &quot;NO HCL&quot;) {
+            jenkinsfile = &apos;jenkins/jobDSL/common_pointfix_sg_no_merge_values_no_dep_up&apos;
+        }
+    }
+    pipelineJob(pipeline_name) {
+        description (&apos;ENM Cloud Native Build pipeline &apos; + pipeline_name + &apos; - autogenerated using JobDSL - all manual changes will be overwritten!&apos;)
+        concurrentBuild(allowConcurrentBuild = false)
+        logRotator {
+            numToKeep(30)
+        }
+        definition {
+            cps {
+                script(readFileFromWorkspace(jenkinsfile))
+                sandbox(true)               
+            }
+        }
+    }
+    }
+
+def createPipelinePrecommitJob(project_name){
+    pipeline_name = project_name.split(&apos;/&apos;).last()
+    pipeline_name = pipeline_name + &apos;-precommit&apos;
+    pipelineJob(pipeline_name) {
+        description (&apos;ENM Cloud Native Build pipeline &apos; + pipeline_name + &apos; - autogenerated using JobDSL - all manual changes will be overwritten!&apos;)
+        concurrentBuild(allowConcurrentBuild = false)
+        //disabled()
+        triggers {
+            gerrit {
+                events {
+                    patchsetCreated()
+                }
+                project(&apos;plain:OSS/com.ericsson.oss.containerisation/&apos; + REPO_NAME, [&apos;plain:master&apos;])
+            }
+        }
+        definition {
+            cpsScm {
+                scm {
+                    git {
+                        branch(&apos;$GERRIT_REFSPEC&apos;)
+                        remote {
+                            credentials(&apos;lciadm100_private_key&apos;)
+                            refspec(&apos;$GERRIT_REFSPEC:$GERRIT_REFSPEC&apos;)
+                        }
+                    }
+                }
+                scriptPath(&quot;JenkinsfilePreCommit&quot;)
+            }
+        }
+    }
+}
+
+def createPipelineBuildPointfixJob(project_name){
+    pipeline_name = project_name.split(&apos;/&apos;).last()
+    pipeline_name = pipeline_name + &apos;-pointfix&apos;
+    if(TYPE == &quot;BaseImage&quot;) {
+        jenkinsfile = &apos;jenkins/jobDSL/common_pointfix_baseImages&apos;
+    }
+    else {
+        if(INCLUDED == &quot;HCL&quot;) {
+            jenkinsfile = &apos;jenkins/jobDSL/common_pointfix_sg&apos;
+        }
+        else(INCLUDED == &quot;NO HCL&quot;) {
+            jenkinsfile = &apos;jenkins/jobDSL/common_pointfix_sg_no_merge_values_no_dep_up&apos;
+        }
+    }
+    pipelineJob(pipeline_name) {
+        description (&apos;ENM Cloud Native Build pipeline &apos; + pipeline_name + &apos; - autogenerated using JobDSL - all manual changes will be overwritten!&apos;)
+        concurrentBuild(allowConcurrentBuild = false)
+        logRotator {
+            numToKeep(30)
+        }
+        definition {
+            cps {
+                script(readFileFromWorkspace(jenkinsfile))
+                sandbox(true)               
+            }
+        }
+    }
+}
+def PipelineName = job(&apos;pipeline_name&apos;) {
+    displayName(&apos;$pipeline_name&apos;)
+}
+
+queue(pipeline_name)</scriptText>
+      <usingScriptText>true</usingScriptText>
+      <sandbox>false</sandbox>
+      <ignoreExisting>false</ignoreExisting>
+      <ignoreMissingFiles>false</ignoreMissingFiles>
+      <failOnMissingPlugin>false</failOnMissingPlugin>
+      <failOnSeedCollision>false</failOnSeedCollision>
+      <unstableOnDeprecation>false</unstableOnDeprecation>
+      <removedJobAction>IGNORE</removedJobAction>
+      <removedViewAction>IGNORE</removedViewAction>
+      <removedConfigFilesAction>IGNORE</removedConfigFilesAction>
+      <lookupStrategy>JENKINS_ROOT</lookupStrategy>
+    </javaposse.jobdsl.plugin.ExecuteDslScripts>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

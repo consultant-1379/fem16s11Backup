@@ -1,0 +1,125 @@
+<flow-definition plugin="workflow-job@2.25">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.3.2"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.3.2">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>NAMESPACE</string>
+        <string>KUBE_CRED</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>To check the condition of the Environment suitable for Upgrade</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>KUBE_CRED</name>
+          <description>Kuberenetes Access Credentails</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>NAMESPACE</name>
+          <description>Namespace</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@69.0.3">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>30</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.19.2">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty/>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@69.0.3">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.57.2">
+    <script>#!/usr/bin/env groovy
+def GIT_COMMITTER_NAME = 'lciadm100'
+def GIT_COMMITTER_EMAIL = 'lciadm100@ericsson.com'
+pipeline {
+    agent {
+        label 'Cloud-Native-Template-version-002'
+    }
+    environment {
+        HOME_DIR = "${WORKSPACE}"		
+    }
+    parameters {
+        string(name: 'KUBE_CRED',description: 'Kuberenetes Access Credentails')
+        string(name: 'NAMESPACE',description: 'Namespace')
+}
+    stages {
+       stage ('Clean workspace') {
+          steps {
+            deleteDir()
+         }
+       }
+       stage('Checkout Cloud-Native pipeline Git Repository') {
+            steps {
+              git branch: 'dTORF-439020',
+                      url:'ssh://gerrit.ericsson.se:29418/OSS/com.ericsson.oss.containerisation/eric-enm-csar-package'
+            }
+        }
+		stage ('values')
+		{
+		steps{
+		      script{
+                    env.kubeConfig = "${workspace}/.kube/${KUBE_CRED}"
+                    env.helm = "KUBECONFIG=${kubeConfig} helm3"
+                    env.kubectl = "kubectl --kubeconfig=${kubeConfig}"
+					echo "kubeConfig: $kubeConfig"
+                    echo "helm: $helm"
+                    echo "kubectl: $kubectl"
+			  }
+			 }
+            }			 
+        stage( 'Connect-K8s' ) {
+            steps {
+                   sh 'mkdir -p ${PWD}/.kube &amp;&amp; chmod 775 ${PWD}/.kube &amp;&amp; cp -v ${PWD}/Kube-Config-Files/${KUBE_CRED} ${PWD}/.kube/${KUBE_CRED} &amp;&amp; chmod 664 ${PWD}/.kube/${KUBE_CRED}'
+				   sh "export KUBECONFIG=${PWD}/.kube/${KUBE_CRED}"
+                }
+        }
+		stage('Healthcheck') {
+            steps {
+                script {
+                        sh '''
+                                export KUBECONFIG=${PWD}/.kube/${KUBE_CRED}
+								echo "helm : ${helm}"
+                                bash -x ${PWD}/scripts/pre_health_check.sh  ${NAMESPACE}
+                           '''
+                }
+                archiveArtifacts 'integration_charts_history.txt'
+            }
+        }
+     }
+    }</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>true</disabled>
+</flow-definition>

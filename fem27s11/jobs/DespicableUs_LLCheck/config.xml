@@ -1,0 +1,639 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>This Job checks LL and RFA250 failures scanning all the testsuites for a given team name.&#xd;
+If flagged, the job will also run a check in the MT DDP sites looking for VCS events &#xd;
+related to a list of services (owned by DespicableUs team).</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>20</daysToKeep>
+        <numToKeep>15</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.23.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty plugin="leastload@1.0.3">
+      <leastLoadDisabled>false</leastLoadDisabled>
+    </org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>Team_name</name>
+          <description>Your team name used to retrieve the test-suites.</description>
+          <defaultValue>DespicableUs</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.TextParameterDefinition>
+          <name>Distribution_list</name>
+          <description>Distributin list to notify the failures to.</description>
+          <defaultValue>andrea.parodi@ericsson.com
+mara.medico@ericsson.com
+filippo.gallo@ericsson.com
+giampiero.torrielli@ericsson.com
+laura.bregante@ericsson.com
+mariaantonia.vaccarello@ericsson.com
+lucia.spoglianti@ericsson.com
+paola.zerega@ericsson.com</defaultValue>
+          <trim>false</trim>
+        </hudson.model.TextParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>Check_type</name>
+          <description>Choose which tests result to check.</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>LL&amp;RFA250</string>
+              <string>LongLoopOnly</string>
+              <string>RFA250Only</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>Run_vcs_checks</name>
+          <description>If flagged this job will run the VCS checks (monitor-offline and clean-start) in MT DDPs related to DespicableUs services (accesscontrol, sps, vaultserv)</description>
+          <defaultValue>true</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>user_name</name>
+          <description>Your username to access DDP site.</description>
+          <defaultValue>eandrpa</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.PasswordParameterDefinition>
+          <name>passw</name>
+          <description>Your password to access DDP site.</description>
+          <defaultValue>{AQAAABAAAAAQvob9zDbLST286bdfHY1y5sxPh8Xzd8Xcwnptyoa2g/M=}</defaultValue>
+        </hudson.model.PasswordParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>Cleanup_files</name>
+          <description>Select if you only want to remove the old files from workspace without checking the failures. All the above fields excluding Team_name will be ignored.</description>
+          <defaultValue>false</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit></paramsToUseForLimit>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    <de.pellepelster.jenkins.walldisplay.WallDisplayJobProperty plugin="jenkinswalldisplay@0.6.30"/>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>ENM-SLAVE-GE-7_3</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers>
+    <hudson.triggers.TimerTrigger>
+      <spec>0 8 * * *</spec>
+    </hudson.triggers.TimerTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <customWorkspace>despicable_workspace</customWorkspace>
+  <builders>
+    <hudson.plugins.python.Python plugin="python@1.3">
+      <command># -*- coding: utf-8 -*-
+import json
+import subprocess
+import os.path
+from os import path
+import datetime
+import time
+import requests
+import sys
+import os
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+
+##################### ENVIRONMENT LOAD ####################################
+un = os.environ[&apos;user_name&apos;]
+pw = os.environ[&apos;passw&apos;]
+team_name = os.environ[&apos;Team_name&apos;]
+check_type = os.environ[&apos;Check_type&apos;]
+cleanup_old_f = eval(os.environ[&apos;Cleanup_files&apos;].capitalize())
+run_vcs_checks = eval(os.environ[&apos;Run_vcs_checks&apos;].capitalize())
+
+
+###########################LL and RFA250 check variables ############################
+host = &apos;mtportal.seli.wh.rnd.internal.ericsson.com&apos;
+
+drop = &quot;&quot;
+iso = &quot;&quot;
+iso_from = &quot;&quot;
+iso_to = &quot;&quot;
+suite = &quot;&quot;
+to_be_sent = False
+
+
+########################### VCS event finder variables ###################
+
+ses = requests.Session()
+events_file_name = &quot;vcs_events_file&quot;
+vcs_message_file_name = &apos;notified_VCS_EVENTS.txt&apos;
+report_file_name = &apos;{}-VCStmp_message.txt&apos;.format(team_name)
+total_counter = 0
+vcs_message = &apos;&apos;&apos;&apos;&apos;&apos;
+vcs_to_be_sent = False
+login_URL = &apos;php/common/loginPage.php?location=%2Fphp%2Fsite_index.php&apos;
+
+yesterday = datetime.date.today() - datetime.timedelta(days=1)
+dir = yesterday.strftime(&apos;%d%m%y&apos;)
+
+#ENM sites list with relevant base urls
+ENMd = {&apos;LMI_ENM296&apos;: &apos;https://ddpenm7.athtem.eei.ericsson.se/&apos;,
+        &apos;LMI_ENM416&apos;: &apos;https://ddpi.athtem.eei.ericsson.se/&apos;,
+        &apos;LMI_ENM664&apos;: &apos;https://ddpi.athtem.eei.ericsson.se/&apos;,
+        &apos;LMI_ENM244&apos;: &apos;https://ddpenm6.athtem.eei.ericsson.se/&apos;,
+        &apos;LMI_ENM636&apos;: &apos;https://ddpenm5.athtem.eei.ericsson.se/&apos;,
+        &apos;LMI_ENM1077&apos; : &apos;https://ddpi.athtem.eei.ericsson.se/&apos;}
+
+
+#Data structure for the events record
+events = {}
+for el in ENMd.keys():
+    events[el] = {}
+    events[el][&apos;accesscontrol&apos;] = {}
+    events[el][&apos;accesscontrol&apos;][&apos;MonitorOffline&apos;]=[]
+    events[el][&apos;accesscontrol&apos;][&apos;CleanStart&apos;]=[]
+    events[el][&apos;sps&apos;] = {}
+    events[el][&apos;sps&apos;][&apos;MonitorOffline&apos;]=[]
+    events[el][&apos;sps&apos;][&apos;CleanStart&apos;]=[]
+    events[el][&apos;vaultserv&apos;] = {}
+    events[el][&apos;vaultserv&apos;][&apos;MonitorOffline&apos;] = []
+    events[el][&apos;vaultserv&apos;][&apos;CleanStart&apos;] = []
+
+
+
+###########################LL and RFA250 check ############################
+
+def execute_command(command):
+    command_array = command.split(&quot;  &quot;)
+    process = subprocess.Popen(command_array, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
+    output = process.communicate()[0]
+    return output
+
+
+def retrieveDrop(is_ll):
+    global drop
+    get_url = &quot;https://{}/metrics-services/sprint-details-from?sprint=19.01&quot;.format(host)
+    
+    output_json = ses.get(get_url, verify=False)
+    dati = json.loads(output_json.content)
+    if len(dati) == 0:
+        print(&quot;No DROP available, exiting.&quot;)
+        exit(0)
+    if is_ll:
+        drop = dati[0][&apos;name&apos;]
+    else:
+        for i in range(2):
+            drop += dati[i][&apos;name&apos;] + &quot;,&quot;
+        drop = drop[:-1]
+    print(&quot;Checking drop : {}&quot;.format(drop))
+
+
+def retrieveIso(is_ll):
+    global drop
+    global iso_from
+    global iso_to
+    global iso
+    job_type = &apos;&apos;
+    if not is_ll:
+        job_type = &apos;-failreport&apos;
+        
+    get_url = &quot;https://{}/metrics-services/list-iso-versions{}?drop={}&quot;.format(host,job_type,drop)
+    output_json = ses.get(get_url, verify=False)
+    dati = json.loads(output_json.content)
+    if len(dati) == 0:
+        print(&quot;No ISO available, we are likely on a sprint change, exiting.&quot;)
+        return False
+    if is_ll:
+        #get the first and last isos
+        iso_from_temp = dati[0][&apos;value&apos;].strip()
+        iso_to = dati[-1][&apos;value&apos;].strip()
+        if iso_from_temp[0] != iso_to[0]:
+            for i in dati:
+                if i[&apos;value&apos;][0] == iso_to[0]:
+                    iso_from_temp = i[&apos;value&apos;].strip()
+                    break
+        iso_from = iso_from_temp
+        print(&quot;Checking ISOs: from {} to {}&quot;.format(iso_from, iso_to))
+    else:
+        # get the last 20 isos GREEN
+        dati_filtered = []
+        for elem in dati:
+            if elem[&apos;baseLine&apos;] == &quot;SUCCESS&quot;:
+                dati_filtered.append(elem)       
+        for i in dati_filtered[-20:]:
+            iso += i[&apos;value&apos;].strip() + &quot;,&quot;
+        iso = iso[:-1]
+        print(&quot;Checking ISOs: {}&quot;.format(iso))
+    return True
+
+
+def retrieveSuite(is_ll):
+    global suite
+    job_type = &apos;longloop-suite-names&apos;
+    if not is_ll:
+        job_type = &apos;rfa-suite-names&apos;
+    get_url = &quot;https://{}/metrics-services/{}&quot;.format(host,job_type)
+    output_json = ses.get(get_url, verify=False)
+    dati = json.loads(output_json.content)
+    for element in dati:
+        if sys.version_info[0] == 3:
+           new_suite = element[&apos;value&apos;].replace(&apos;\xe2\x80\x93&apos;, &apos;-&apos;) # this is to replace long dash character in some suite name.
+        else :
+           new_suite = element[&apos;value&apos;].encode(&apos;utf8&apos;).replace(&apos;\xe2\x80\x93&apos;, &apos;-&apos;)  # this is to replace long dash character in some suite name.
+           suite+=new_suite + &quot;*&quot;
+    suite = suite[:-1]
+
+
+def cleanup(tmp_message_file_name):
+    if path.exists(tmp_message_file_name):
+        os.remove(tmp_message_file_name)
+        print(&apos;Found and removed {}&apos;.format(tmp_message_file_name))
+
+
+def save_new_failures(tmp_message_file_name, mail_sent_file, message_file):
+    global to_be_sent
+    if path.exists(tmp_message_file_name) and os.stat(tmp_message_file_name).st_size != 0:
+        kind = &apos;LL&apos; if &apos;LL&apos; in tmp_message_file_name else &apos;RFA250&apos;
+        print(&quot;{} Failures will be notified.&quot;.format(kind))
+        with open(mail_sent_file, &quot;a&quot;) as mail_file:
+            mail_file.write(datetime.datetime.now().strftime(&apos;%Y-%m-%d %H:%M:%S&apos;) + &quot; send mail\n&quot;)
+        to_be_sent = True
+        # the failures are added in the message file to trace the history, temporary file is attached to the email.
+        with open(tmp_message_file_name, &quot;r&quot;) as tmp_message_file:
+            message_file.write(tmp_message_file.read())
+
+def reset_variables():
+    global drop
+    global iso
+    global suite
+    global iso_from
+    global iso_to
+    drop = &quot;&quot;
+    iso = &quot;&quot;
+    suite = &quot;&quot;
+    iso_from = &quot;&quot;
+    iso_to = &quot;&quot;
+    
+def cleanup_old_files():
+    files = os.listdir(os.getcwd())
+    for el in files:
+        if el.startswith(team_name):
+            print(&quot;Removing {}&quot;.format(el))
+            os.remove(el)
+
+    
+def execute_ll():
+    print(&quot;Running LL failures check for team {}&quot;.format(team_name))
+    reset_variables()
+    message_file_name = &apos;{}-LLmessage.txt&apos;.format(team_name)
+    tmp_message_file_name = &apos;{}-LLtmp_message.txt&apos;.format(team_name)
+    mail_sent_file = &apos;{}-LLcheckScriptFailure&apos;.format(team_name)
+    cleanup(tmp_message_file_name)
+    message_file = open(message_file_name, &quot;a+&quot;)
+
+    signaledFailures = []
+    if path.exists(message_file_name):
+        signaledFailures = message_file.read().splitlines()
+    print(&quot;LL already signalled failures size: {}&quot;.format(len(signaledFailures)))
+    retrieveDrop(True)
+    if not retrieveIso(True):
+        return
+    retrieveSuite(True)
+
+    post_url = &quot;https://{}/metrics-services/long-loop-trends-by-teams&quot;.format(host)
+    body= {}
+    body[&apos;drop&apos;]= drop
+    body[&apos;iso_from&apos;]= iso_from
+    body[&apos;iso_to&apos;]= iso_to
+    body[&apos;suite&apos;]= suite
+    
+    output_json = ses.post(post_url, json=body, verify=False)
+    dati = json.loads(output_json.content)
+
+    # looking for failures in the response
+    for iso_el in dati:
+        base = iso_el[&apos;trendsByTeamIsoVOs&apos;]
+        version = iso_el[&apos;isoVersion&apos;].strip()
+        for x in base:
+            if team_name in x[&apos;suiteName&apos;]:
+                if x[&apos;testPassed&apos;] != x[&apos;testTotal&apos;]:
+                    stringa = version + &quot; &quot; + x[&apos;suiteName&apos;] + &quot;\n&quot;
+                    if stringa.strip() not in signaledFailures:
+                        with open(tmp_message_file_name, &quot;a&quot;) as tmp_message_file:
+                            tmp_message_file.write(stringa)
+
+    # new failures are notified, if any
+    save_new_failures(tmp_message_file_name, mail_sent_file, message_file)
+    message_file.close()
+
+def execute_rfa():
+    print(&quot;Running RFA250 failures check for team {}&quot;.format(team_name))
+    reset_variables()
+    global iso
+    message_file_name = &apos;{}-RFAmessage.txt&apos;.format(team_name)
+    tmp_message_file_name = &apos;{}-RFAtmp_message.txt&apos;.format(team_name)
+    mail_sent_file = &apos;{}-RFAcheckScriptFailure&apos;.format(team_name)
+    cleanup(tmp_message_file_name)
+
+    retrieveDrop(False)
+    if not retrieveIso(False):
+        return
+    retrieveSuite(False)
+    message_file = open(message_file_name, &quot;a+&quot;)
+
+    signaledFailures = []
+    if path.exists(message_file_name):
+        signaledFailures = message_file.read().splitlines()
+    print(&quot;RFA already signalled failures size: {}&quot;.format(len(signaledFailures)))
+    post_url = &quot;https://{}/metrics-services/rfa-trends-by-teams-failreport&quot;.format(host)
+    body={}
+    body[&apos;drop&apos;] = drop
+    body[&apos;isos&apos;] = iso
+    body[&apos;suites&apos;] = suite
+    body[&apos;isoStatus&apos;] = &quot;Working ISO&quot;
+    output_json = ses.post(post_url, json=body, verify=False)
+    dati = json.loads(output_json.content)
+
+    post_url_jira = &quot;https://{}/metrics-services/rfa-trends-jira-tickets&quot;.format(host)
+
+    # looking for failures in the response
+    for iso_el in dati:
+        base = iso_el[&apos;trendsByTeamIsoVOs&apos;]
+        version = iso_el[&apos;isoVersion&apos;].strip()
+        for x in base:
+            if team_name in x[&apos;suiteName&apos;]:
+                if x[&apos;testPassed&apos;] != x[&apos;testTotal&apos;]:
+                    body_jira = {}
+                    body_jira[&apos;iso&apos;] = version
+                    body_jira[&apos;rfa250_testcase&apos;] =  x[&apos;suiteName&apos;]
+                    body_jira[&apos;jira_ticket&apos;] = 1111
+                    output_json = ses.post(post_url_jira, json=body_jira, verify=False)
+                    jira_results = json.loads(output_json.content)
+                    
+                    # only failures without a TORF associated should be collected
+                    if &apos;Enter Jira Ticket Number&apos; in jira_results[0][&apos;jira&apos;]:
+                        stringa = version + &quot; &quot; + x[&apos;suiteName&apos;] + &quot;\n&quot;
+                        if stringa.strip() not in signaledFailures:
+                            with open(tmp_message_file_name, &quot;a&quot;) as tmp_message_file:
+                                tmp_message_file.write(stringa)
+    # new failures are notified by email, if any
+    save_new_failures(tmp_message_file_name, mail_sent_file, message_file)
+    message_file.close()
+
+############################################ VCS event finder ################################    
+
+
+def retrieve_events():
+    with open(events_file_name, &apos;w&apos;) as f:
+        for enm in ENMd.keys():
+            login_url = &apos;&apos;
+            try:
+                #Retrieve login url from site
+                vcs_url = ENMd[enm] + &apos;php/TOR/vcs_events.php?site=&apos; + enm + &apos;&amp;dir=&apos; + dir + &apos;&amp;date=&apos; + str(yesterday) + &apos;&amp;oss=tor&apos;
+                outp = ses.get(vcs_url, verify=False)
+                login_url = outp.url
+            except:
+                print(&quot;Some issue happened during the VCS event login process, mainly due to connection errors&quot;)
+                exit(1)
+
+            #Login and open the ddp page
+            vcs_events = ses.post(login_url, data={&apos;login&apos;: un.strip(), &apos;password&apos;: pw.strip()}, verify=False)
+            decoded_vcs_events = vcs_events.content
+            if sys.version_info[0] == 3:
+                decoded_vcs_events = vcs_events.content.decode()
+            
+            if &quot;Invalid SIGNUM and password.&quot; in decoded_vcs_events:
+                print(&quot;Password validation failed, exiting.&quot;)
+                f.write(&quot;Password validation failed, exiting.\n&quot;)
+                exit(1)
+            #decoded = vcs_events.content.decode()
+            
+            f.write(&apos;ENMSERVER:&apos; + enm + &apos;\n&apos;)
+            for line in (decoded_vcs_events).splitlines():
+                if &quot; time:&quot; in line:
+                    f.write(line + &apos;\n&apos;)
+
+
+def search_for_services():
+    global vcs_to_be_sent
+    global total_counter
+    with open(events_file_name, &apos;r&apos;) as f:
+        for line in f:
+            if &apos;ENMSERVER:&apos; in line:
+                current_server = line.split(&quot;:&quot;)[1].strip()
+                #print(&quot;current server:&quot;,current_server)
+            if &quot;CleanStart&quot; in line:
+                if &quot;accesscontrol&quot; in line:
+                    vcs_to_be_sent = True
+                    total_counter += 1
+                    events[current_server][&apos;accesscontrol&apos;][&apos;CleanStart&apos;].append(line)
+                elif &quot;sps&quot; in line:
+                    vcs_to_be_sent = True
+                    total_counter += 1
+                    events[current_server][&apos;sps&apos;][&apos;CleanStart&apos;].append(line)
+                elif &quot;vaultserv&quot; in line:
+                    vcs_to_be_sent = True
+                    total_counter += 1
+                    events[current_server][&apos;vaultserv&apos;][&apos;CleanStart&apos;].append(line)
+            elif &quot;MonitorOffline&quot; in line:
+                if &quot;accesscontrol&quot; in line:
+                    vcs_to_be_sent = True
+                    total_counter += 1
+                    events[current_server][&apos;accesscontrol&apos;][&apos;MonitorOffline&apos;].append(line)
+                elif &quot;sps&quot; in line:
+                    vcs_to_be_sent = True
+                    total_counter += 1
+                    events[current_server][&apos;sps&apos;][&apos;MonitorOffline&apos;].append(line)
+                elif &quot;vaultserv&quot; in line:
+                    vcs_to_be_sent = True
+                    total_counter += 1
+                    events[current_server][&apos;vaultserv&apos;][&apos;MonitorOffline&apos;].append(line)
+
+
+def build_message():
+    global vcs_message
+    vcs_message = &apos;&apos;&apos;&apos;&apos;&apos;
+    for server in events.keys():
+        vcs_message += &apos;&apos;&apos;\n{} \t  {}\t{}php/TOR/vcs_events.php?site={}&amp;dir={}&amp;date={}&amp;oss=tor
+        SERVICE\t\tCLEANSTART\tMONITOR OFFLINE
+        cacs\t\t{}\t\t\t{}
+        sps \t\t{}\t\t\t{}
+        vault\t\t{}\t\t\t{}
+        &apos;&apos;&apos;.format(server, yesterday, ENMd[server],server,dir,yesterday,
+                   len(events[server][&apos;accesscontrol&apos;][&apos;CleanStart&apos;]), len(events[server][&apos;accesscontrol&apos;][&apos;MonitorOffline&apos;]),
+                   len(events[server][&apos;sps&apos;][&apos;CleanStart&apos;]), len(events[server][&apos;sps&apos;][&apos;MonitorOffline&apos;]),
+                   len(events[server][&apos;vaultserv&apos;][&apos;CleanStart&apos;]), len(events[server][&apos;vaultserv&apos;][&apos;MonitorOffline&apos;]))
+
+        with open(report_file_name, &apos;w&apos;) as report:
+            report.write(vcs_message)
+
+def generate_report():
+    if vcs_to_be_sent:
+        print(&quot;Found vcs event in DDP sites.&quot;)
+        with open(vcs_message_file_name, &quot;a+&quot;) as f:
+            f.seek(0)
+            actual = f.readlines()
+            print(actual)
+            if str(yesterday) + &apos;-&apos; + str(total_counter) in actual:
+                print(&quot;failures already notified, nothing to do&quot;)
+                # exit(0)
+            else:
+                print(&quot;Failures will be notified&quot;)
+                f.seek(0)
+                f.truncate()
+                f.write(str(yesterday) + &apos;-&apos; + str(total_counter))
+                # exit(1)
+    else:
+        print(&quot;No issue found.&quot;)
+        #exit(1)#this is just for test, to be removed
+    os.remove(events_file_name)
+ 
+    
+########################### MAIN ####################################
+
+if cleanup_old_f:
+    cleanup_old_files()
+    run_vcs_checks = False
+    
+else:
+    if &apos;LongLoopOnly&apos; in check_type:
+        execute_ll()
+    elif &apos;RFA250Only&apos; in check_type:
+        execute_rfa()
+    else:
+        execute_ll()
+        execute_rfa()
+        # to_be_sent = True
+
+
+mail_message = &quot;There are failures in: &quot;
+        
+if run_vcs_checks:
+    print(&quot;Executing VCS checks&quot;)
+    retrieve_events()
+    search_for_services()
+    build_message()
+    print(vcs_message)
+    generate_report()
+    # vcs_to_be_sent = True
+        
+if to_be_sent:
+    mail_message += &quot;RFA or LL ,&quot;
+    # se fallisce LL o RFA c&apos;è il file tmp da allegare.
+if vcs_to_be_sent:
+    mail_message += &quot;VCS events in DDP &quot;
+# if no vcs failure, remove the report file.
+else:
+    if path.exists(report_file_name):
+        os.remove(report_file_name)
+
+# Build mail subject message.
+with open (&quot;despicable.properties&quot;, &quot;w&quot;) as f:
+    f.write(&quot;Subject_message=&quot; + mail_message[:-1])
+ 
+
+</command>
+      <configuredLocalRules/>
+    </hudson.plugins.python.Python>
+    <EnvInjectBuilder plugin="envinject@2.1.5">
+      <info>
+        <propertiesFilePath>despicable.properties</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+  </builders>
+  <publishers>
+    <hudson.plugins.postbuildtask.PostbuildTask plugin="postbuild-task@1.9">
+      <tasks>
+        <hudson.plugins.postbuildtask.TaskProperties>
+          <logTexts>
+            <hudson.plugins.postbuildtask.LogProperties>
+              <logText>Failures will be notified</logText>
+              <operator>OR</operator>
+            </hudson.plugins.postbuildtask.LogProperties>
+          </logTexts>
+          <EscalateStatus>true</EscalateStatus>
+          <RunIfJobSuccessful>false</RunIfJobSuccessful>
+          <script>exit 1</script>
+        </hudson.plugins.postbuildtask.TaskProperties>
+      </tasks>
+    </hudson.plugins.postbuildtask.PostbuildTask>
+    <hudson.plugins.emailext.ExtendedEmailPublisher plugin="email-ext@2.63">
+      <recipientList>$Distribution_list</recipientList>
+      <configuredTriggers>
+        <hudson.plugins.emailext.plugins.trigger.FailureTrigger>
+          <email>
+            <subject>$PROJECT_DEFAULT_SUBJECT</subject>
+            <body>$PROJECT_DEFAULT_CONTENT</body>
+            <recipientProviders>
+              <hudson.plugins.emailext.plugins.recipients.DevelopersRecipientProvider/>
+              <hudson.plugins.emailext.plugins.recipients.ListRecipientProvider/>
+            </recipientProviders>
+            <attachmentsPattern></attachmentsPattern>
+            <attachBuildLog>false</attachBuildLog>
+            <compressBuildLog>false</compressBuildLog>
+            <replyTo>$PROJECT_DEFAULT_REPLYTO</replyTo>
+            <contentType>project</contentType>
+          </email>
+        </hudson.plugins.emailext.plugins.trigger.FailureTrigger>
+      </configuredTriggers>
+      <contentType>default</contentType>
+      <defaultSubject>$Subject_message</defaultSubject>
+      <defaultContent>The attached file contains the $Team_name failures.
+
+$DEFAULT_CONTENT</defaultContent>
+      <attachmentsPattern>$Team_name*tmp_messa*.txt</attachmentsPattern>
+      <presendScript>$DEFAULT_PRESEND_SCRIPT</presendScript>
+      <postsendScript>$DEFAULT_POSTSEND_SCRIPT</postsendScript>
+      <attachBuildLog>false</attachBuildLog>
+      <compressBuildLog>false</compressBuildLog>
+      <replyTo>$DEFAULT_REPLYTO</replyTo>
+      <from>DespicableUs</from>
+      <saveOutput>false</saveOutput>
+      <disabled>false</disabled>
+    </hudson.plugins.emailext.ExtendedEmailPublisher>
+  </publishers>
+  <buildWrappers/>
+</project>

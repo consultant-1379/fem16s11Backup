@@ -1,0 +1,112 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>SPRINT</string>
+        <string>PUSH_COMMIT</string>
+        <string>COMMIT_TAG</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty>
+      <abortPrevious>false</abortPrevious>
+    </org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.BooleanParameterDefinition>
+          <name>PUSH_COMMIT</name>
+          <defaultValue>false</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>COMMIT_TAG</name>
+          <description>Enter the commit tag from which you want to create branch</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>SPRINT</name>
+          <description>Enter current sprint number Eg: 21.01</description>
+          <defaultValue>21.01</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>SLAVE</name>
+          <defaultValue>Docker-POC</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>pipeline {
+    agent { node { label 'Docker-POC-e2e' } }
+    parameters {
+        booleanParam(name: 'PUSH_COMMIT', defaultValue: false)
+        string(name: 'COMMIT_TAG', description: 'Enter the commit tag from which you want to create branch',defaultValue: "")
+        string(name: 'SPRINT', description: 'Enter current sprint number Eg: 21.01',defaultValue: "21.01")
+    }
+    stages {
+        stage ('Clean workspace') {
+          steps {
+            deleteDir()
+          }
+        }
+        stage("creating branch for ci-pipeline") {
+            steps {
+                script {
+                    BRANCH = "point_fix_${params.SPRINT}"
+                    echo "${BRANCH}"
+                    def repo = "OSS/com.ericsson.oss.de.containerisation/test-eric-enm-pre-deploy-integration"
+                    branch_exists = sh(returnStatus: true, script: """git ls-remote --exit-code --heads $env.GERRIT_MIRROR/$repo $BRANCH""")
+                    if(branch_exists != 0 &amp;&amp; env.PUSH_COMMIT == "true" &amp;&amp; COMMIT_TAG != "") {
+                        sh """
+                           git clone "${GERRIT_MIRROR}/${repo}"
+                           cd test-eric-enm-pre-deploy-integration
+                           git checkout -b ${BRANCH} ${COMMIT_TAG}
+                           git push ${GERRIT_CENTRAL}/$repo $BRANCH
+                           git checkout master
+                           git branch -D ${BRANCH}
+                        """
+                    }
+                    if(branch_exists == 1){
+                        error "Issue while checking the branch"
+                    }
+                }
+            }
+        }
+    }
+}
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

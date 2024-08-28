@@ -1,0 +1,185 @@
+<?xml version="1.1" encoding="UTF-8"?><flow-definition plugin="workflow-job@2.39">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.7.0"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.7.0">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>This Jenkins job is able to update &lt;b&gt;enm-requirements-python&lt;/b&gt; files in utils repo.&lt;br&gt;&#13;
+Each enm-requirements-python file contains the list of packages installed for a specific Python versions.&lt;br&gt;&#13;
+&lt;br&gt;&#13;
+&lt;b&gt;Python environments reflect the current installations for GridEngine slaves.&lt;/b&gt;&lt;br&gt;&#13;
+&lt;br&gt;&#13;
+&lt;b&gt;Confluence references&lt;/b&gt;:&lt;br&gt;&#13;
+- &lt;a href="https://confluence-oss.seli.wh.rnd.internal.ericsson.com/display/CICD/Python+environments+in+Jenkins+Pipeline"&gt;Python+environments+in+Jenkins+Pipeline&lt;/a&gt;&lt;br&gt;&#13;
+- &lt;a href="https://confluence-oss.seli.wh.rnd.internal.ericsson.com/pages/viewpage.action?spaceKey=CICD&amp;title=ENM+Python+Environment+-+Install+Module"&gt;ENM+Python+Environment+-+Install+Module&lt;/a&gt;&lt;br&gt;&#13;
+- &lt;a href="https://confluence-oss.seli.wh.rnd.internal.ericsson.com/display/CICD/ENM+python+build+time+environment"&gt;ENM+python+build+time+environment&lt;/a&gt;&lt;br&gt;&#13;
+&lt;br&gt;&#13;
+&lt;b&gt;Note&lt;/b&gt;: the job fails in case there is nothing to submit, hence nothing to update in enm-requirements-python files.&#13;
+</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.1"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@69.0.3">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.23.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@69.0.3">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit/>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+    <EnvInjectJobProperty plugin="envinject@2.1.5">
+      <info>
+        <propertiesContent>REPO=OSS/com.ericsson.ci.execution/utils</propertiesContent>
+        <secureGroovyScript plugin="script-security@1.73">
+          <script/>
+          <sandbox>false</sandbox>
+        </secureGroovyScript>
+        <loadFilesFromMaster>false</loadFilesFromMaster>
+      </info>
+      <on>true</on>
+      <keepJenkinsSystemVariables>true</keepJenkinsSystemVariables>
+      <keepBuildVariables>true</keepBuildVariables>
+      <overrideBuildParameters>false</overrideBuildParameters>
+    </EnvInjectJobProperty>
+    
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.80">
+    <script>@Library('ci-pipeline-lib') _
+pipeline {
+    agent { label 'ENM-SLAVE-GE-7' }
+    options {
+        timeout(time: 60, unit: 'MINUTES')
+        timestamps()
+    }
+    stages {
+        stage('Pre-step') {
+            steps {
+                ci_pcr_pre()
+            }
+        }
+        stage('Clone') {
+            steps {
+                sh 'git clone ${GERRIT_CENTRAL}/${REPO}'
+            }
+        }/*
+        stage('Python 2.6.6 backup') {
+            steps {
+                sh '''
+                export PYTHONPATH=/proj/ciexadm200/tools/enm_py-2.6_reqmnts-backup/usr/lib/python2.6/site-packages:/proj/ciexadm200/tools/enm_py-2.6_reqmnts-backup/usr/lib64/python2.6/site-packages
+                export PATH=/proj/ciexadm200/tools/enm_py-2.6_reqmnts-backup/usr/bin:$PATH
+                python -m site
+                python --version
+                pip --version
+                pip freeze
+                pip freeze &gt; utils/enm-python-requirements/enm-requirements-python2.6.6_backup.txt
+                '''
+            }
+        }
+        stage('Python 2.6.6 1.0') {
+            steps {
+                sh '''
+                export PYTHONPATH=/proj/ciexadm200/tools/enm_py-2.6_reqmnts-1.0/usr/lib/python2.6/site-packages:/proj/ciexadm200/tools/enm_py-2.6_reqmnts-1.0/usr/lib64/python2.6/site-packages
+                export PATH=/proj/ciexadm200/tools/enm_py-2.6_reqmnts-1.0/usr/bin:$PATH
+                python -m site
+                python --version
+                pip --version
+                pip freeze
+                pip freeze &gt; utils/enm-python-requirements/enm-requirements-python2.6.6_1.0.txt
+                '''
+            }
+        }
+        stage('Python 2.6.6 2.0') {
+            steps {
+                sh '''
+                export PYTHONPATH=/proj/ciexadm200/tools/enm_py-2.6_reqmnts-2.0/usr/lib/python2.6/site-packages:/proj/ciexadm200/tools/enm_py-2.6_reqmnts-2.0/usr/lib64/python2.6/site-packages
+                export PATH=/proj/ciexadm200/tools/enm_py-2.6_reqmnts-2.0/usr/bin:$PATH
+                python -m site
+                python --version
+                pip --version
+                pip freeze
+                pip freeze &gt; utils/enm-python-requirements/enm-requirements-python2.6.6_2.0.txt
+                '''
+            }
+        }*/
+        stage('Python 2.7.8 2.0') {
+            steps {
+                sh '''
+                export PYTHONPATH=/proj/ciexadm200/tools/enm_py-2.7.8_reqmnts-2.0/usr/lib/python2.7/site-packages:/proj/ciexadm200/tools/enm_py-2.7.8_reqmnts-2.0/usr/lib64/python2.7/site-packages
+                export PATH=/proj/ciexadm200/tools/enm_py-2.7.8_reqmnts-2.0/usr/bin:/proj/ciexadm200/tools/python-2.7.8/bin:$PATH
+                python -m site
+                python --version
+                pip --version
+                pip freeze
+                pip freeze &gt; utils/enm-python-requirements/enm-requirements-python2.7.8.txt
+                '''
+            }
+        }/*
+        stage('Python 2.7.9 1.0') {
+            steps {
+                sh '''
+                export PYTHONPATH=/proj/ciexadm200/tools/enm_py-2.7.9_reqmnts-1.0/usr/lib/python2.7/site-packages:/proj/ciexadm200/tools/enm_py-2.7.9_reqmnts-1.0/usr/lib64/python2.7/site-packages
+                export PATH=/proj/ciexadm200/tools/enm_py-2.7.9_reqmnts-1.0/usr/bin:/proj/ciexadm200/tools/python-2.7.9/bin:$PATH
+                python -m site
+                python --version
+                pip --version
+                pip freeze
+                pip freeze &gt; utils/enm-python-requirements/enm-requirements-python2.7.9.txt
+                '''
+            }
+        }*/
+        stage('Python 3.5.1 1.0') {
+            steps {
+                sh '''
+                export PYTHONPATH=/proj/ciexadm200/tools/enm_py-3.5.1_reqmnts-1.0/usr/lib/python3.5/site-packages:/proj/ciexadm200/tools/enm_py-3.5.1_reqmnts-1.0/usr/lib64/python3.5/site-packages
+                export PATH=/proj/ciexadm200/tools/enm_py-3.5.1_reqmnts-1.0/usr/bin:/proj/ciexadm200/tools/python-3.5.1/bin:$PATH
+                python3 -m site
+                python3 --version
+                pip --version
+                pip freeze
+                pip freeze &gt; utils/enm-python-requirements/enm-requirements-python3.5.1.txt
+                '''
+            }
+        }
+        stage('Update enm-requirements-python files') {
+            steps {
+                sh '''
+                cd utils
+                git add --all
+                git commit -m "No Jira: update enm-requirements-python files"
+                git remote set-url --push origin ${GERRIT_CENTRAL}/${REPO}
+                git push -f origin master
+                '''
+            }
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

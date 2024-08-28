@@ -1,0 +1,507 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>&lt;br&gt;&#xd;
+This job runs on a Vapp from the ENM FULL KGB pool - the Vapp will have the  latest KGB declared baseline, as set by the MTG team.&lt;br&gt;&#xd;
+&lt;font color=&quot;red&quot;&gt;Please note this job is only for testing deployment impacting changes. If SW update on SSGID vApp works for your rpm&apos;s, please use SSGID KGB+N job.&lt;/font&gt;&lt;br&gt;&#xd;
+&lt;br&gt;&#xd;
+You can chose combinations of the following options::&lt;br&gt;&#xd;
+&#xd;
+1. Execute team testware only (shortloop optional)&lt;br&gt;&#xd;
+2. Execute ENM Upgrade and team Testware (shortloop optional)&lt;br&gt;&#xd;
+&#xd;
+&lt;br&gt;&#xd;
+&#xd;
+&lt;br&gt;&#xd;
+Click on &quot;Build with Parameters&quot; for more instructions on running the job.&#xd;
+&lt;br&gt;&#xd;
+If you need support you can contact &lt;b&gt;Cloud Centric Team&lt;/b&gt; by writing a &lt;a href=&quot;http://jira-nam.lmera.ericsson.se/secure/RapidBoard.jspa?rapidView=3814&quot;&gt;JIRA&lt;/a&gt; here using the &quot;ENM Test Environment Cloud&quot; component.&#xd;
+&lt;br&gt;&lt;br&gt;&#xd;
+&#xd;
+&lt;br&gt; For more information on KGB+N on vApp click &lt;a href=&quot;http://confluence-nam.lmera.ericsson.se/pages/viewpage.action?pageId=67046798&quot;&gt;here&lt;/a&gt; for our confluence page.&#xd;
+&#xd;
+</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.security.AuthorizationMatrixProperty>
+      <inheritanceStrategy class="org.jenkinsci.plugins.matrixauth.inheritance.InheritParentStrategy"/>
+      <permission>com.cloudbees.plugins.credentials.CredentialsProvider.Create:xpradks</permission>
+      <permission>com.cloudbees.plugins.credentials.CredentialsProvider.Update:xbhagma</permission>
+      <permission>com.cloudbees.plugins.credentials.CredentialsProvider.Update:xpradks</permission>
+      <permission>com.cloudbees.plugins.credentials.CredentialsProvider.Update:xvekkar</permission>
+      <permission>com.cloudbees.plugins.credentials.CredentialsProvider.Update:zjaksir</permission>
+      <permission>com.cloudbees.plugins.credentials.CredentialsProvider.Update:zvetsni</permission>
+      <permission>com.cloudbees.plugins.credentials.CredentialsProvider.View:xbhagma</permission>
+      <permission>com.cloudbees.plugins.credentials.CredentialsProvider.View:xvekkar</permission>
+      <permission>com.cloudbees.plugins.credentials.CredentialsProvider.View:zjaksir</permission>
+      <permission>com.cloudbees.plugins.credentials.CredentialsProvider.View:zvetsni</permission>
+      <permission>hudson.model.Item.Build:xbhagma</permission>
+      <permission>hudson.model.Item.Build:xjangop</permission>
+      <permission>hudson.model.Item.Build:xlakdag</permission>
+      <permission>hudson.model.Item.Build:xpradks</permission>
+      <permission>hudson.model.Item.Build:xvekkar</permission>
+      <permission>hudson.model.Item.Build:zjaksir</permission>
+      <permission>hudson.model.Item.Build:zmalsiv</permission>
+      <permission>hudson.model.Item.Build:zvetsni</permission>
+      <permission>hudson.model.Item.Cancel:xbhagma</permission>
+      <permission>hudson.model.Item.Cancel:xjangop</permission>
+      <permission>hudson.model.Item.Cancel:xlakdag</permission>
+      <permission>hudson.model.Item.Cancel:xpradks</permission>
+      <permission>hudson.model.Item.Cancel:xvekkar</permission>
+      <permission>hudson.model.Item.Cancel:zjaksir</permission>
+      <permission>hudson.model.Item.Cancel:zmalsiv</permission>
+      <permission>hudson.model.Item.Cancel:zvetsni</permission>
+      <permission>hudson.model.Item.Configure:xbhagma</permission>
+      <permission>hudson.model.Item.Configure:xjangop</permission>
+      <permission>hudson.model.Item.Configure:xlakdag</permission>
+      <permission>hudson.model.Item.Configure:xpradks</permission>
+      <permission>hudson.model.Item.Configure:xvekkar</permission>
+      <permission>hudson.model.Item.Configure:zjaksir</permission>
+      <permission>hudson.model.Item.Configure:zmalsiv</permission>
+      <permission>hudson.model.Item.Configure:zvetsni</permission>
+      <permission>hudson.model.Item.Delete:xbhagma</permission>
+      <permission>hudson.model.Item.Delete:xjangop</permission>
+      <permission>hudson.model.Item.Delete:xlakdag</permission>
+      <permission>hudson.model.Item.Delete:xpradks</permission>
+      <permission>hudson.model.Item.Delete:xvekkar</permission>
+      <permission>hudson.model.Item.Delete:zjaksir</permission>
+      <permission>hudson.model.Item.Delete:zmalsiv</permission>
+      <permission>hudson.model.Item.Delete:zvetsni</permission>
+      <permission>hudson.model.Item.Discover:xjangop</permission>
+      <permission>hudson.model.Item.Discover:xlakdag</permission>
+      <permission>hudson.model.Item.Discover:zmalsiv</permission>
+      <permission>hudson.model.Item.ExtendedRead:xjangop</permission>
+      <permission>hudson.model.Item.ExtendedRead:xlakdag</permission>
+      <permission>hudson.model.Item.ExtendedRead:zmalsiv</permission>
+      <permission>hudson.model.Item.Read:anonymous</permission>
+      <permission>hudson.model.Item.Read:xbhagma</permission>
+      <permission>hudson.model.Item.Read:xjangop</permission>
+      <permission>hudson.model.Item.Read:xlakdag</permission>
+      <permission>hudson.model.Item.Read:xpradks</permission>
+      <permission>hudson.model.Item.Read:xvekkar</permission>
+      <permission>hudson.model.Item.Read:zjaksir</permission>
+      <permission>hudson.model.Item.Read:zmalsiv</permission>
+      <permission>hudson.model.Item.Read:zvetsni</permission>
+      <permission>hudson.model.Item.Workspace:anonymous</permission>
+      <permission>hudson.model.Item.Workspace:xbhagma</permission>
+      <permission>hudson.model.Item.Workspace:xjangop</permission>
+      <permission>hudson.model.Item.Workspace:xlakdag</permission>
+      <permission>hudson.model.Item.Workspace:xpradks</permission>
+      <permission>hudson.model.Item.Workspace:xvekkar</permission>
+      <permission>hudson.model.Item.Workspace:zjaksir</permission>
+      <permission>hudson.model.Item.Workspace:zmalsiv</permission>
+      <permission>hudson.model.Item.Workspace:zvetsni</permission>
+      <permission>hudson.model.Run.Delete:xbhagma</permission>
+      <permission>hudson.model.Run.Delete:xjangop</permission>
+      <permission>hudson.model.Run.Delete:xlakdag</permission>
+      <permission>hudson.model.Run.Delete:xpradks</permission>
+      <permission>hudson.model.Run.Delete:xvekkar</permission>
+      <permission>hudson.model.Run.Delete:zjaksir</permission>
+      <permission>hudson.model.Run.Delete:zmalsiv</permission>
+      <permission>hudson.model.Run.Delete:zvetsni</permission>
+      <permission>hudson.model.Run.Update:xbhagma</permission>
+      <permission>hudson.model.Run.Update:xjangop</permission>
+      <permission>hudson.model.Run.Update:xlakdag</permission>
+      <permission>hudson.model.Run.Update:xpradks</permission>
+      <permission>hudson.model.Run.Update:xvekkar</permission>
+      <permission>hudson.model.Run.Update:zjaksir</permission>
+      <permission>hudson.model.Run.Update:zmalsiv</permission>
+      <permission>hudson.model.Run.Update:zvetsni</permission>
+      <permission>hudson.scm.SCM.Tag:xbhagma</permission>
+      <permission>hudson.scm.SCM.Tag:xjangop</permission>
+      <permission>hudson.scm.SCM.Tag:xlakdag</permission>
+      <permission>hudson.scm.SCM.Tag:xpradks</permission>
+      <permission>hudson.scm.SCM.Tag:xvekkar</permission>
+      <permission>hudson.scm.SCM.Tag:zjaksir</permission>
+      <permission>hudson.scm.SCM.Tag:zmalsiv</permission>
+      <permission>hudson.scm.SCM.Tag:zvetsni</permission>
+    </hudson.security.AuthorizationMatrixProperty>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>UNDEFINED</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>30</daysToKeep>
+        <numToKeep>20</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.plugins.validating__string__parameter.ValidatingStringParameterDefinition plugin="validating-string-parameter@2.8">
+          <name>MR/BUG/Improvement</name>
+          <description>&lt;p&gt;&lt;b&gt;Please mention the JIRA number only - Ex: TORF-12345 &lt;/b&gt;&lt;/p&gt;</description>
+          <defaultValue>TORF-123456</defaultValue>
+          <regex>^TORF-\d+$</regex>
+          <failedValidationMessage>Please input valid JIRA number</failedValidationMessage>
+        </hudson.plugins.validating__string__parameter.ValidatingStringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>installType</name>
+          <description>ISO upgrade for testing deployment impcating changes. If the option is selected the job will replace rpms in ENM iso that installed on the vApp and kick off an iso upgrade. &lt;br&gt;</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>upgrade_install</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>deployPackage</name>
+          <description>&lt;p&gt;If you &lt;b&gt;want&lt;/b&gt; to execute software update or upgrade install &lt;b&gt;add your packages here&lt;/b&gt; in the following format:&lt;/p&gt;
+&lt;blockquote&gt;&lt;p&gt;&lt;font color=&quot;blue&quot;&gt;&lt;b&gt;&amp;lt;deliverable name&amp;gt;::&amp;lt;version&amp;gt;&lt;/b&gt;&lt;/font&gt;, where version is in maven version format or &quot;Latest&quot;. 
+&lt;br&gt;There is also an option to add a package that that has not officially delivered as a complete URL.
+&lt;br&gt;Media category of the rpm is a requirement for new rpm&apos;s that have never delivered to the portal i.e. can&apos;t be found on the complete package list page - see Example 4 below&lt;br&gt;
+
+
+  &lt;br&gt;Example 1 using specific version -&gt; ERICrpm::1.2.3
+  &lt;br&gt;Example 2 using Latest on complete package list page -&gt;  ERICrpm::Latest
+  &lt;br&gt;Example 3 using url -&gt; ERICrpm::https://ci-portal.seli.wh.rnd.internal.ericsson.com/static/tmpUploadSnapshot/2015-08-17_14-44-56/ERICapdatamacro_CXP9030537-1.22.9-SNAPSHOT20150817134050.noarch.rpm
+  &lt;br&gt;Example 4 using category option -&gt; ERICrpm::Latest::service
+  &lt;/p&gt;&lt;/blockquote&gt;
+  
+&lt;blockquote&gt;&lt;p&gt;&lt;b&gt;When adding multiple rpms, use @@ as the separator:&lt;/b&gt;
+  &lt;br&gt;
+  &amp;lt;deliverable name&amp;gt;::&amp;lt;version&amp;gt;&lt;font color=&quot;blue&quot;&gt;&lt;b&gt;@@&lt;/b&gt;&lt;/font&gt;&amp;lt;deliverable name&amp;gt;::&amp;lt;version&amp;gt;
+  &lt;br&gt;ERICrpm::1.0.25@@ERICrpm::Latest
+  &lt;/p&gt;&lt;/blockquote&gt;
+</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>xmlFile</name>
+          <description>&lt;p&gt;Deployment Description used for upgrade. You can upload a custom DD file to &lt;a href=&quot;https://ci-portal.seli.wh.rnd.internal.ericsson.com/dmt/uploadSnapshot/&quot;&gt;CIFWK portal pre-commit staging area&lt;/a&gt;  
+and put the donwload link to your custom DD file in text box. &lt;b&gt;e.g. https://ci-portal.seli.wh.rnd.internal.ericsson.com/static/tmpUploadSnapshot/2016-02-16_15-12-57/team_cloud_centric_cloud_test_dd.xml&lt;/b&gt; 
+  If you leave it blank, the DD file included in the productSet installed on the vApp will be used.&lt;/p&gt;</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>setSED</name>
+          <description>&lt;p&gt;SED used for upgrade. You can upload a custom SED to &lt;a href=&quot;https://ci-portal.seli.wh.rnd.internal.ericsson.com/dmt/uploadSnapshot/&quot;&gt;CIFWK portal pre-commit staging area&lt;/a&gt;  
+and put the donwload link to your custom SED in text box. &lt;b&gt;e.g. https://ci-portal.seli.wh.rnd.internal.ericsson.com/static/tmpUploadSnapshot/2016-02-15_17-07-40/sed-cloud-MASTER_siteEngineering-iso-1.18.90.txt&lt;/b&gt; If you leave it blank, MASTER SED will be used.&lt;/p&gt;</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>Retain_vApp_when_job_fails</name>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>Yes</string>
+              <string>No</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>Retain_vApp_when_job_passes</name>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>Yes</string>
+              <string>No</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>vApp_retention_period</name>
+          <description>Hour(s)</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>1</string>
+              <string>2</string>
+              <string>3</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.TextParameterDefinition>
+          <name>Testware_Items</name>
+          <defaultValue>&lt;item-group parallel=&quot;true&quot;&gt;
+
+
+&lt;item timeout-in-seconds=&quot;2400&quot;&gt;
+&lt;name&gt;NSCS_TRUST_EXTCAIPSEC - Ciphers&lt;/name&gt;
+&lt;component&gt;com.ericsson.nms.security.nscs:ERICTAFnodesecurity_CXP9032282&lt;/component&gt;
+&lt;suites&gt;NSCS_TRUST_EXTCAIPSEC_Ciphers.xml&lt;/suites&gt;
+&lt;/item&gt;
+
+
+&lt;item timeout-in-seconds=&quot;2400&quot;&gt;
+	&lt;name&gt;NSCS_GENERATE_ENROLLMENT_INFO - Ciphers&lt;/name&gt;
+	&lt;component&gt;com.ericsson.nms.security.nscs:ERICTAFnodesecurity_CXP9032282&lt;/component&gt;
+	&lt;suites&gt;NSCS_GENERATE_ENROLLMENT_INFO_Ciphers.xml&lt;/suites&gt;
+&lt;/item&gt;
+
+&lt;/item-group&gt;
+</defaultValue>
+          <trim>false</trim>
+        </hudson.model.TextParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <quietPeriod>300</quietPeriod>
+  <assignedNode>FULL-POD-H-Cluster1-ENM-KGB||FULL-POD-K-Cluster1-ENM-KGB||FULL-POD-C-Cluster3-ENM-KGB||FULL-POD-D-Cluster2-ENM-KGB||FULL-POD-H-Cluster2-ENM-KGB||FULL-POD-K-Cluster2-ENM-KGB||FULL-POD-K-Cluster3-ENM-KGB</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>true</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>set +x
+wget -q &quot;https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/service/local/artifact/maven/redirect?r=releases&amp;g=com.ericsson.ci.kgb&amp;a=kgb-scripts&amp;p=jar&amp;v=RELEASE&quot; -O kgb-scripts.jar
+jar -xvf kgb-scripts*.jar 2&gt;&amp;1 &gt;/dev/null
+chmod +x kgb_logic_6SVC_CONF.sh
+bash kgb_logic_6SVC_CONF.sh set_env</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <EnvInjectBuilder plugin="envinject@2.4.0">
+      <info>
+        <propertiesFilePath>/tmp/$JOB_NAME</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+    <com.ericsson.duraci.messaging.EiffelMessageDispatcherBuildStep plugin="eiffel-core@75.0.1">
+      <baselineId></baselineId>
+      <flowContext>${flowContext}</flowContext>
+      <optionalParameters>
+        <list>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>artifactList</key>
+            <value>${gavs}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>team</key>
+            <value>${team_name}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>ra</key>
+            <value>${requirement_area}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>installType</key>
+            <value>vapp</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>clusterId</key>
+            <value>443</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>baseIso</key>
+            <value>${ENM_iso}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+        </list>
+      </optionalParameters>
+      <eiffelEventType class="com.ericsson.duraci.messaging.events.EiffelConfidenceLevelModifiedEventType">
+        <confidenceLevels>
+          <map>
+            <entry>
+              <string>MULTI_KGB_TESTING_STARTED</string>
+              <string>SUCCESS</string>
+            </entry>
+          </map>
+        </confidenceLevels>
+        <gav class="com.ericsson.duraci.messaging.events.params.ArtifactGavWrapper">
+          <groupId>na</groupId>
+          <artifactId>na</artifactId>
+          <version>na</version>
+        </gav>
+        <confidenceLevelAsString>MULTI_KGB_TESTING_STARTED: SUCCESS</confidenceLevelAsString>
+      </eiffelEventType>
+      <inputEventIdAsString></inputEventIdAsString>
+    </com.ericsson.duraci.messaging.EiffelMessageDispatcherBuildStep>
+    <hudson.tasks.Shell>
+      <command>bash kgb_logic_6SVC_CONF.sh</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <EnvInjectBuilder plugin="envinject@2.4.0">
+      <info>
+        <propertiesFilePath>/tmp/$JOB_NAME</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+    <com.ericsson.oss.axis.BaselineDefinedMessageDispatcher plugin="taf-trigger@1.0.60">
+      <ciArtifacts>
+        <jobType>KGB+N</jobType>
+        <teamName></teamName>
+        <artifactsClassName>com.ericsson.oss.axis.BaselineDefinedMessageDispatcher$ArtifactAsPackage$1</artifactsClassName>
+      </ciArtifacts>
+      <schedule>
+        <xml>&lt;?xml version=&quot;1.0&quot;?&gt;
+&lt;schedule xmlns=&quot;http://taf.lmera.ericsson.se/schema/te&quot;
+          xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+          xsi:schemaLocation=&quot;http://taf.lmera.ericsson.se/schema/te http://taf.lmera.ericsson.se/schema/te/schedule/xml&quot;&gt;
+
+&lt;item-group parallel=&quot;true&quot;&gt;
+
+${Testware_Items}
+
+&lt;/item-group&gt;
+
+&lt;/schedule&gt;</xml>
+        <testPropertiesAsString></testPropertiesAsString>
+        <scheduleClassName>com.ericsson.oss.axis.BaselineDefinedMessageDispatcher$ScheduleAsXml$1</scheduleClassName>
+      </schedule>
+      <testwarePropertiesFile></testwarePropertiesFile>
+      <tunnellingOn>true</tunnellingOn>
+      <breakBuildOnTestsFailure>true</breakBuildOnTestsFailure>
+      <sutClusterId>443</sutClusterId>
+      <citeHostPropertiesFile></citeHostPropertiesFile>
+      <globalTestGroups></globalTestGroups>
+      <tafVersion>2.63.1</tafVersion>
+      <userDefinedGAVs></userDefinedGAVs>
+      <additionalTestProperties>
+        <property name="taf.profiles" value="localInfo"/>
+        <property name="host.UiTestGrid.user.root.pass" value="shroot"/>
+        <property name="taf_ui.default_OS" value="LINUX"/>
+        <property name="host.UiTestGrid.port.ssh" value="22"/>
+        <property name="node.sync.repeat" value="120"/>
+        <property name="smoke.vusers" value="3"/>
+        <property name="host.UiTestGrid.ip" value="192.168.0.231"/>
+        <property name="taf.deploymentType" value="cloud"/>
+        <property name="host.UiTestGrid.user.root.type" value="ADMIN"/>
+        <property name="host.UiTestGrid.type" value="SELENIUM_GRID"/>
+        <property name="host.UiTestGrid.port.http" value="4444"/>
+      </additionalTestProperties>
+      <arm>
+        <id></id>
+        <description></description>
+        <httpString>https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/groups/public</httpString>
+        <credentials>
+          <username></username>
+          <password></password>
+        </credentials>
+      </arm>
+      <ciFwkHost>https://ci-portal.seli.wh.rnd.internal.ericsson.com/</ciFwkHost>
+      <tafTestExecutorHostname></tafTestExecutorHostname>
+      <tafTestExecutorPort>8080</tafTestExecutorPort>
+    </com.ericsson.oss.axis.BaselineDefinedMessageDispatcher>
+    <EnvInjectBuilder plugin="envinject@2.4.0">
+      <info/>
+    </EnvInjectBuilder>
+  </builders>
+  <publishers>
+    <com.ericsson.duraci.messaging.ConfidenceLevelMessageDispatcher plugin="eiffel-core@75.0.1">
+      <gav class="com.ericsson.duraci.messaging.events.params.ArtifactGavWrapper">
+        <groupId>na</groupId>
+        <artifactId>na</artifactId>
+        <version>na</version>
+      </gav>
+      <confidenceLevels>
+        <map>
+          <entry>
+            <string>MULTI_KGB_TESTING_COMPLETED</string>
+            <string>DYNAMIC</string>
+          </entry>
+        </map>
+      </confidenceLevels>
+      <optionalParameters>
+        <list>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>teAllureLogUrl</key>
+            <value>${TE_ALLURE_LOG_URL}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>teTestWare</key>
+            <value>${TE_TESTWARE}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>artifactList</key>
+            <value>${gavs}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>team</key>
+            <value>${team_name}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>ra</key>
+            <value>${requirement_area}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>installType</key>
+            <value>vapp</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>clusterId</key>
+            <value>443</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>baseIso</key>
+            <value>${ENM_iso}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+        </list>
+      </optionalParameters>
+      <baselineId></baselineId>
+      <flowContext>${flowContext}</flowContext>
+      <extraInputEventIdsAsString></extraInputEventIdsAsString>
+    </com.ericsson.duraci.messaging.ConfidenceLevelMessageDispatcher>
+    <hudson.plugins.postbuildtask.PostbuildTask plugin="postbuild-task@1.9">
+      <tasks>
+        <hudson.plugins.postbuildtask.TaskProperties>
+          <logTexts>
+            <hudson.plugins.postbuildtask.LogProperties>
+              <logText></logText>
+              <operator>AND</operator>
+            </hudson.plugins.postbuildtask.LogProperties>
+          </logTexts>
+          <EscalateStatus>false</EscalateStatus>
+          <RunIfJobSuccessful>false</RunIfJobSuccessful>
+          <script>chmod +x kgb_post_build_logic.sh&#xd;
+./kgb_post_build_logic.sh</script>
+        </hudson.plugins.postbuildtask.TaskProperties>
+      </tasks>
+    </hudson.plugins.postbuildtask.PostbuildTask>
+    <hudson.plugins.parameterizedtrigger.BuildTrigger plugin="parameterized-trigger@2.43">
+      <configs>
+        <hudson.plugins.parameterizedtrigger.BuildTriggerConfig>
+          <configs>
+            <hudson.plugins.parameterizedtrigger.NodeParameters/>
+            <hudson.plugins.parameterizedtrigger.FileBuildParameters>
+              <propertiesFile>/tmp/${JOB_NAME}_Retention_Period</propertiesFile>
+              <failTriggerOnMissing>false</failTriggerOnMissing>
+              <textParamValueOnNewLine>false</textParamValueOnNewLine>
+              <useMatrixChild>false</useMatrixChild>
+              <onlyExactRuns>false</onlyExactRuns>
+            </hudson.plugins.parameterizedtrigger.FileBuildParameters>
+          </configs>
+          <projects>Team_Abhedya_Full_vApp_KGB+N_Retention_job</projects>
+          <condition>ALWAYS</condition>
+          <triggerWithNoParameters>false</triggerWithNoParameters>
+          <triggerFromChildProjects>false</triggerFromChildProjects>
+        </hudson.plugins.parameterizedtrigger.BuildTriggerConfig>
+      </configs>
+    </hudson.plugins.parameterizedtrigger.BuildTrigger>
+  </publishers>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.40">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+  </buildWrappers>
+</project>

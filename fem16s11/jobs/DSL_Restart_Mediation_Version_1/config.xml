@@ -1,0 +1,367 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>KUBE_SLAVE</name>
+          <description>Slave to run pipeline against</description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@4.10.3">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>ssh://gerrit.ericsson.se:29418/OSS/com.ericsson.oss.containerisation/eric-enm-integration-pipeline-code</url>
+        <credentialsId>34f6017c-d71b-4e72-9f80-26a8576e1beb</credentialsId>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>dTORF-428658</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <submoduleCfg class="list"/>
+    <extensions>
+      <hudson.plugins.git.extensions.impl.CleanBeforeCheckout>
+        <deleteUntrackedNestedRepositories>false</deleteUntrackedNestedRepositories>
+      </hudson.plugins.git.extensions.impl.CleanBeforeCheckout>
+    </extensions>
+  </scm>
+  <canRoam>false</canRoam>
+  <disabled>true</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <javaposse.jobdsl.plugin.ExecuteDslScripts plugin="job-dsl@1.78.3">
+      <scriptText>class CommonAuthorization {
+
+    static Object setPermissionGroupIncludingConfigure(String permissionGroup) {
+        return {
+            permissions(permissionGroup, [
+                &apos;hudson.model.Item.Configure&apos;,
+                &apos;hudson.model.Item.Build&apos;,
+                &apos;hudson.model.Item.Cancel&apos;,
+                &apos;hudson.model.Item.Discover&apos;,
+                &apos;hudson.model.Item.Read&apos;,
+                &apos;hudson.model.Item.Workspace&apos;,
+                &apos;hudson.model.Item.ExtendedRead&apos;
+            ])
+        }
+    }
+
+    static Object setPermissionGroup(String permissionGroup) {
+        return {
+            permissions(permissionGroup, [
+                &apos;hudson.model.Item.Build&apos;,
+                &apos;hudson.model.Item.Cancel&apos;,
+                &apos;hudson.model.Item.Discover&apos;,
+                &apos;hudson.model.Item.Read&apos;,
+                &apos;hudson.model.Item.Workspace&apos;,
+                &apos;hudson.model.Item.ExtendedRead&apos;
+            ])
+        }
+    }
+
+}
+
+class CommonParameters {
+
+    static List clusterId() {
+        return [&apos;cluster_id&apos;, &apos;&apos;, &apos;The deployment name to run the job against&apos;]
+    }
+
+    static List testPhase() {
+        return [&apos;test_phase&apos;, &apos;&apos;, &apos;Test phase being run&apos;]
+    }
+
+    static List mtUtilsVersion() {
+        return [&apos;mt_utils_version&apos;, &apos;RELEASE&apos;, &apos;&apos;&apos;This is the version of the scripts available in Nexus&lt;br&gt;
+We recommend you always use RELEASE&lt;br&gt;
+However, if there is an issue with RELEASE please use one of the versions available &lt;a href = https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/repositories/releases/com/ericsson/mtg/utils/&gt;here&lt;/a&gt;&apos;&apos;&apos;]
+    }
+
+    static List nssUtilsVersion() {
+        return [&apos;nss_utils_version&apos;, &apos;&apos;, &apos;&apos;&apos;&lt;b&gt;
+  Options:
+  &lt;ul&gt;
+    &lt;li&gt;LATEST - Gets version mapped to latest green product set version&lt;/li&gt;
+    &lt;li&gt;MAPPED - Gets version mapped to NSS Product Set Version present in the environment&apos;s netsims&lt;/li&gt;
+    &lt;li&gt;NOT_REQUIRED - Ignores the deployment of NSS Testware Utilities&lt;/li&gt;
+  &lt;/ul&gt;
+&lt;/b&gt;&apos;&apos;&apos;]
+    }
+
+    static List torUtilsVersion() {
+        return [&apos;tor_utils_version&apos;, &apos;&apos;, &apos;&apos;&apos;&lt;b&gt;
+  Options:
+  &lt;ul&gt;
+    &lt;li&gt;LATEST - Gets version mapped to latest green product set version&lt;/li&gt;
+    &lt;li&gt;INSTALLED - Aligns all versions in the WLVM to match the version of Tor Utilities Production Package installed on ENM System. NOTE: Cloud Native is currently unsupported here.&lt;/li&gt;
+    &lt;li&gt;NOT_REQUIRED - Ignores the deployment of Tor Utilities. NOTE: Only physical is currently supported here.&lt;/li&gt;
+    &lt;li&gt;SPECIFIC VERSION - Deploys the version specified
+      &lt;ul&gt;
+        &lt;li&gt;List of versions: &lt;a href=&quot;https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/repositories/releases/com/ericsson/dms/torutility/ERICtorutilitiesinternal_CXP9030579/&quot;&gt;Tor Utilities Versions&lt;/a&gt;&lt;/li&gt;
+        &lt;li&gt;e.g. 4.80.9&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/li&gt;
+  &lt;/ul&gt;
+&lt;/b&gt;&apos;&apos;&apos;]
+    }
+
+    static List aptVersion() {
+        return [&apos;apt_version&apos;, &apos;&apos;, &apos;&apos;&apos;&lt;b&gt;
+Options:
+&lt;ul&gt;
+  &lt;li&gt;LATEST - Gets latest version from Nexus&lt;/li&gt;
+  &lt;li&gt;MAPPED - Gets version mapped to ENM ISO contained in product set specified above&lt;/li&gt;
+  &lt;li&gt;NOT_REQUIRED - Ignores the deployment of APT&lt;/li&gt;
+    &lt;li&gt;
+      SPECIFIC VERSION - Deploys the version specified
+      &lt;ul&gt;
+        &lt;li&gt;List of versions: &lt;a href=&quot;http://atclvm1356.athtem.eei.ericsson.se/changelogs/assertion_python_utilities.html&quot;&gt;APT Versions Log&lt;/a&gt;&lt;/li&gt;
+        &lt;li&gt;e.g. 1.22.4&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/li&gt;
+&lt;/ul&gt;
+&lt;/b&gt;&apos;&apos;&apos;]
+    }
+
+    static List productSetVersion() {
+        return [&apos;product_set_version&apos;, &apos;&apos;, &apos;Product Set Version that the test environment is currently deployed to&apos;]
+    }
+
+    static List enmIsoVersion() {
+        return [&apos;enm_iso_version&apos;, &apos;&apos;, &apos;&apos;&apos;The enm iso version for your deployment&lt;br&gt;
+This should also be the enm iso version that matches the product set specified&lt;br&gt;
+Example: 1.74.11&apos;&apos;&apos;]
+    }
+
+    static List drop() {
+        return [&apos;drop&apos;, &apos;&apos;, &apos;&apos;&apos;The drop in which the product is within&lt;br&gt;
+Example: 19.07&apos;&apos;&apos;]
+    }
+
+    static List centralCsvVersion() {
+        return [&apos;central_csv_version&apos;, &apos;&apos;, &apos;&apos;&apos;Version of the Central CSV to use&lt;br&gt;
+AUTO will get the version mapped to Product Set&lt;br&gt;
+If you do not want to use mapped version, then can select a specific version to use&apos;&apos;&apos;]
+    }
+
+    static List simdepRelease() {
+        return [&apos;simdep_release&apos;, &apos;1.5.568&apos;, &apos;&apos;&apos;Simdep release no.
+Example: 1.5.216&apos;&apos;&apos;]
+    }
+
+    static List tafVersion() {
+        return [&apos;taf_version&apos;, &apos;&apos;, &apos;&apos;&apos;Version of the TAF to use&lt;br&gt;
+AUTO will get the version mapped to Product Set&lt;br&gt;
+If you do not want to use mapped version, select a specific version to use&apos;&apos;&apos;]
+    }
+
+    static List tafSchedulerVersion() {
+        return [&apos;taf_scheduler_version&apos;, &apos;&apos;, &apos;&apos;&apos;Version of the TAF Scheduler to use&lt;br&gt;
+AUTO will get the version mapped to Product Set&lt;br&gt;
+If you do not want to use mapped version, then can select a specific version to use&apos;&apos;&apos;]
+    }
+
+    static List sendConfidenceLevel() {
+        return [&apos;send_confidence_level&apos;, &apos;NO&apos;, &apos;&apos;&apos;This parameter is used to send the confidence level to portal/radiator/auto build log&apos;&apos;&apos;]
+    }
+
+    static List restrictToFeatures() {
+        return [&apos;restrict_to_features&apos;, &apos;&apos;, &apos;&apos;&apos;Comma separated list of features to include/restrict&lt;br&gt;
+The following features are available to restrict: AMOS,AP,CLOUD,CM,CMEVENTS_NBI,CMSYNC,DAILY_SCOPE,ENM,EXPORT,FM,FMX,IMPORT,KPI,NETEX,PHYSICAL,PM,SECUI,SHM,SYSTEM,UPGRADE,WORKLOAD&lt;br&gt;
+&lt;b&gt;LEAVE EMPTY TO RUN FULL ASSERTIONS&lt;/b&gt;&apos;&apos;&apos;]
+    }
+
+    static List featuresToExclude() {
+        return [&apos;features_to_exclude&apos;, &apos;&apos;, &apos;&apos;&apos;Comma separated list of features to exclude&lt;br&gt;
+The following features are available to exclude: AMOS,AP,CLOUD,CM,CMEVENTS_NBI,CMSYNC,DAILY_SCOPE,ENM,EXPORT,FM,FMX,IMPORT,KPI,NETEX,PHYSICAL,PM,SECUI,SHM,SYSTEM,UPGRADE,WORKLOAD&lt;br&gt;
+&lt;b&gt;LEAVE EMPTY TO RUN FULL ASSERTIONS&lt;/b&gt;&apos;&apos;&apos;]
+    }
+
+    static List emailRecipients() {
+        return [&apos;email_recipients&apos;, &apos;&apos;, &apos;OPTIONAL: A comma separated list of email recipients.&apos;]
+    }
+
+}
+
+class CommonSteps {
+
+    static String downloadMTUtilsRelease() {
+        &apos;&apos;&apos;#!/bin/sh
+
+echo &quot;Retrieving Scripts from Nexus&quot;
+tarFileName=&quot;utils_${mt_utils_version}.tar.gz&quot;
+echo &quot;Downloading file - ${tarFileName} - to the workspace&quot;
+curl -s --noproxy \\* -L &quot;https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/service/local/artifact/maven/redirect?r=releases&amp;g=com.ericsson.mtg&amp;a=utils&amp;p=tar.gz&amp;v=${mt_utils_version}&quot; -o ${tarFileName}
+tar -zxf ${tarFileName}
+
+&apos;&apos;&apos;
+    }
+
+    static Object defaultLogRotatorValues() {
+        return {
+            daysToKeep 25
+            numToKeep 20
+        }
+    }
+
+    static Object exportParametersProperties() {
+        return {
+            filePath(&apos;parameters&apos;)
+            fileFormat(&apos;properties&apos;)
+            keyPattern(&apos;&apos;)
+            useRegexp(false)
+        }
+    }
+
+    static String defaultJobDescription(String jobNameBeingGenerated, String jobDescription) {
+        String defaultJobDescriptionHeader = &apos;&apos;&apos;&lt;h3&gt;Job Description&lt;/h3&gt;
+&apos;&apos;&apos;
+        String defaultJobDescriptionFooter = &apos;&apos;&apos;&lt;br&gt;
+&lt;br&gt;
+&lt;b&gt; Job developed and maintained by Thunderbee : &lt;/b&gt; &lt;a href=&quot;mailto:PDLENMCOUN@pdl.internal.ericsson.com?Subject=&apos;&apos;&apos; + jobNameBeingGenerated + &apos;&apos;&apos;%20Job&quot; target=&quot;_top&quot;&gt;Send Mail&lt;/a&gt; to provide feedback&apos;&apos;&apos;
+        return defaultJobDescriptionHeader + jobDescription + defaultJobDescriptionFooter
+    }
+
+}
+
+class CommonViewProperties {
+
+    static Object setViewColumns() {
+        return {
+            status()
+            weather()
+            name()
+            lastSuccess()
+            lastFailure()
+            lastDuration()
+            buildButton()
+        }
+    }
+
+}
+
+///////////////////////////
+//   DSL SCRIPT START   //
+/////////////////////////
+
+CommonSteps commonSteps = new CommonSteps()
+CommonParameters commonParams = new CommonParameters()
+CommonAuthorization commonAuthorization = new CommonAuthorization()
+CommonViewProperties commonViewProperties = new CommonViewProperties()
+
+def pipelineBeingGeneratedName = &quot;cENM_Mediation_Pods_Restart&quot;
+
+pipelineJob(pipelineBeingGeneratedName) {
+    
+    //String[] permissionGroupsArray = &quot;${PERMISSION_GROUPS}&quot;.split(&apos;,&apos;)
+    //permissionGroupsArray.each {
+    //    authorization(commonAuthorization.setPermissionGroup(&quot;${it}&quot;))
+    //}
+    
+    description(commonSteps.defaultJobDescription(pipelineBeingGeneratedName, &apos;&apos;&apos;&lt;p&gt;This job restarts the mediation pods.&lt;/p&gt;&apos;&apos;&apos;))
+    
+    concurrentBuild(allowConcurrentBuild = true)
+    
+    parameters {
+        stringParam(commonParams.clusterId())
+        stringParam(&apos;SLAVE&apos;, &quot;${KUBE_SLAVE}&quot;, &apos;Slave to run pipeline against&apos;)
+    }
+    
+    logRotator(commonSteps.defaultLogRotatorValues())
+    
+    definition {
+        cpsScm {
+            scm {
+                git {
+                    branch(&apos;dTORF-428658&apos;)
+                    remote {
+                        credentials(&apos;lciadm100_private_key&apos;)
+                        url(&quot;ssh://gerrit.ericsson.se:29418/OSS/com.ericsson.oss.containerisation/eric-enm-integration-pipeline-code&quot;)
+                    }
+                    extensions {
+                        cleanBeforeCheckout()
+                    }
+                }
+            }
+            scriptPath(&quot;Jenkins/Jenkinsfile/JenkinsfileMediation&quot;)
+            lightweight(lightweight = true)
+        }
+    }
+}
+
+//listView(&apos;cENM Jobs&apos;) {
+//    filterBuildQueue()
+//    filterExecutors()
+//    jobs {
+//        regex(/.*cENM_.*/)
+//    }
+//    columns commonViewProperties.setViewColumns()
+//}</scriptText>
+      <usingScriptText>true</usingScriptText>
+      <sandbox>false</sandbox>
+      <ignoreExisting>false</ignoreExisting>
+      <ignoreMissingFiles>false</ignoreMissingFiles>
+      <failOnMissingPlugin>false</failOnMissingPlugin>
+      <failOnSeedCollision>false</failOnSeedCollision>
+      <unstableOnDeprecation>false</unstableOnDeprecation>
+      <removedJobAction>DELETE</removedJobAction>
+      <removedViewAction>DELETE</removedViewAction>
+      <removedConfigFilesAction>IGNORE</removedConfigFilesAction>
+      <lookupStrategy>JENKINS_ROOT</lookupStrategy>
+    </javaposse.jobdsl.plugin.ExecuteDslScripts>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.40">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+  </buildWrappers>
+</project>

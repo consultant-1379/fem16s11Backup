@@ -1,0 +1,126 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>This script search if a specific string is available for repositories listed in&lt;br&gt;&#xd;
+&lt;b&gt;projects_service_group&lt;/b&gt; and &lt;b&gt;projects_common&lt;/b&gt; files</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>FILE</name>
+          <description></description>
+          <defaultValue>Jenkinsfile</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>RHEL6.10_GE_1</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.plugins.groovy.Groovy plugin="groovy@2.4">
+      <scriptSource class="hudson.plugins.groovy.StringScriptSource">
+        <command>import java.io.File
+import groovy.json.JsonSlurper
+
+def String ci_pipeline_jenkins_config_project = &apos;OSS/com.ericsson.oss.containerisation/enm-containerisation-ci-pipeline&apos; // Pipeline official repository.
+cmd1 = &apos;git archive --remote=ssh://gerrit.ericsson.se:29418/&apos; + ci_pipeline_jenkins_config_project + &apos; HEAD jenkins/projects_service_group&apos;
+
+def cmd3=&apos;tar --extract --to-stdout&apos;
+def proc1 = cmd1.execute() | cmd3.execute()
+
+def std_out1 = new StringBuffer()
+proc1.consumeProcessErrorStream(std_out1)
+def config_file = proc1.text
+
+config_file.eachLine {
+    String repository -&gt;
+        project_name = repository.tokenize(&apos;/&apos;).last()
+        
+        // clone repository
+        git_clone_cmd = &apos;git clone ssh://gerritmirror-ha.lmera.ericsson.se:29418/&apos; + repository
+        def git_clone_proc = git_clone_cmd.execute()
+
+        def std_out_clone = new StringBuffer()
+        git_clone_proc.consumeProcessErrorStream(std_out_clone)        
+}</command>
+      </scriptSource>
+      <groovyName>(Default)</groovyName>
+      <parameters></parameters>
+      <scriptParameters></scriptParameters>
+      <properties></properties>
+      <javaOpts></javaOpts>
+      <classPath></classPath>
+    </hudson.plugins.groovy.Groovy>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+
+PAIRS=()
+
+for dir in */ ; do
+	base_dir=${dir}    
+
+	for dir in */ ; do
+    	nest_dir=${dir}
+
+        if [[ ${base_dir} != ${nest_dir} ]] &amp;&amp; [[ ! &quot; ${PAIRS[@]} &quot; =~ &quot; ${base_dir},${nest_dir} &quot; ]] &amp;&amp; [[ ! &quot; ${PAIRS[@]} &quot; =~ &quot; ${nest_dir},${base_dir} &quot; ]]; then
+        	echo &quot;************* DIFF ${base_dir} ${nest_dir} *************&quot;
+        	diff -w ${base_dir}/${FILE} ${nest_dir}/${FILE}
+        	echo &quot;********************** END DIFF ************************&quot;
+        	echo -e
+
+            PAIRS+=(&quot;${base_dir},${nest_dir}&quot;)
+            PAIRS+=(&quot;${nest_dir},${base_dir}&quot;)
+        fi
+    done
+done</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.40">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+  </buildWrappers>
+</project>

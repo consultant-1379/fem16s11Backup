@@ -1,0 +1,140 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>This job used to purge the docker images on GE slaves,&#13;
+Label: Docker-POC-e2e</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <org.biouno.unochoice.ChoiceParameter plugin="uno-choice@2.1">
+          <name>Select_Label</name>
+          <randomName>choice-parameter-63761698933094686</randomName>
+          <visibleItemCount>1</visibleItemCount>
+          <script class="org.biouno.unochoice.model.GroovyScript">
+            <secureScript plugin="script-security@1138.v8e727069a_025">
+              <script>import jenkins.model.*
+def labelAndNodeList = []
+
+Jenkins.instance.nodes.each { node -&gt;
+  node.assignedLabels.each { label -&gt;
+    if (label as String != node.name) {        
+            labelAndNodeList.add(label)
+    }      
+  }
+}
+
+return labelAndNodeList</script>
+              <sandbox>false</sandbox>
+            </secureScript>
+            <secureFallbackScript plugin="script-security@1138.v8e727069a_025">
+              <script/>
+              <sandbox>false</sandbox>
+            </secureFallbackScript>
+          </script>
+          <projectName>Clean_Workspace-Purge_Images-ByLabel</projectName>
+          <choiceType>PT_RADIO</choiceType>
+          <filterable>false</filterable>
+          <filterLength>1</filterLength>
+        </org.biouno.unochoice.ChoiceParameter>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    
+    <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+      <triggers>
+        <hudson.triggers.TimerTrigger>
+          <spec>30 0 * * *</spec>
+        </hudson.triggers.TimerTrigger>
+      </triggers>
+    </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>#!/usr/bin/env groovy
+def nodes = [:]
+
+String selectedLabel = "${Select_Label}" 
+
+def started_by_timer = currentBuild.getBuildCauses()[0]["shortDescription"].matches("Started by timer")
+echo "Build Started by timer: $started_by_timer"
+
+Jenkins.instance.getItem("${JOB_NAME}").getTriggers().each{
+                        // Validate the trigger is indeed a timer and if so print the cron string (spec)
+                        if (it.key =~ 'TimerTrigger' &amp;&amp; currentBuild.getBuildCauses()[0]["shortDescription"].matches("Started by timer") == true) { 
+                           println it.value.spec 
+                           selectedLabel = "Cloud-Native-Pointfix"
+                        } else {
+                            selectedLabel = "${Select_Label}" 
+                        }
+                    }  
+                    
+nodesByLabel("${selectedLabel}").each {
+  nodes[it] = { -&gt;
+    node(it) {
+      stage("PurgeAndClean@${it}") {
+        sh('docker system prune -af')
+        sh '''
+        echo 'Cleaning Workspace'
+        cd ..
+        pwd
+        echo ${PWD##*/}
+        mkdir -p test1
+        ls
+        rm -rf $(ls -A | grep -v ${JOB_NAME})
+        ls
+        '''
+      }
+    }
+  }
+}
+
+/*
+nodesByLabel('preCloud_Native').each {
+  nodes[it] = { -&gt;
+    node(it) {
+      stage("Purge@${it}") {
+        sh('docker version &amp;&amp; docker images &amp;&amp; docker system prune -af &amp;&amp; docker images')
+      }
+    }
+  }
+}
+*/
+
+parallel nodes
+
+
+
+
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

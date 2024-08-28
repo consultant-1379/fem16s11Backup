@@ -1,0 +1,116 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.25">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.3.2"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.3.2">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>director_node_B64</string>
+        <string>config_B64_file</string>
+        <string>Security_Context_Diff</string>
+        <string>director_node_pem_file</string>
+        <string>podname</string>
+        <string>Security_Context_File</string>
+        <string>config_file</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>director_node_pem_file</name>
+          <description>Pem File for your cENM environment</description>
+          <defaultValue>ccd-c12a008.director.pem</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>director_node_B64</name>
+          <description>Your Pem File Converted to Base64</description>
+          <defaultValue>asdf</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>config_file</name>
+          <description>Your config.ini filename</description>
+          <defaultValue>config.ini</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>config_B64_file</name>
+          <description>Your Base64 config file</description>
+          <defaultValue>NULL</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>podname</name>
+          <description>The pod you want to run cappa against</description>
+          <defaultValue>cmevents</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>Security_Context_Diff</name>
+          <description>Mark True if you want to run the security context diff</description>
+          <defaultValue>false</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>Security_Context_File</name>
+          <description>Security Context File used to compare against</description>
+          <defaultValue>Null</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <org.jenkinsci.plugins.workflow.multibranch.BranchJobProperty plugin="workflow-multibranch@2.20">
+      <branch plugin="branch-api@2.0.18">
+        <sourceId>blueocean</sourceId>
+        <head class="jenkins.plugins.git.GitBranchSCMHead" plugin="git@3.9.3">
+          <name>master</name>
+        </head>
+        <scm class="hudson.plugins.git.GitSCM" plugin="git@3.9.3">
+          <configVersion>2</configVersion>
+          <userRemoteConfigs>
+            <hudson.plugins.git.UserRemoteConfig>
+              <name>origin</name>
+              <refspec>+refs/heads/*:refs/remotes/origin/*</refspec>
+              <url>ssh://evadtam@gerrit.ericsson.se:29418/OSS/ENM-Parent/SQ-Gate/com.ericsson.oss.containerisation/eric-enm-cappa-utils</url>
+              <credentialsId>jenkins-generated-ssh-key</credentialsId>
+            </hudson.plugins.git.UserRemoteConfig>
+          </userRemoteConfigs>
+          <branches class="singleton-list">
+            <hudson.plugins.git.BranchSpec>
+              <name>master</name>
+            </hudson.plugins.git.BranchSpec>
+          </branches>
+          <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+          <submoduleCfg class="empty-list"/>
+          <extensions>
+            <hudson.plugins.git.extensions.impl.CleanBeforeCheckout/>
+            <hudson.plugins.git.extensions.impl.CleanCheckout/>
+            <hudson.plugins.git.extensions.impl.LocalBranch>
+              <localBranch>**</localBranch>
+            </hudson.plugins.git.extensions.impl.LocalBranch>
+            <jenkins.plugins.git.GitSCMSourceDefaults>
+              <includeTags>false</includeTags>
+            </jenkins.plugins.git.GitSCMSourceDefaults>
+          </extensions>
+        </scm>
+        <properties/>
+        <actions>
+          <jenkins.scm.api.metadata.PrimaryInstanceMetadataAction plugin="scm-api@2.6.3"/>
+        </actions>
+      </branch>
+    </org.jenkinsci.plugins.workflow.multibranch.BranchJobProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.19.2">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.multibranch.SCMBinder" plugin="workflow-multibranch@2.20">
+    <scriptPath>Jenkinsfile</scriptPath>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

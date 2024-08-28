@@ -1,0 +1,125 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>&lt;font size=&quot;3&quot; color=&quot;FORESTGREEN&quot;&gt;NEW: Search all job for your Repo: put &lt;em&gt; repo &lt;/em&gt; as TEXT and select &lt;em&gt;all jenkins&lt;/em&gt;, &lt;br&gt;&#xd;
+  in console log you will find hyperlink to every job in which repo is used&lt;/font&gt;&lt;br&gt;&lt;br&gt;&#xd;
+&#xd;
+It&apos;s possible to search any text (CXP/Group Name/Repo url) in the config of all Jenkins Jobs.&lt;br&gt;&lt;br&gt;&#xd;
+For example you can answer to the following questions:&lt;br&gt;&#xd;
+&lt;ol&gt;&#xd;
+  &lt;li&gt;Where are Jenkins jobs containing this text?&lt;/li&gt;&#xd;
+  &lt;li&gt;Where is repository for this text?&lt;/li&gt;&#xd;
+  &lt;li&gt;How many jobs contains this text?&lt;/li&gt;&#xd;
+  &lt;li&gt;How many repos contains this text?&lt;/li&gt;&#xd;
+&lt;/ol&gt;&#xd;
+</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>20</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>TEXT</name>
+          <description>&lt;font size=&quot;2&quot; color=&quot;red&quot;&gt;NEW: It is possible to insert an Array of values separated by one space&lt;/font&gt;&lt;br&gt;&lt;br&gt;
+&lt;font size=&quot;2&quot;&gt;Enter the text you want to search it.&lt;/font&gt;&lt;br&gt;&lt;br&gt;
+&lt;font size=&quot;2&quot;&gt; For example&lt;/font&gt;&lt;br&gt;
+&lt;font size=&quot;2&quot;&gt; - (Number cxp: ERICenmxxxxx_CXP99999999)&lt;/font&gt;&lt;br&gt;
+&lt;font size=&quot;2&quot;&gt; - (Set of Number cxp: ERICenmxxxxx_CXP99999999 ERICenmxxxxx_CXP8888888 .... etc)&lt;/font&gt;&lt;br&gt;</description>
+          <defaultValue>OSS/com.ericsson.oss.services.model.ned/security-function-model</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>JENKINS</name>
+          <description>Select the jenkins istance where you want to search into.</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>fem16s11</string>
+              <string>fem35s11</string>
+              <string>fem7s11</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>TYPE</name>
+          <description>Choose the type of job</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>all</string>
+              <string>precommit</string>
+              <string>Release</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>GridEngine_RHEL7</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+python /proj/ciexadm200/tools/utils/scripts/Monitoring_tools/Search_for_jobs/search_for_jobs_e2c.py &quot;${TEXT}&quot; &quot;${JENKINS}&quot; &quot;${TYPE}&quot;</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.40">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+    <org.jenkinsci.plugins.buildnamesetter.BuildNameSetter plugin="build-name-setter@2.2.0">
+      <template>#${BUILD_NUMBER} - ${ENV,var=&quot;TEXT&quot;}</template>
+      <descriptionTemplate></descriptionTemplate>
+      <runAtStart>true</runAtStart>
+      <runAtEnd>true</runAtEnd>
+    </org.jenkinsci.plugins.buildnamesetter.BuildNameSetter>
+  </buildWrappers>
+</project>

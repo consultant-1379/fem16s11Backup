@@ -1,0 +1,414 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.39">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.7.0"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.7.0">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>product_set_version</string>
+        <string>ENM_ISO_REPO_VERSION</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>TEST JOBS for Gerrit UAT/STAGING.&lt;br&gt;&lt;br&gt;&#xd;
+&#xd;
+&lt;b&gt;&lt;u&gt;Test Parameters:&lt;/u&gt;&lt;/b&gt;&lt;br&gt;&#xd;
+Product_set_version:&lt;br&gt;&#xd;
+20.13.43&lt;br&gt;&#xd;
+ENM_ISO_REPO_VERSION:&lt;br&gt;&#xd;
+ENM_20_13_ERICenm_CXP9027091_1_97_28</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.23.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty/>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>product_set_version</name>
+          <description>Enter the product set version (e.g. 20.11.52).                      Please ensure to give latest product set version compared to last built product set.</description>
+          <defaultValue>20.13.43</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>ENM_ISO_REPO_VERSION</name>
+          <description>Enter the ISO Repo Version (e.g. ENM_20_13_ERICenm_CXP9027091_1_97_10).</description>
+          <defaultValue>ENM_20_13_ERICenm_CXP9027091_1_97_28</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>Choose_Label</name>
+          <description>Choose desired label from the available options.
+Docker-POC -&gt; Grid Engine Slaves
+TEMP-Cloud-Native -&gt; Openstack Slaves</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>Docker-POC</string>
+              <string>TEMP-Cloud-Native</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>Choose_Functional_User</name>
+          <description>Choose appropriate functional user.
+Docker-POC -&gt; enmadm100
+TEMP-Cloud-Native -&gt; lciadm100</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>enmadm100</string>
+              <string>lciadm100</string>
+              <string>cenmbuild</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>Gerrit_Instance</name>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>PROD</string>
+              <string>UAT</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit></paramsToUseForLimit>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.80">
+    <script>SG_PROJECT_LIST = [&quot;eric-enmsg-mssnmpfm&quot;,&quot;eric-enmsg-mspm&quot;,&quot;eric-enmsg-ebs-topology&quot;,&quot;eric-pm-fileaccess-nbi&quot;]
+//,&quot;eric-enmsg-amos&quot;,&quot;eric-enmsg-ebs-flow&quot;,&quot;eric-enmsg-visinaming-nb&quot;,&quot;eric-enmsg-visinaming-sb&quot;,&quot;eric-enm-modeldeployservice&quot;,&quot;eric-enm-sfwkdb-schemamgt&quot;,&quot;eric-enm-omnidaemon&quot;,&quot;eric-enmsg-cmservice&quot;,&quot;eric-enmsg-element-manager&quot;]
+BASEIMAGESOS_PROJECT_LIST = [&quot;eric-enm-sles-base&quot;]
+BASEIMAGES_PROJECT_LIST = [&quot;eric-enm-sles-eap7&quot;,&quot;eric-enm-monitoring-master&quot;]
+MOREBASEIMAGES_PROJECT_LIST = [&quot;eric-sec-directoryservices-fd&quot;]
+pipeline {
+    agent { 
+        label &quot;${Choose_Label}&quot; 
+        //label &apos;Cloud-Native&apos;
+    }
+    options {
+        timestamps()
+    }
+    environment {
+        PIPELINE_LAST_STAGE_STATUS = &apos;UNKNOWN&apos;
+    }
+    
+    parameters {
+        string(name: &apos;product_set_version&apos;, description: &apos;Enter the product set version (e.g. 20.11.52).\
+                      Please ensure to give latest product set version compared to last built product set.&apos;, defaultValue: &quot;20.13.43&quot;)
+		string(name: &apos;ENM_ISO_REPO_VERSION&apos;, description: &apos;Enter the ISO Repo Version (e.g. ENM_20_13_ERICenm_CXP9027091_1_97_10).&apos;, defaultValue: &quot;ENM_20_13_ERICenm_CXP9027091_1_97_28&quot;)
+    }
+    stages { 
+        stage (&apos;Removing Docker Images&apos;) {
+            steps {
+                script {
+                    echo &quot;docker image removal&quot;
+                    build(job: &quot;Purge-slaves-pointfix&quot;, propagate: true, wait: true)
+                    build(job: &quot;Purge-slaves-Docker-POC&quot;, propagate: true, wait: true)
+                }
+            }
+        }
+        stage (&apos;Initialization of ENM Version&apos;) {
+            steps {
+                script {
+                    def productSet = &quot;&quot;
+					def enmISORepoVersion = &quot;&quot;
+					
+
+					env.SPRINT_TAG= &quot;20.13&quot;
+                    env.SPRINT_TAG = &apos;sprint_&apos;+ env.SPRINT_TAG
+                    //env.SPRINT_TAG = &apos;sprint_test_1&apos;
+
+                    // For nightly build this parameter would be empty
+                    if (params.product_set_version) {
+                        productSet = params.product_set_version.trim()
+                    }
+                    // Check if product set version is given
+                    if (productSet != &quot;&quot;) {
+                        env.PRODUCT_SET = productSet
+                        echo &quot;Triggered manually with the PRODUCT_SET: ${productSet}&quot;
+                        currentBuild.description = &quot;Triggered Mode: &lt;b&gt;Manual&lt;/b&gt;&lt;br/&gt;&quot;
+                    } else {
+                        echo &quot;Triggered automatically.&quot;
+                        currentBuild.description = &quot;Triggered Mode: &lt;b&gt;Auto&lt;/b&gt;&lt;br/&gt;&quot;
+                    }
+					
+					if (params.ENM_ISO_REPO_VERSION) {
+                        enmISORepoVersion = &quot;ENM_20_13_ERICenm_CXP9027091_1_97_28&quot; //params.ENM_ISO_REPO_VERSION.trim()
+                    }
+                   					
+                    // Call eric-enm-green-iso-build-trigger with PRODUCT_SET parameter
+                    //def b = build(job: &quot;eric-enm-green-iso-build-trigger-tst&quot;, parameters: [[$class:&apos;StringParameterValue&apos;, name:&apos;PRODUCT_SET&apos;, value:String.valueOf(&quot;${productSet}&quot;)], [$class:&apos;StringParameterValue&apos;, name:&apos;ENM_ISO_REPO_VERSION&apos;, value:String.valueOf(&quot;${enmISORepoVersion}&quot;)]], propagate: true, wait: true)
+                    def b = build(job: &quot;eric-enm-green-iso-build-trigger-ssh-tst-UAT-STAGING-GERRIT-3&quot;, parameters: [[$class:&apos;StringParameterValue&apos;, name:&apos;PRODUCT_SET&apos;, value:String.valueOf(&quot;${productSet}&quot;)], [$class:&apos;StringParameterValue&apos;, name:&apos;ENM_ISO_REPO_VERSION&apos;, value:String.valueOf(&quot;${enmISORepoVersion}&quot;)]], propagate: true, wait: true)
+					
+                    env.ISO_VERSION = &quot;1.97.43&quot; //&quot;$b.buildVariables.ISO_VERSION&quot;
+                    echo &quot;ISO VERSION: $ISO_VERSION&quot;
+                    env.PRODUCT_SET = &quot;$b.buildVariables.PRODUCT_SET&quot;
+                    echo &quot;PRODUCT SET VERSION: $PRODUCT_SET&quot;
+                    env.ENM_ISO_REPO_VERSION = &quot;ENM_20_13_ERICenm_CXP9027091_1_97_28&quot; //&quot;$b.buildVariables.ENM_ISO_REPO_VERSION&quot;
+                    echo &quot;ENM_ISO_REPO_VERSION: $ENM_ISO_REPO_VERSION&quot;
+
+                    // Update the Build Description
+                    currentBuild.description += &quot;Product Set Version: $PRODUCT_SET&lt;br/&gt;&quot;
+                    currentBuild.description += &quot;ISO Version: $ISO_VERSION&lt;br/&gt;&quot;
+                    currentBuild.description += &quot;Yum Repo Setup: $ENM_ISO_REPO_VERSION&lt;br/&gt;&quot;
+					currentBuild.description += &quot;Sprint Tag: $SPRINT_TAG&lt;br/&gt;&quot;
+
+                    environment_list = [[$class:&apos;StringParameterValue&apos;, name:&quot;ISO_VERSION&quot;, value:String.valueOf(&quot;${ISO_VERSION}&quot;)],
+                                        [$class:&apos;StringParameterValue&apos;, name:&quot;ENM_ISO_REPO_VERSION&quot;, value:String.valueOf(&quot;${ENM_ISO_REPO_VERSION}&quot;)],
+										[$class:&apos;StringParameterValue&apos;, name:&quot;SPRINT_TAG&quot;, value:String.valueOf(&quot;${SPRINT_TAG}&quot;)],
+										[$class:&apos;StringParameterValue&apos;, name:&quot;PRODUCT_SET&quot;, value:String.valueOf(&quot;${PRODUCT_SET}&quot;)],
+										[$class:&apos;StringParameterValue&apos;, name:&quot;Choose_Label&quot;, value:String.valueOf(&quot;${Choose_Label}&quot;)],
+										[$class:&apos;StringParameterValue&apos;, name:&quot;Choose_Functional_User&quot;, value:String.valueOf(&quot;${Choose_Functional_User}&quot;)],
+										[$class:&apos;StringParameterValue&apos;, name:&quot;Gerrit_Instance&quot;, value:String.valueOf(&quot;${Gerrit_Instance}&quot;)]
+										]
+                    echo &quot;$environment_list&quot;
+                }
+            }
+        }
+        stage(&apos;Inject Credential Files&apos;) {
+            steps {
+                withCredentials([file(credentialsId: &apos;lciadm100-docker-auth&apos;, variable: &apos;dockerConfig&apos;)]) {
+                    sh &quot;install -m 600 ${dockerConfig} ${HOME}/.docker/config_test_fem27.json&quot;
+                }
+            }
+        }
+        stage (&apos;Building OS Base Images&apos;) {
+            steps{
+                script{
+                    def builds = [:]
+                    for (def proj in BASEIMAGESOS_PROJECT_LIST) {
+                        def baseimagesos_build = &quot;${proj}&quot;
+                        builds[&quot;${baseimagesos_build}&quot;] = {
+                            stage(&quot;Build ${baseimagesos_build}&quot;){
+                                retry(3) {
+                                    def image_tag_name = (baseimagesos_build.replaceAll(&quot;-&quot;, &quot;_&quot;) + &quot;_IMAGE_TAG&quot;).toUpperCase()
+                                    def build = build(job: &quot;${baseimagesos_build}-ssh-tst-UAT-STAGING-GERRIT-3&quot;, propagate: true, wait: true, parameters: environment_list)
+                                    env.&quot;$image_tag_name&quot; = &quot;$build.buildVariables.IMAGE_TAG&quot;
+                                    echo &quot;IMAGE TAG: $image_tag_name&quot;
+                                }
+                            }
+                        }
+                    }
+                    parallel builds
+                    echo sh(script: &apos;env&apos;, returnStdout:true)
+                }
+            }
+        }
+        stage (&apos;SYNC1: OS Base Images&apos;) {
+            steps {
+                echo &quot;All OS Base Images up to this point built successfully&quot;
+                sleep(5)
+                script {
+                    build_environment_list()
+                }
+            }
+        }
+        stage (&apos;Building Base Images&apos;) {
+            steps{
+                script{
+                    def builds = [:]
+                    for (def proj in BASEIMAGES_PROJECT_LIST) {
+                        def baseimages_build = &quot;${proj}&quot;
+                          builds[&quot;${baseimages_build}&quot;] = {
+                            stage(&quot;Build ${baseimages_build}&quot;){
+                                retry(3) {
+                                    def image_tag_name = (baseimages_build.replaceAll(&quot;-&quot;, &quot;_&quot;) + &quot;_IMAGE_TAG&quot;).toUpperCase()
+                                    def build = build(job: &quot;${baseimages_build}-ssh-tst-UAT-STAGING-GERRIT-3&quot;, propagate: true, wait: true, parameters: environment_list)
+                                    env.&quot;$image_tag_name&quot; = &quot;$build.buildVariables.IMAGE_TAG&quot;
+                                    echo &quot;IMAGE TAG: $image_tag_name&quot;
+                                }
+                            }
+                        }
+                    }
+                    parallel builds
+                    echo sh(script: &apos;env&apos;, returnStdout:true)
+                }
+            }
+        }
+        stage (&apos;SYNC 2: BaseImages&apos;) {
+            steps {
+                echo &quot;All Base Images up to this point built successfully&quot;
+                sleep(5)
+                script {
+                    build_environment_list()
+                }
+            }
+        }
+        stage (&apos;Building more Base Images&apos;) {
+            steps{
+                script{
+                    def builds = [:]
+                    for (def proj in MOREBASEIMAGES_PROJECT_LIST) {
+                        def morebaseimages_build = &quot;${proj}&quot;
+                        builds[&quot;${morebaseimages_build}&quot;] = {
+                            stage(&quot;Build ${morebaseimages_build}&quot;){
+                                retry(3) {
+                                    def image_tag_name = (morebaseimages_build.replaceAll(&quot;-&quot;, &quot;_&quot;) + &quot;_IMAGE_TAG&quot;).toUpperCase()
+                                    def build = build(job: &quot;${morebaseimages_build}-ssh-tst-UAT-STAGING-GERRIT-3&quot;, propagate: true, wait: true, parameters: environment_list)
+                                    env.&quot;$image_tag_name&quot; = &quot;$build.buildVariables.IMAGE_TAG&quot;
+                                    echo &quot;IMAGE TAG: $image_tag_name&quot;
+                                }
+                            }
+                        }
+                    }
+                    parallel builds
+                    echo sh(script: &apos;env&apos;, returnStdout:true)
+                }
+            }
+        }
+        stage (&apos;SYNC 3: More BaseImages&apos;) {
+            steps {
+                echo &quot;All Base Images built successfully&quot;
+                sleep(5)
+                script {
+                    build_environment_list()
+                }
+            }
+        }
+        stage(&apos;Building Service Groups Images and Helm Charts&apos;) {
+            steps{
+                script{
+                    def builds = [:]
+                    for (def proj in SG_PROJECT_LIST) {
+                        def service_group_build = &quot;${proj}&quot;+&apos;-ssh-tst-UAT-STAGING-GERRIT-3&apos;
+                        builds[&quot;${service_group_build}&quot;] = {
+                            stage(&quot;Build ${service_group_build}&quot;){
+                                retry(3) {
+                                    def image_tag_name = (service_group_build.replaceAll(&quot;-&quot;, &quot;_&quot;) + &quot;_IMAGE_TAG&quot;).toUpperCase()
+                                    def build = build(job: &quot;${service_group_build}&quot;, propagate: true, wait: true, parameters: environment_list)
+                                    env.&quot;$image_tag_name&quot; = &quot;$build.buildVariables.IMAGE_TAG&quot;
+                                    echo &quot;IMAGE TAG: $image_tag_name&quot;
+                                }
+                            }
+                        }
+                    }
+                    parallel builds
+                    echo sh(script: &apos;env&apos;, returnStdout:true)
+                }
+            }
+        }
+        stage (&apos;SYNC 4: Service Groups Images and Helms Charts&apos;) {
+            steps {
+                echo &quot;All Service Groups Images and Helms charts built successfully&quot;
+                sleep(5)
+                script {
+                    build_environment_list()
+                }
+            }
+        }
+        stage (&apos;Generate Requirements File&apos;) {
+            steps {
+                script {
+                    init_requirements()
+                    build_requirements_file()
+                    //store_requirements_file()
+                }
+            }
+        }
+        stage (&apos;Trigger Integration Build&apos;) {
+            steps {
+                script {
+                    sh &apos;echo &quot;ISO_VERSION=$ISO_VERSION&quot; &gt; artifact.properties&apos;
+                    sh &apos;echo &quot;PRODUCT_SET=$PRODUCT_SET&quot; &gt;&gt; artifact.properties&apos;
+                    sh &apos;echo &quot;SPRINT_TAG=$SPRINT_TAG&quot; &gt;&gt; artifact.properties&apos;
+                    sh &apos;echo &quot;REQUIREMENTS_FILE_URL=$REQUIREMENTS_FILE_URL&quot; &gt;&gt; artifact.properties&apos;
+                    archiveArtifacts &apos;artifact.properties,requirements_test.yaml&apos;
+                }
+                sleep(5)
+            }
+        }
+    }
+    post {
+//        success {
+//            script {
+//               sh(script: &apos;wget -q -O - --no-check-certificate --post-data=&quot;&quot; https://ci-portal.seli.wh.rnd.internal.ericsson.com/api/manageCNProductSet/${PRODUCT_SET}/cENM-Build-Images/failed/&apos;, returnStdout: true).trim()
+//                currentBuild.rawBuild.@result = hudson.model.Result.SUCCESS
+//            }
+//        }
+        failure {
+            script {
+                if (PIPELINE_LAST_STAGE_STATUS==&apos;SUCCESS&apos;) {
+                    currentBuild.rawBuild.@result = hudson.model.Result.SUCCESS
+                }
+            }
+        }
+    }
+}
+
+def build_environment_list(){
+    env.getEnvironment().each { key, value -&gt;
+        if (&quot;${key}&quot;.startsWith(&quot;ERIC_&quot;)){
+            echo &quot;${key}=${value}&quot;
+            environment_list &lt;&lt; [$class:&apos;StringParameterValue&apos;, name:&quot;${key}&quot;, value:String.valueOf(&quot;${value}&quot;)]
+        }
+    }
+    build(job: &quot;sync-build-trigger-ssh-tst-UAT-STAGING-GERRIT-3&quot;, propagate: true, wait: true, parameters: environment_list)
+}
+
+def init_requirements() {
+    outString = &apos;dependencies:\r\n&apos;
+    writeFile file: &apos;requirements_test.yaml&apos;, text: outString
+}
+
+def build_requirements_file(){
+    env.getEnvironment().each { key, value -&gt;
+        if (key.startsWith(&quot;ERIC_ENM&quot;) || key.startsWith(&quot;ERIC_PM&quot;)){
+            if (key.endsWith(&quot;_REPOSITORY_TAG&quot;)){
+                return
+            }
+            else{
+                key=key.replace(&quot;_IMAGE_TAG&quot;,&quot;&quot;)
+                env.repoKey = &apos;\${&apos;+key+&apos;_REPOSITORY_TAG}&apos;
+                repository=sh(returnStdout: true, script: &quot;echo \$repoKey&quot;).trim()
+            if (repository == &quot;&quot;){
+                repoString = &apos;  repository: https://arm.epk.ericsson.se/artifactory/proj-enm-helm/&apos;
+            } else {
+                repoString = &apos;  repository: &apos; + repository
+            }
+                key = key.replace(&quot;_POINTFIX&quot;,&quot;&quot;)
+                key=key.toLowerCase().replace(&quot;_&quot;,&quot;-&quot;)
+                nameString = &apos;- name: &apos;+ key
+                versionString = &apos;  version: &apos; + value
+            }
+        readContent = readFile &apos;requirements_test.yaml&apos;
+        outString = readContent + nameString + &quot;\\r\\n&quot; + repoString + &quot;\\r\\n&quot; + versionString + &quot;\\r\\n&quot;
+        writeFile file: &apos;requirements_test.yaml&apos;, text: outString
+        }
+    }
+}
+
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

@@ -1,0 +1,179 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><project>
+  <actions/>
+  <description>This job is for adding node licences to cENM</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>test_phase</name>
+          <defaultValue>MTE</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>cluster_id</name>
+          <description>Cluster ID of your deployment
+</description>
+          <defaultValue>ieatenmc31</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>drop</name>
+          <description>Provide the Sprint Number of the charts used</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>product_set_version</name>
+          <description>The Product Set version of the charts used</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>deployment_type</name>
+          <defaultValue>cloud</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>mt_utils_version</name>
+          <defaultValue>RELEASE</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix/>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    <EnvInjectJobProperty plugin="envinject@2.4.0">
+      <info>
+        <secureGroovyScript plugin="script-security@1138.v8e727069a_025">
+          <script/>
+          <sandbox>true</sandbox>
+        </secureGroovyScript>
+        <loadFilesFromMaster>false</loadFilesFromMaster>
+      </info>
+      <on>true</on>
+      <keepJenkinsSystemVariables>true</keepJenkinsSystemVariables>
+      <keepBuildVariables>true</keepBuildVariables>
+      <overrideBuildParameters>false</overrideBuildParameters>
+    </EnvInjectJobProperty>
+    
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>Jenkins_cENM_Design_Teams_TAF1_Slave_1Node_18</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <org.jenkinsci.plugins.exportparams.ExportParametersBuilder plugin="export-params@1.9">
+      <filePath>parameters</filePath>
+      <fileFormat>properties</fileFormat>
+      <keyPattern/>
+      <useRegexp>false</useRegexp>
+    </org.jenkinsci.plugins.exportparams.ExportParametersBuilder>
+    <hudson.tasks.Shell>
+      <command>#!/bin/sh
+
+echo "Retrieving Scripts from Nexus"
+tarFileName="utils_${mt_utils_version}.tar.gz"
+echo "Downloading file - ${tarFileName} - to the workspace"
+curl -s --noproxy \* -L "https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/service/local/artifact/maven/redirect?r=releases&amp;g=com.ericsson.mtg&amp;a=utils&amp;p=tar.gz&amp;v=${mt_utils_version}" -o ${tarFileName}
+tar -zxf ${tarFileName}
+
+sh MTELoopScripts/pipeline_scripts/add_licenses_setup.sh "${WORKSPACE}/parameters.properties" || exit 1</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <EnvInjectBuilder plugin="envinject@2.4.0">
+      <info>
+        <propertiesFilePath>$WORKSPACE/build.properties</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+    <com.ericsson.oss.axis.BaselineDefinedMessageDispatcher plugin="taf-trigger@1.0.60">
+      <ciArtifacts>
+        <isoProduct>ENM</isoProduct>
+        <isoDrop>${drop}</isoDrop>
+        <isoVersion>${enm_iso_version}</isoVersion>
+        <jobType>Entry Loop</jobType>
+        <artifactsClassName>com.ericsson.oss.axis.BaselineDefinedMessageDispatcher$ArtifactAsISO$1</artifactsClassName>
+      </ciArtifacts>
+      <schedule>
+        <name>enm_schedule_kvm_add_licenses.xml</name>
+        <groupId>com.ericsson.cifwk</groupId>
+        <artifactId>enm-schedule-kvm</artifactId>
+        <version>${taf_scheduler_version}</version>
+        <testPropertiesAsString/>
+        <scheduleClassName>com.ericsson.oss.axis.BaselineDefinedMessageDispatcher$ScheduleAsGav$1</scheduleClassName>
+      </schedule>
+      <testwarePropertiesFile/>
+      <tunnellingOn>true</tunnellingOn>
+      <breakBuildOnTestsFailure>false</breakBuildOnTestsFailure>
+      <sutClusterId>${cluster_id}</sutClusterId>
+      <citeHostPropertiesFile/>
+      <globalTestGroups/>
+      <tafVersion>${tafVersion}</tafVersion>
+      <userDefinedGAVs/>
+      <additionalTestProperties>
+        <property name="taf.config.dit.deployment.name" value="${cluster_id}"/>
+        <property name="taf.profiles" value="license_rollout"/>
+        <property name="tdm.api.host" value="https://taf-tdm.seli.wh.rnd.internal.ericsson.com/api/"/>
+      </additionalTestProperties>
+      <arm>
+        <id/>
+        <description/>
+        <httpString>https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/groups/public</httpString>
+        <credentials>
+          <username/>
+          <password/>
+        </credentials>
+      </arm>
+      <ciFwkHost>https://ci-portal.seli.wh.rnd.internal.ericsson.com/</ciFwkHost>
+      <tafTestExecutorHostname/>
+      <tafTestExecutorPort>8080</tafTestExecutorPort>
+    </com.ericsson.oss.axis.BaselineDefinedMessageDispatcher>
+  </builders>
+  <publishers>
+    <hudson.tasks.Mailer plugin="mailer@408.vd726a_1130320">
+      <recipients>anthony.kodela@tcs.com</recipients>
+      <dontNotifyEveryUnstableBuild>false</dontNotifyEveryUnstableBuild>
+      <sendToIndividuals>false</sendToIndividuals>
+    </hudson.tasks.Mailer>
+  </publishers>
+  <buildWrappers>
+    <org.jenkinsci.plugins.buildnamesetter.BuildNameSetter plugin="build-name-setter@2.2.0">
+      <template>ClusterID = ${ENV,var="cluster_id"}</template>
+      <descriptionTemplate/>
+      <runAtStart>true</runAtStart>
+      <runAtEnd>true</runAtEnd>
+    </org.jenkinsci.plugins.buildnamesetter.BuildNameSetter>
+  </buildWrappers>
+</project>

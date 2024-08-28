@@ -1,0 +1,145 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>&lt;h3&gt;Job Description&lt;/h3&gt;&#xd;
+&lt;p&gt;This job is used to setup the WLVM post II.&lt;/p&gt;&#xd;
+&lt;ul&gt;&#xd;
+  &lt;li&gt;Sets up the workload vm configuration&lt;/li&gt;&#xd;
+  &lt;li&gt;Sets up tor utilities in workload vm&lt;/li&gt;&#xd;
+  &lt;li&gt;To Be Done : Sets up ddc on workload vm&lt;/li&gt;&#xd;
+&lt;/ul&gt;&#xd;
+&lt;br&gt;&#xd;
+&lt;br&gt;&#xd;
+&lt;b&gt;Job developed and maintained by Thunderbee : &lt;/b&gt; &lt;a href=&quot;mailto:PDLENMCOUN@pdl.internal.ericsson.com?Subject=vENM_Setup_Workload_VM%20Job&quot; target=&quot;_top&quot;&gt;Send Mail&lt;/a&gt; to provide feedback</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>25</daysToKeep>
+        <numToKeep>20</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>cluster_id</name>
+          <description>Deployment name of cENM Cloud Deployment to setup Workload VM for</description>
+          <defaultValue>ieatenmvcd01</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>drop</name>
+          <description>Drop version installed on deployment&lt;br&gt;
+Example: 18.02</description>
+          <defaultValue>20.15</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <jp.ikedam.jenkins.plugins.extensible__choice__parameter.ExtensibleChoiceParameterDefinition plugin="extensible-choice-parameter@1.8.0">
+          <name>mt_utils_version</name>
+          <description>This is the version of the scripts available in Nexus&lt;br&gt;
+The version used will be printed in the console output&lt;br&gt;
+&lt;a href=&quot;https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/repositories/releases/com/ericsson/mtg/utils/&quot;&gt;Nexus Link&lt;/a&gt; </description>
+          <editable>true</editable>
+          <choiceListProvider class="jp.ikedam.jenkins.plugins.extensible_choice_parameter.TextareaChoiceListProvider">
+            <choiceList>
+              <string>RELEASE</string>
+            </choiceList>
+          </choiceListProvider>
+        </jp.ikedam.jenkins.plugins.extensible__choice__parameter.ExtensibleChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>tor_utils_version</name>
+          <description>&lt;b&gt;
+  Options:
+  &lt;ul&gt;
+    &lt;li&gt;INSTALLED - Aligns all versions in the WLVM to match the version of Tor Utilities Production Package installed on EMP&lt;/li&gt;
+    &lt;li&gt;
+      SPECIFIC VERSION - Deploys the version specified
+      &lt;ul&gt;
+        &lt;li&gt;List of versions: &lt;a href=&quot;https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/repositories/releases/com/ericsson/dms/torutility/ERICtorutilitiesinternal_CXP9030579/&quot;&gt;Tor Utilities Versions&lt;/a&gt;&lt;/li&gt;
+        &lt;li&gt;e.g. 4.80.9&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/li&gt;
+    &lt;li&gt;
+      The following option requires a version already installed on the deployment:
+      &lt;ul&gt;
+        &lt;li&gt;LATEST - Installs the latest available version of Tor Utilities&lt;/li&gt;
+      &lt;/ul&gt;
+    &lt;/li&gt;
+  &lt;/ul&gt;
+&lt;/b&gt;</description>
+          <defaultValue>LATEST</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>Jenkins_Security_RA_TE_SLAVE_1||Jenkins_TAF_TE_Slave_4Node_Skyfall_2</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>true</concurrentBuild>
+  <builders>
+    <org.jenkinsci.plugins.exportparams.ExportParametersBuilder plugin="export-params@1.9">
+      <filePath>parameters</filePath>
+      <fileFormat>properties</fileFormat>
+      <keyPattern></keyPattern>
+      <useRegexp>false</useRegexp>
+    </org.jenkinsci.plugins.exportparams.ExportParametersBuilder>
+    <hudson.tasks.Shell>
+      <command>#!/bin/sh
+
+echo &quot;Retrieving Scripts from Nexus&quot;
+tarFileName=&quot;utils_${mt_utils_version}.tar.gz&quot;
+echo &quot;Downloading file - ${tarFileName} - to the workspace&quot;
+curl -s --noproxy \* -L &quot;https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/service/local/artifact/maven/redirect?r=releases&amp;g=com.ericsson.mtg&amp;a=utils&amp;p=tar.gz&amp;v=${mt_utils_version}&quot; -o ${tarFileName}
+tar -zxf ${tarFileName}
+
+sh MTELoopScripts/pipeline_scripts/workload_vm_setup.sh &quot;${WORKSPACE}/parameters.properties&quot; || exit 1</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <org.jenkinsci.plugins.buildnamesetter.BuildNameSetter plugin="build-name-setter@2.2.0">
+      <template>ClusterID = ${ENV,var=&quot;cluster_id&quot;}</template>
+      <runAtStart>true</runAtStart>
+      <runAtEnd>true</runAtEnd>
+    </org.jenkinsci.plugins.buildnamesetter.BuildNameSetter>
+  </buildWrappers>
+</project>

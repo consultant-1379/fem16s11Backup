@@ -1,0 +1,193 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.security.AuthorizationMatrixProperty>
+      <inheritanceStrategy class="org.jenkinsci.plugins.matrixauth.inheritance.InheritParentStrategy"/>
+      <permission>USER:hudson.model.Item.Build:ealeing</permission>
+      <permission>USER:hudson.model.Item.Build:eandurs</permission>
+      <permission>USER:hudson.model.Item.Build:esetpar</permission>
+      <permission>USER:hudson.model.Item.Build:qsarfly</permission>
+      <permission>USER:hudson.model.Item.Build:zkasabh</permission>
+      <permission>USER:hudson.model.Item.Build:zmurshi</permission>
+      <permission>USER:hudson.model.Item.Build:zuanmgk</permission>
+      <permission>USER:hudson.model.Item.Cancel:ealeing</permission>
+      <permission>USER:hudson.model.Item.Cancel:eandurs</permission>
+      <permission>USER:hudson.model.Item.Cancel:esetpar</permission>
+      <permission>USER:hudson.model.Item.Cancel:qsarfly</permission>
+      <permission>USER:hudson.model.Item.Cancel:zkasabh</permission>
+      <permission>USER:hudson.model.Item.Cancel:zmurshi</permission>
+      <permission>USER:hudson.model.Item.Cancel:zuanmgk</permission>
+      <permission>USER:hudson.model.Item.Configure:ealeing</permission>
+      <permission>USER:hudson.model.Item.Configure:eandurs</permission>
+      <permission>USER:hudson.model.Item.Configure:esetpar</permission>
+      <permission>USER:hudson.model.Item.Configure:qsarfly</permission>
+      <permission>USER:hudson.model.Item.Configure:zkasabh</permission>
+      <permission>USER:hudson.model.Item.Configure:zmurshi</permission>
+      <permission>USER:hudson.model.Item.Configure:zuanmgk</permission>
+      <permission>USER:hudson.model.Item.Delete:ealeing</permission>
+      <permission>USER:hudson.model.Item.Delete:zmurshi</permission>
+      <permission>GROUP:hudson.model.Item.Read:authenticated</permission>
+      <permission>USER:hudson.model.Item.Read:ealeing</permission>
+      <permission>USER:hudson.model.Item.Read:eandurs</permission>
+      <permission>USER:hudson.model.Item.Read:esetpar</permission>
+      <permission>USER:hudson.model.Item.Read:qsarfly</permission>
+      <permission>USER:hudson.model.Item.Read:zkasabh</permission>
+      <permission>USER:hudson.model.Item.Read:zmurshi</permission>
+      <permission>USER:hudson.model.Item.Read:zuanmgk</permission>
+      <permission>USER:hudson.model.Item.Workspace:ealeing</permission>
+      <permission>USER:hudson.model.Item.Workspace:eandurs</permission>
+      <permission>USER:hudson.model.Item.Workspace:esetpar</permission>
+      <permission>USER:hudson.model.Item.Workspace:qsarfly</permission>
+      <permission>USER:hudson.model.Item.Workspace:zkasabh</permission>
+      <permission>USER:hudson.model.Item.Workspace:zmurshi</permission>
+      <permission>USER:hudson.model.Item.Workspace:zuanmgk</permission>
+    </hudson.security.AuthorizationMatrixProperty>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <org.biouno.unochoice.ChoiceParameter plugin="uno-choice@2.1">
+          <name>SLAVE_NAME</name>
+          <description>Please select a slave for which you want to clear workspace</description>
+          <randomName>choice-parameter-55816791118380928</randomName>
+          <visibleItemCount>1</visibleItemCount>
+          <script class="org.biouno.unochoice.model.GroovyScript">
+            <secureScript plugin="script-security@1138.v8e727069a_025">
+              <script>def slaves = []
+def count = 0
+    hudson.model.Hudson.instance.slaves.each {
+        if(it.name.contains('GE'))
+        {
+            slaves &lt;&lt; it.name
+            count = count + 1
+        }
+    }
+    return slaves</script>
+              <sandbox>false</sandbox>
+            </secureScript>
+            <secureFallbackScript plugin="script-security@1138.v8e727069a_025">
+              <script/>
+              <sandbox>false</sandbox>
+            </secureFallbackScript>
+          </script>
+          <projectName>GE-Agent-Workspace-Clean</projectName>
+          <choiceType>PT_RADIO</choiceType>
+          <filterable>true</filterable>
+          <filterLength>1</filterLength>
+        </org.biouno.unochoice.ChoiceParameter>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>import hudson.model.*;
+import hudson.AbortException;
+import java.util.concurrent.CancellationException;
+
+pipeline
+{
+    agent 
+    {
+        node "${SLAVE_NAME}"
+    }
+    stages 
+    {
+        stage('Slave Checking') 
+        {
+            steps
+            {
+                echo env.NODE_NAME 
+                script {
+                   def nodes = jenkins.model.Jenkins.instance.nodes
+                   echo "nodes collected"
+                    try {
+                    for (agent in nodes) {
+                           def computer = agent.computer
+                           if(computer.name == "${SLAVE_NAME}")
+                           {
+                               println "Checking computer ${computer.name}:"
+                               def isOK = (!computer.offline)
+                               if (isOK) {
+                                 println "\t\tOK, got PATH back from agent ${computer.name}."
+                                 println('\tcomputer.isOffline: ' + computer.isOffline());
+                                 println('\tcomputer.isTemporarilyOffline: ' + computer.isTemporarilyOffline());
+                                 println('\tcomputer.getOfflineCause: ' + computer.getOfflineCause());
+                                 println('\tcomputer.offline: ' + computer.offline);
+                               } else {
+                                 numberOfflineNodes ++
+                                 println "  ERROR: can't get PATH from agent ${computer.name}."
+                                 println('\tcomputer.isOffline: ' + computer.isOffline());
+                                 println('\tcomputer.isTemporarilyOffline: ' + computer.isTemporarilyOffline());
+                                 println('\tcomputer.getOfflineCause: ' + computer.getOfflineCause());
+                                 println('\tcomputer.offline: ' + computer.offline);
+                               }
+                               break;
+                           }
+                    }
+                }catch (err) {
+                    echo err.getMessage()
+                }
+            }
+                
+        }
+    }
+        stage('Clean Project Workspace') 
+        {
+            steps
+            {
+                deleteDir()
+            }
+        }
+        stage('Clean Total Workspace') 
+        {
+            steps
+            {
+                sh '''
+                cd ..
+                pwd
+                echo ${PWD##*/}
+                mkdir -p test1 test2
+                ls
+                rm -rf $(ls -A | grep -v GE-Agent-Workspace-Clean)
+                ls
+                '''
+            }
+        }
+    }
+}
+
+</script>
+    <sandbox>false</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

@@ -1,0 +1,456 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><project>
+  <actions/>
+  <description>Job that generates new ENM-EAR,ENM-WAR/CDS/TAF/Service Group/Service Model/Plugins/Extensions/3pp projects&lt;br&gt;&lt;br&gt;&#13;
+&lt;b&gt; &lt;/b&gt;&lt;br&gt;&#13;
+&lt;b&gt;&lt;font color="red"&gt;    WARNING!  YOU NEED TO SET "Service Model" Archetype, for any ENM-Products, IF MediaCategory=model  !!! &lt;/font&gt;&lt;/b&gt;&lt;br&gt;&#13;
+&lt;br&gt;&lt;br&gt;&#13;
+- Creates a new Gerrit Repo&lt;br&gt;&#13;
+and if it's requested:&lt;br&gt;&#13;
+- Creates Jenkins Jobs&lt;br&gt;&#13;
+- Runs selected archetype&lt;br&gt;&#13;
+- Prints JIRA message&lt;br&gt;</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@69.0.3">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>30</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.24.1">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@69.0.3">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@69.0.3">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@69.0.3">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty plugin="leastload@1.0.3">
+      <leastLoadDisabled>false</leastLoadDisabled>
+    </org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>JIRA_TICKET</name>
+          <description>&lt;font size="2"&gt;Enter the JIRA ticket number of the product request&lt;br&gt;
+  Examples:CIS-1234&lt;br&gt;&lt;br&gt;&lt;/font&gt;</description>
+          <defaultValue/>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>TEAM</name>
+          <description>&lt;font size="2"&gt;Enter the name of the team for whom the repo is required:&lt;br&gt;
+&lt;font color="red"&gt;Note no spaces allowed, please use underscore (Example: Team_America)&lt;/font&gt;&lt;br&gt;
+&lt;font color="red"&gt;Please Note this can be left blank for LITP jobs&lt;/font&gt;&lt;/font&gt;&lt;br&gt;</description>
+          <defaultValue/>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>REPO</name>
+          <description>&lt;font size="2"&gt;Enter the gerrit repo above (Example: OSS/com.ericsson.oss.ci/ciexe_test)&lt;/font&gt;</description>
+          <defaultValue/>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>PARENT_GROUP_RIGHTS</name>
+          <description>&lt;font size="2"&gt;Parent group from which to inherit. Please choose 'OSS/ENM-Parent/PM-Parent' ONLY for a PM repository, otherwise choose the standard option 'OSS/ENM-Parent'.&lt;/font&gt;&lt;br&gt;</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>OSS/ENM-Parent</string>
+              <string>OSS/ENM-Parent/PM-Parent</string>
+              <string>LITP/LITP2.x-Parent</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>GUARD_GROUP_NAME</name>
+          <description>&lt;font size="2"&gt;Enter the guard group name (Example: CI_Test_guard)&lt;br&gt;
+&lt;font&gt;It is possible to insert an Array of values separated by one space&lt;/font&gt;
+&lt;font color="red"&gt;Make sure the group name given here exists in Gerrit. If group doesn't exist select the below box&lt;/font&gt;&lt;/font&gt;</description>
+          <defaultValue/>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>NEW_GUARD_GROUP</name>
+          <description>&lt;br&gt;&lt;font size="2"&gt;Click the checkbox if the team entered above is a new guard group&lt;/font&gt;&lt;br&gt;&lt;br&gt;</description>
+          <defaultValue/>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>GUARD_GROUP_MEMBERS</name>
+          <description>&lt;font size="2" color="red"&gt;add a space between the lower case team members' IDs. Example: zmosluc ealeing egiogiu epiepol&lt;/font&gt;</description>
+          <defaultValue/>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>ARCHETYPE_CREATION</name>
+          <description>&lt;font size="3" color="red"&gt;If NO Archetype is required, skip to the JOBS_CREATION field. If also Jenkins jobs are not required, just press APPLY at the bottom of this page&lt;/font&gt;&lt;br&gt;&lt;br&gt;
+&lt;font size="2"&gt;Select "Yes" if team requires a specific Archetype for its repository&lt;/font&gt;&lt;br&gt;</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>No</string>
+              <string>Yes</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>RUN_ARCHETYPE</name>
+          <description>&lt;font size="2"&gt;Select the archetype you wish to run in repo:&lt;br&gt;
+Choices:&lt;br&gt;
+CDS Archetype&lt;br&gt;
+ENM - EAR Archetype &lt;font color="red"&gt;(You need to choose the media category one ore more for every CXP)&lt;/font&gt;&lt;br&gt;
+ENM - WAR Archetype &lt;font color="red"&gt;(You need to choose the media category one ore more for every CXP)&lt;/font&gt;&lt;br&gt;  
+Service Group RPM Archetype &lt;font color="red"&gt;(You need to choose the media category one ore more for every CXP)&lt;/font&gt;&lt;br&gt;
+Service Model Archeype &lt;font color="red"&gt;(You need to choose this for any ENM Products featured by MediaCategory="model")&lt;/font&gt;&lt;br&gt;
+TAF Archetype&lt;br&gt;
+LITP ENM Plugins&lt;br&gt;
+LITP ENM Extensions&lt;br&gt;
+LITP ENM 3pps&lt;/font&gt;&lt;br&gt;&lt;br&gt;  
+</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>cds</string>
+              <string>enm_ear</string>
+              <string>enm_war</string>
+              <string>sg_rpm</string>
+              <string>service_model</string>
+              <string>taf</string>
+              <string>plugins</string>
+              <string>extensions</string>
+              <string>3pp</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>DELIVERABLE</name>
+          <description>&lt;font size="2"&gt;This field can be left empty if you don't have or it's not required an RPM&lt;br&gt;
+&lt;font&gt;It is possible to insert an Array of values CXP separated by one space&lt;/font&gt;
+&lt;font&gt;(Example: ERICtest_CXP1234567 ERICtest_CXP7654321)&lt;/font&gt;&lt;br&gt;&lt;br&gt;
+
+&lt;font size="2"&gt;Enter the deliverable from the repo (Example: ERICtest_CXP1234567)&lt;br&gt;
+  &lt;font color="red"&gt;Please Note this should be in relevant format: &lt;br&gt;
+    ERICenmsgXXXX_CXPxxxxxxxx for Service Group RPMs&lt;br&gt;
+    ERICTAFxxxx_CXPxxxxxxx for TAF&lt;br&gt;
+    ERIClitpxxxx_CXPxxxxxxx for Plugins and Extensions&lt;br&gt;
+    EXTRxxxx_CXPxxxxxxx for 3pps&lt;br&gt;
+  &lt;/font&gt;&lt;/font&gt;&lt;br&gt;&lt;br&gt;
+
+</description>
+          <defaultValue/>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>MEDIA_CATEGORY</name>
+          <description>&lt;font size="2"&gt;The media category for CDS Archetype, ENM Archetype, Service Group RPM Archetype, Service Model Archetype  is mandatory but it is possible to leave the field empty if you not desire a CXP. For the other types of archetype this field is not needed&lt;br&gt;&lt;br&gt;
+You can choose one or more media categories for each RPM&lt;br&gt; 
+The media category for each RPM are separated by one space, if you want to put more media for RPM, you can use the comma ","&lt;br&gt;&lt;br&gt;
+  
+For example&lt;br&gt;
+RPM: RPM1 RPM2 RPM3&lt;br&gt;
+SERVICE: service,common ms image,model
+&lt;br&gt;
+The first one RPM1: service and model media category, RPM2: ms, RPM3: image,model&lt;/font&gt;
+
+&lt;ul style="color: red; font-size: 13px;"&gt;
+&lt;li&gt;service&lt;/li&gt;
+&lt;li&gt;common&lt;/li&gt;
+&lt;li&gt;db&lt;/li&gt;
+&lt;li&gt;model&lt;/li&gt;
+&lt;li&gt;scripting&lt;/li&gt;
+&lt;li&gt;ms&lt;/li&gt;
+&lt;li&gt;image&lt;/li&gt;
+&lt;li&gt;plugin&lt;/li&gt;
+&lt;li&gt;cloudrepo&lt;/li&gt;  
+&lt;li&gt;ebsstream&lt;/li&gt;
+&lt;li&gt;asrstream&lt;/li&gt;
+&lt;li&gt;streaming&lt;/li&gt;
+&lt;li&gt;esnstream&lt;/li&gt;
+&lt;li&gt;eba&lt;/li&gt;
+&lt;/ul&gt;
+</description>
+          <defaultValue/>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>PARENT</name>
+          <description>&lt;font size="2"&gt;&lt;font color="red"&gt;Select parent here for TAF projects&lt;/font&gt;&lt;/font&gt;&lt;br&gt;&lt;br&gt;</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>enm</string>
+              <string>cds</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>JOBS_CREATION</name>
+          <description>&lt;font size="3" color="red"&gt;If NO Jenkins jobs are required, just press APPLY at the bottom of this page&lt;/font&gt;&lt;br&gt;&lt;br&gt;
+&lt;font size="2"&gt;Select "Yes" if team requires Jenkins jobs creation&lt;/font&gt;&lt;br&gt;</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>No</string>
+              <string>Yes</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>JOB_TYPE</name>
+          <description>&lt;font size="2"&gt;Select the Jenkins Jobs template category&lt;br&gt;
+&lt;font&gt;Note: CDS jobs created based on fem selection&lt;/font&gt;&lt;/font&gt;&lt;br&gt;</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>ENM</string>
+              <string>TAF</string>
+              <string>ENM_LITP</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>JENKINS</name>
+          <description>&lt;font size="2"&gt;Enter the destination Jenkins instance for the generated jobs.&lt;br&gt;
+</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>fem1s11</string>
+              <string>fem2s11</string>
+              <string>fem3s11</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>ACCEPTANCE</name>
+          <description>&lt;font size="2"&gt;Select 'Yes' if team requires Acceptance job&lt;/font&gt;&lt;br&gt;&lt;br&gt;</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>None</string>
+              <string>Standard</string>
+              <string>Versant</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>SIGNUM</name>
+          <description>&lt;font size="2"&gt;Enter a signum &lt;font color=red&gt;&lt;b&gt;(Use always lower case)&lt;/b&gt;&lt;/font&gt; for permissions above (Example: edarbyr)&lt;/font&gt;&lt;br&gt;&lt;br&gt;</description>
+          <defaultValue/>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit/>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@69.0.3">
+      <enabled>false</enabled>
+      <userDomainSuffix/>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    <de.pellepelster.jenkins.walldisplay.WallDisplayJobProperty plugin="jenkinswalldisplay@0.6.30"/>
+    
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>GridEngine_RHEL7</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+
+echo "JIRA Ticket: http://jira-oss.lmera.ericsson.se/browse/"${JIRA_TICKET}
+
+export GROUP_ID=$(echo ${REPO// /} | grep -o -P '(?&lt;=LITP/LITP2.x-Parent/).*(?=/)')
+export REPO=${REPO// /}
+export Parent_Group_Rights=${PARENT_GROUP_RIGHTS// /}
+export Acceptance=$INTEGRATION_PCR
+export Deliverable=$DELIVERABLE
+export New_Guard_Group=${NEW_GUARD_GROUP// /}
+export Guard_Group_Members=$GUARD_GROUP_MEMBERS
+export ARTIFACT_ID=${REPO##*/}
+echo GroupId=$GROUP_ID
+echo ArtifactId=$ARTIFACT_ID
+
+ssh -p 29418 gerrit.ericsson.se gerrit ls-projects | grep -Fx ${REPO}
+if [ $? -eq 0 ]; then
+    echo "${REPO} already existing"
+else
+    echo "Proceed to ${REPO} creation"
+    /proj/cdsadm100/tools/utils/scripts/new_repo_and_job_creation/new_repo.sh || { echo 'ERROR: Check Job Parameters'; exit 1; }
+fi
+
+if [ "${ARCHETYPE_CREATION}" = "Yes" ];  then
+# new enm_ear, enm_war  archetypes for ENM products only 
+    if [ "${RUN_ARCHETYPE}" = "enm_ear" ]; then
+         /proj/cdsadm100/tools/utils/scripts/new_repo_and_job_creation/run_enm_ear_archetype_new.sh || { exit 1; }  
+         
+    elif [ "${RUN_ARCHETYPE}" = "enm_war" ]; then
+         /proj/cdsadm100/tools/utils/scripts/new_repo_and_job_creation/run_enm_war_archetype_new.sh || { exit 1; }  
+
+    elif [ "${RUN_ARCHETYPE}" = "sg_rpm" ]; then
+         /proj/cdsadm100/tools/utils/scripts/new_repo_and_job_creation/run_sg_rpm_archetype_new.sh || { exit 1; }   
+# new service model archetype for MODELS          
+    elif [ "${RUN_ARCHETYPE}" = "service_model" ]; then
+         export deliverableName=$DELIVERABLE
+         /proj/cdsadm100/tools/utils/scripts/new_repo_and_job_creation/run_service_model_archetype_new.sh || { exit 1; }
+
+    elif [ "${RUN_ARCHETYPE}" = "taf" ]; then
+         /proj/cdsadm100/tools/utils/scripts/new_repo_and_job_creation/run_taf_archetype_new.sh || { exit 1; }
+
+    elif [ "${RUN_ARCHETYPE}" = "plugins" ] || [ "${RUN_ARCHETYPE}" = "extensions" ]; then
+         /proj/cdsadm100/tools/utils/scripts/new_repo_and_job_creation/run_litp_plugins_ext_archetype_new.sh || { exit 1; }
+
+    elif [ "${RUN_ARCHETYPE}" = "3pp" ]; then
+         /proj/cdsadm100/tools/utils/scripts/new_repo_and_job_creation/run_3PP_OSS_archetype_new.sh || { exit 1; }
+
+    else
+       exit 1
+    fi
+fi
+
+cd ${WORKSPACE}/workspace/${JOB_NAME}/
+rm -rf ${ARTIFACT_ID}
+git clone ${GERRIT_CENTRAL}/${REPO}
+cd ${ARTIFACT_ID}
+git pull
+
+if [ -f pipeline_local.cfg ]
+then
+	echo "pipeline_local.cfg found."
+else
+	echo "Fill pipeline_local.cfg file with default Maven goals..."
+    echo "MVN_PCR=-V -U jacoco:prepare-agent install jacoco:report pmd:pmd" &gt;&gt; pipeline_local.cfg
+    echo "MVN_Release=-V -Dresume=false release:prepare release:perform -DpreparationGoals=\"install -U\" -Dgoals=\"clean deploy pmd:pmd jacoco:report -U\" -DlocalCheckout=true" &gt;&gt; pipeline_local.cfg
+    if [ "${INTEGRATION_PCR}" = "Yes" ]; then
+        echo "MVN_PCR_INT=-V -Dts -P jboss_managed_local install -U" &gt;&gt; pipeline_local.cfg
+    fi
+
+    git add --all
+    git commit -m "${JIRA_TICKET}: create pipeline_local.cfg with default list of Maven goals."
+    git remote set-url --push origin ${GERRIT_CENTRAL}/${REPO}
+    git push -f origin master   
+fi
+
+cd ..
+
+if [ "${JOBS_CREATION}" = "Yes" ]; then
+    PIPELINE_REPO="OSS/com.ericsson.oss.de/ci-pipeline-jenkins-config"
+    PIPELINE_REPO_ARTIFACT_ID=${PIPELINE_REPO##*/}
+
+    #git clone ssh://gerritmirror-ha.lmera.ericsson.se:29418/${PIPELINE_REPO}
+    cd ${WORKSPACE}/workspace/${JOB_NAME}/
+    git clone ssh://enmadm100@gerritmirror-ha.lmera.ericsson.se:29418/${PIPELINE_REPO} &amp;&amp; scp -p -P 29418 enmadm100@gerritmirror-ha.lmera.ericsson.se:hooks/commit-msg ${PIPELINE_REPO_ARTIFACT_ID}/.git/hooks/
+    cd ${PIPELINE_REPO_ARTIFACT_ID}
+
+    IFS=',' read -ra ADDR &lt;&lt;&lt; "$REPO_LIST"
+    
+    if grep -Fq "${REPO}," ${WORKSPACE}/workspace/${JOB_NAME}/${PIPELINE_REPO_ARTIFACT_ID}/ci-jenkins-config/projects ; then
+    	echo "Repository already existing in projects file..."
+        echo "Skip Pipeline jobs creation."
+        exit 0
+	fi
+    
+    if [ "${PROJECT_TYPE}" = "Service" ] || [ "${PROJECT_TYPE}" = "UI" ]; then
+    	GATE_TYPE="GateB"
+    elif [ "${PROJECT_TYPE}" = "API" ]; then
+    	GATE_TYPE="GateA"
+    else
+    	GATE_TYPE="NA"
+    fi   
+    
+    if [ "${ACCEPTANCE}" = "Yes" ]; then
+        PCR_TYPE="integration"
+    else
+        PCR_TYPE="unit"
+    fi
+    
+    echo "${REPO},${JENKINS},SILENT_MODE=false,SKIP_SONAR=false,PCR=${PCR_TYPE},GATE_TYPE=${GATE_TYPE}" &gt;&gt; ${WORKSPACE}/workspace/${JOB_NAME}/${PIPELINE_REPO_ARTIFACT_ID}/ci-jenkins-config/projects 
+
+    echo -en '\n'
+    echo "============Git Status=========="
+    git status
+
+    echo -en '\n'
+    echo "============Git add -all========="
+    git add --all
+
+    echo -en '\n'
+    echo "============Git Status=========="
+    git status
+
+    echo -en '\n'
+    echo "============Git Commit==========="
+    git commit -m "${JIRA_TICKET}: appending list of repos to projects file - triggering ${PCR_TYPE} DSL"
+
+    echo -en '\n'
+    echo "============Git Status=========="
+    git status
+
+    echo -en '\n'
+    echo "============Git Push============="
+    #git remote set-url --push origin ${GERRIT_CENTRAL}/${PIPELINE_REPO}
+    
+    git push ${GERRIT_CENTRAL}/${PIPELINE_REPO} HEAD:refs/for/master/${PCR_TYPE}-${JENKINS}
+fi
+
+printf '========================================\n'
+printf '============ JIRA Message ==============\n'
+printf '========================================\n\n'
+
+printf 'Hi,\n\n'
+printf 'Your Gerrit Repository is created:\n'
+echo https://gerrit.ericsson.se/#/admin/projects/$REPO
+
+if [ "${JOBS_CREATION}" = "Yes" ];  then
+    printf '\n\nJenkins Jobs created:\n'
+    echo https://$JENKINS-eiffel004.eiffel.gic.ericsson.se:8443/jenkins/job/${ARTIFACT_ID}_PCR
+    echo https://$JENKINS-eiffel004.eiffel.gic.ericsson.se:8443/jenkins/job/${ARTIFACT_ID}_Release
+fi
+
+printf '\n\nUseful CI Info:\n'
+printf 'Jenkins Pipeline - https://confluence-oss.seli.wh.rnd.internal.ericsson.com/display/CICD/CI+Impact+for+ENM+developers\n'
+printf '========================================\n'</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.37">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter/>
+      <externalDelete/>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+    <org.jenkinsci.plugins.buildnamesetter.BuildNameSetter plugin="build-name-setter@1.6.9">
+      <template>#${BUILD_NUMBER} --------  ${ENV,var="JIRA_TICKET"} </template>
+      <runAtStart>true</runAtStart>
+      <runAtEnd>true</runAtEnd>
+    </org.jenkinsci.plugins.buildnamesetter.BuildNameSetter>
+  </buildWrappers>
+</project>

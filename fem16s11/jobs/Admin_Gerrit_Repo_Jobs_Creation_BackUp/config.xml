@@ -1,0 +1,564 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>This Jenkins Job allow the user to create a brand new Gerrit repository&lt;br&gt;&#xd;
+and its Jenkins Job flow (Release, PreCommit, PointFix).&lt;br&gt;&#xd;
+&lt;br&gt;&#xd;
+&#xd;
+Confluence: &lt;a href=&quot;https://confluence-oss.seli.wh.rnd.internal.ericsson.com/display/cENMCICD/Automated+job+to+create+new+Gerrit+repositories+based+on+a+cENM+specific+archetype&quot;&gt;Automated+job+to+create+new+Gerrit+repositories+based+on+a+cENM+specific+archetype&lt;/a&gt;</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>30</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.plugins.validating__string__parameter.ValidatingStringParameterDefinition plugin="validating-string-parameter@2.8">
+          <name>REPO_NAME</name>
+          <description>&lt;font size=&quot;2&quot;&gt;Enter the gerrit repo above (Example: OSS/com.ericsson.oss.ci/ciexe_test).&lt;/font&gt;</description>
+          <defaultValue></defaultValue>
+          <regex>(OSS)\/.*</regex>
+          <failedValidationMessage></failedValidationMessage>
+        </hudson.plugins.validating__string__parameter.ValidatingStringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>PARENT_GROUP_RIGHTS</name>
+          <description>&lt;font size=&quot;2&quot;&gt;Inherited access rights.&lt;/font&gt;</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>OSS/ENM-Parent</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>REPO_TYPE</name>
+          <description>&lt;font size=&quot;2&quot;&gt;Enter the Repository type.&lt;/font&gt;</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>Service_Group</string>
+              <string>Base_Image</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>INCLUDED</name>
+          <description>&lt;font size=&quot;2&quot;&gt;Service Group Repo configuration.&lt;/font&gt;</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>HCL</string>
+              <string>NO HCL</string>
+              <string>NO MERGE</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.plugins.validating__string__parameter.ValidatingStringParameterDefinition plugin="validating-string-parameter@2.8">
+          <name>SPRINT_NUMBER</name>
+          <description>&lt;font size=&quot;2&quot;&gt;Sprint Number, e.g. 21.07.&lt;/font&gt;
+</description>
+          <defaultValue></defaultValue>
+          <regex>(\d)+(\.\d+)</regex>
+          <failedValidationMessage></failedValidationMessage>
+        </hudson.plugins.validating__string__parameter.ValidatingStringParameterDefinition>
+        <hudson.plugins.validating__string__parameter.ValidatingStringParameterDefinition plugin="validating-string-parameter@2.8">
+          <name>JIRA_TICKET</name>
+          <description>&lt;font size=&quot;2&quot;&gt;Jira Ticket reference, e.g. CIS-12345.&lt;/font&gt;</description>
+          <defaultValue></defaultValue>
+          <regex>(CIS-).*(\d)</regex>
+          <failedValidationMessage></failedValidationMessage>
+        </hudson.plugins.validating__string__parameter.ValidatingStringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>Cloud-Native</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+
+CI_REPO=&quot;OSS/com.ericsson.oss.containerisation/enm-containerisation-ci-pipeline&quot;
+ARCH_REPO=&quot;OSS/com.ericsson.oss.containerisation/enm-cn-ci-pipeline-archtype-generator&quot;
+
+git clone ${GERRIT_MIRROR}/${ARCH_REPO}
+git clone ${GERRIT_MIRROR}/${CI_REPO}
+
+REPO=${REPO_NAME// /}
+ARTIFACT_ID=${REPO##*/}
+ARCH_ARTIFACT_ID=${ARCH_REPO##*/}
+PARENT_GROUP_RIGHTS=${PARENT_GROUP_RIGHTS// /}
+
+#define Gerrit guardian groups
+GUARD_GROUP_NAME=&quot;CTF_guard Cloud_Native_TC_Group cENM_Guard&quot;
+GURAD_GROUP1=&quot;CTF_guard&quot;
+GURAD_GROUP2=&quot;Cloud_Native_TC_Group&quot;
+GURAD_GROUP3=&quot;cENM_Guard&quot;
+
+echo &quot;Tell $ARTIFACT_ID&quot;
+
+echo &quot;*******************Creating the repository in Gerrit*****************&quot;
+
+echo &quot;*******************Creating repository &quot;$REPO&quot; with required master branch only********************&quot;
+
+GERRIT_CENTRAL_HOST=$(echo ${GERRIT_CENTRAL} | sed -e &apos;s/ssh:\/\/\(.*\):29418/\1/&apos;)
+
+ssh -p 29418 ${GERRIT_CENTRAL_HOST} gerrit ls-projects | grep -Fx ${REPO}
+
+if [ $? -eq 0 ]; then
+    echo &quot;${REPO} already existing&quot;
+else
+    echo &quot;Proceed to ${REPO} creation&quot;
+    ssh -p 29418 ${GERRIT_CENTRAL_HOST} self-service create-project --parent ${PARENT_GROUP_RIGHTS} ${REPO} -b master --empty-commit -o CI_Infrastructure_ENM_admin || { echo &apos;ERROR: Check Job Parameters&apos;; exit 1; }
+fi
+
+echo &quot;*******************Adding access rights for &quot;${GUARD_GROUP_NAME}&quot;*******************&quot;
+
+mkdir test
+cd test
+git init
+
+git pull ${GERRIT_CENTRAL}/${REPO} refs/meta/config
+
+#manage multiple guardian groups
+IFS=&apos; &apos; read -ra ADDR &lt;&lt;&lt; &quot;${GUARD_GROUP_NAME}&quot;
+for group in &quot;${ADDR[@]}&quot;; do
+    ssh -p 29418 ${GERRIT_CENTRAL_HOST} gerrit ls-groups -v | grep ${group} &gt; output.txt
+    GroupID_Sub=$(grep ^${group} output.txt | cut -f 2)
+    rm output.txt
+    echo -e &quot;${GroupID_Sub}\t${group}&quot; &gt;&gt; groups
+done
+
+git add .
+git commit -m &quot;${JIRA_TICKET}: Added new group&quot;
+git push ${GERRIT_CENTRAL}/${REPO} HEAD:refs/meta/config
+
+echo &quot;************* groups file pushed **************&quot;
+echo &quot;*************config file push******************&quot;
+
+
+rm -rf project.config
+
+echo -e &quot;[access]
+        inheritFrom = ${PARENT_GROUP_RIGHTS}
+[access \&quot;refs/*\&quot;]
+        owner = group CI_Infrastructure_ENM_admin&quot; &gt; project.config
+
+echo -e &quot;create = group ${GURAD_GROUP1}&quot; &gt;&gt; project.config;
+echo -e &quot;create = group ${GURAD_GROUP2}&quot; &gt;&gt; project.config;
+echo -e &quot;forgeCommitter = group ${GURAD_GROUP1}&quot; &gt;&gt; project.config;
+echo -e &quot;forgeCommitter = group ${GURAD_GROUP2}&quot; &gt;&gt; project.config;
+echo -e &quot;pushTag = group ${GURAD_GROUP1}&quot; &gt;&gt; project.config;
+echo -e &quot;pushTag = group ${GURAD_GROUP2}&quot; &gt;&gt; project.config;
+echo -e &quot;label-Code-Review = -2..+2 group ${GURAD_GROUP1}&quot; &gt;&gt; project.config;
+echo -e &quot;label-Code-Review = -2..+2 group ${GURAD_GROUP2}&quot; &gt;&gt; project.config;
+echo -e &quot;label-Code-Review = -2..+2 group ${GURAD_GROUP3}&quot; &gt;&gt; project.config;
+echo -e &quot;label-Verified = -1..+1 group ${GURAD_GROUP1}&quot; &gt;&gt; project.config;
+echo -e &quot;label-Verified = -1..+1 group ${GURAD_GROUP2}&quot; &gt;&gt; project.config;
+echo -e &quot;label-Verified = -1..+1 group ${GURAD_GROUP3}&quot; &gt;&gt; project.config;
+echo -e &quot;rebase = group ${GURAD_GROUP1}&quot; &gt;&gt; project.config;
+echo -e &quot;rebase = group ${GURAD_GROUP2}&quot; &gt;&gt; project.config;
+echo -e &quot;submit = group ${GURAD_GROUP3}&quot; &gt;&gt; project.config;
+
+echo -e &quot;[project]
+        description = 
+[receive]
+        requireChangeId = true
+[submit]
+        action = fast forward only
+        mergeContent = false
+[access \&quot;refs/for/refs/heads/master\&quot;]&quot; &gt;&gt; project.config
+
+echo -e &quot;pushMerge = group ${GURAD_GROUP3}&quot; &gt;&gt; project.config;
+
+echo -e &quot;[access \&quot;refs/heads/master\&quot;]&quot; &gt;&gt; project.config
+
+echo -e &quot;push = group ${GURAD_GROUP3}&quot; &gt;&gt; project.config;
+echo -e &quot;exclusiveGroupPermissions = push pushMerge&quot; &gt;&gt; project.config;
+echo -e &quot;pushMerge = group ${GURAD_GROUP3}&quot; &gt;&gt; project.config;
+
+echo -e &quot;[plugin \&quot;eiffel\&quot;]
+        enabled = true
+        rmq-domain = eiffel004.camo.gerrit
+        rmq-exchange = mb401-eiffel004
+        rmq-server = amqp://mb401-eiffel004.mo.ca.am.ericsson.se:5672&quot; &gt;&gt; project.config
+
+git add .
+git commit -m &quot;${JIRA_TICKET}: Added access controls&quot;
+git push ssh://gerrit.ericsson.se:29418/${REPO} HEAD:refs/meta/config
+cd ..
+rm -rf test/
+
+echo &quot;*******************Running Archetype Generator Tool*****************&quot;
+git clone ssh://gerrit.ericsson.se:29418/${REPO}
+
+cd ${ARCH_ARTIFACT_ID}
+docker build . -t archgen_pcr
+docker run --entrypoint &quot;sh&quot; -v ${WORKSPACE}/temporary_folder:/data/output archgen_pcr -c &quot;python run.py --service_name  $ARTIFACT_ID --service_type 0 --service_description TestSG --path_of_archtype /data/output --product_number 123456 --is_depend_on_jboss_base_image n&quot;
+
+cd ..
+cp -r temporary_folder/${ARTIFACT_ID}/* ${ARTIFACT_ID}
+cd ${ARTIFACT_ID}
+
+git add --all
+git commit -m &quot;${JIRA_TICKET}: Adding artifacts/archetype&quot;
+git push
+
+echo &quot;************* end ******************&quot;
+
+echo REPO=${REPO} &gt; ${WORKSPACE}/env.properties
+echo CI_REPO=${CI_REPO} &gt;&gt; ${WORKSPACE}/env.properties
+
+#calculate dropback sprint number
+SPR_MAJOR_VERSION=$(echo ${SPRINT_NUMBER} | awk -F&quot;.&quot; &apos;{print $1}&apos;)
+SPR_MINOR_VERSION=$(echo ${SPRINT_NUMBER} | awk -F&quot;.&quot; &apos;{print $2}&apos;)
+
+
+SPR_MINOR_VERSION_1=$(expr ${SPR_MINOR_VERSION} - 1)
+if [ &quot;${SPR_MINOR_VERSION}&quot; -le 10 ] ; then 
+   echo DROPBACK_SPRINT_NUMBER=&quot;${SPR_MAJOR_VERSION}.0${SPR_MINOR_VERSION_1}&quot; &gt;&gt; ${WORKSPACE}/env.properties
+else
+   echo DROPBACK_SPRINT_NUMBER=&quot;${SPR_MAJOR_VERSION}.${SPR_MINOR_VERSION_1}&quot; &gt;&gt; ${WORKSPACE}/env.properties
+fi</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <EnvInjectBuilder plugin="envinject@2.4.0">
+      <info>
+        <propertiesFilePath>${WORKSPACE}/env.properties</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+    <javaposse.jobdsl.plugin.ExecuteDslScripts plugin="job-dsl@1.78.3">
+      <scriptText>import java.io.File
+
+createPipelineBuildJob(REPO)
+
+def createPipelineBuildJob(project_name) {
+    jenkinsFile_path = &apos;enm-containerisation-ci-pipeline/jenkins/jobDSL/&apos;
+    pipeline_name = project_name.split(&apos;/&apos;).last()
+    if(REPO_TYPE == &quot;Base_Image&quot;) {
+        jenkinsfile = jenkinsFile_path + &apos;common_jenkinsfile_baseImages&apos;
+    }
+    else if(REPO_TYPE == &quot;Service_Group&quot;) {
+        if(INCLUDED == &quot;HCL&quot;) {
+            jenkinsfile = jenkinsFile_path + &apos;common_jenkinsfile_precommit_sg&apos;
+        }
+        if(INCLUDED == &quot;NO HCL&quot;) {
+            jenkinsfile = jenkinsFile_path + &apos;common_jenkinsfile_precommit_sg_nodepup_nomerge&apos;
+        }
+        if(INCLUDED == &quot;NO MERGE&quot;) {
+            jenkinsfile = jenkinsFile_path + &apos;common_jenkinsfile_precommit_sg_nomerge&apos;
+    }
+    pipelineJob(pipeline_name) {
+        description (&apos;ENM Cloud Native Build pipeline &apos; + pipeline_name + &apos; - autogenerated using JobDSL - all manual changes will be overwritten!&apos;)
+        concurrentBuild(allowConcurrentBuild = false)
+        parameters {
+        	stringParam(&apos;REPO&apos;, REPO, &apos;Project name&apos;)
+        }
+        logRotator {
+            numToKeep(30)
+        }
+        triggers {
+            gerritTrigger {
+                triggerOnEvents {
+                    patchsetCreated { // Trigger when a new change or patch set is uploaded.
+                        excludeDrafts(false)
+                        excludeTrivialRebase(false) // this will ignore any patchset which Gerrit considers a &quot;trivial rebase&quot; from triggering this build.
+                        excludeNoCodeChange(false) // this will ignore any patchset which Gerrit considers without any code changes from triggering this build.
+                    }
+                }
+
+                // Specify what Gerrit project(s) to trigger a build on.
+                gerritProjects {
+                    gerritProject {
+                        compareType(&quot;PLAIN&quot;) // The exact repository name in Gerrit, case sensitive equality.
+                        pattern(CI_REPO)
+                        branches {
+                            branch {
+                            	compareType(&quot;PLAIN&quot;) // The exact branch name in Gerrit, case sensitive equality.
+                                pattern(&quot;master&quot;)
+                            }
+                        }
+                        topics {
+                            topic {
+                                compareType(&quot;PLAIN&quot;) // The exact topic name in Gerrit, case sensitive equality.
+                                pattern(&quot;VALIDATION&quot;)
+                            }
+                        }
+                        disableStrictForbiddenFileVerification(false)
+                    }
+                }
+            }
+            definition {
+                // Specify where to obtain a source code repository containing your JenkinsFile.
+                cps {
+					script(readFileFromWorkspace(jenkinsfile))
+					sandbox(true)
+                }
+            }
+        }
+    }
+}
+
+createPipelineBuildJobPointfix(REPO)
+
+def createPipelineBuildJobPointfix(project_name) {
+    jenkinsFile_path = &apos;enm-containerisation-ci-pipeline/jenkins/jobDSL/&apos;
+    chart_dir = project_name.split(&apos;/&apos;).last()
+    pipeline_name = project_name.split(&apos;/&apos;).last()
+    pipeline_name = pipeline_name + &apos;-pointfix&apos;
+    if(REPO_TYPE == &quot;Base_Image&quot;) {
+        /*common_pointfix_baseImages is the common jenkinsfile created for the base images with all the findings of base images
+        which will get passed to all the creating base images pointfix jobs through this DSL*/
+        jenkinsfile = jenkinsFile_path + &apos;common_pointfix_baseImages&apos;
+    }
+    else if(REPO_TYPE == &quot;Service_Group&quot;) {
+        if(INCLUDED == &quot;HCL&quot;) {
+            jenkinsfile = jenkinsFile_path + &apos;common_pointfix_sg&apos;
+        }
+        if(INCLUDED == &quot;NO HCL&quot;) {
+            jenkinsfile = jenkinsFile_path + &apos;common_pointfix_sg_no_merge_values_no_dep_up&apos;
+        }
+        if(INCLUDED == &quot;NO MERGE&quot;) {
+            jenkinsfile = jenkinsFile_path + &apos;common_pointfix_sg_no_merge_values&apos;
+        }
+    }
+    pipelineJob(pipeline_name) {
+        description (&apos;ENM Cloud Native Build pipeline &apos; + pipeline_name + &apos; - autogenerated using JobDSL - all manual changes will be overwritten!&apos;)
+        concurrentBuild(allowConcurrentBuild = false)
+        parameters {
+            stringParam(&apos;ISO_VERSION&apos;)
+            stringParam(&apos;BRANCH&apos;)
+        }
+        logRotator {
+            numToKeep(30)
+        }
+      triggers {
+            gerritTrigger {
+                triggerOnEvents {
+                    patchsetCreated { // Trigger when a new change or patch set is uploaded.
+                        excludeDrafts(false)
+                        excludeTrivialRebase(false) // this will ignore any patchset which Gerrit considers a &quot;trivial rebase&quot; from triggering this build.
+                        excludeNoCodeChange(false) // this will ignore any patchset which Gerrit considers without any code changes from triggering this build.
+                    }
+                }
+
+                // Specify what Gerrit project(s) to trigger a build on.
+                gerritProjects {
+                    gerritProject {
+                        compareType(&quot;PLAIN&quot;) // The exact repository name in Gerrit, case sensitive equality.
+                        pattern(CI_REPO)
+                        branches {
+                            branch {
+                            	compareType(&quot;PLAIN&quot;) // The exact branch name in Gerrit, case sensitive equality.
+                                pattern(&quot;master&quot;)
+                            }
+                        }
+                        topics {
+                            topic {
+                                compareType(&quot;PLAIN&quot;) // The exact topic name in Gerrit, case sensitive equality.
+                                pattern(&quot;VALIDATION&quot;)
+                            }
+                        }
+                        disableStrictForbiddenFileVerification(false)
+                    }
+                }
+            }
+            environmentVariables {
+              env(&apos;REPO&apos;, project_name)
+              env(&apos;CHART_DIR&apos;, chart_dir)
+              }
+            }
+            definition {
+                // Specify where to obtain a source code repository containing your JenkinsFile.
+               cps {
+					script(readFileFromWorkspace(jenkinsfile))
+					sandbox(true)
+                }
+            }
+        }
+     } 
+}</scriptText>
+      <usingScriptText>true</usingScriptText>
+      <sandbox>false</sandbox>
+      <ignoreExisting>false</ignoreExisting>
+      <ignoreMissingFiles>false</ignoreMissingFiles>
+      <failOnMissingPlugin>false</failOnMissingPlugin>
+      <failOnSeedCollision>false</failOnSeedCollision>
+      <unstableOnDeprecation>false</unstableOnDeprecation>
+      <removedJobAction>IGNORE</removedJobAction>
+      <removedViewAction>IGNORE</removedViewAction>
+      <removedConfigFilesAction>IGNORE</removedConfigFilesAction>
+      <lookupStrategy>JENKINS_ROOT</lookupStrategy>
+    </javaposse.jobdsl.plugin.ExecuteDslScripts>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+
+PROJECT_NAME=${CI_REPO##*/}
+
+GERRIT_MIRROR_HOST=$(echo ${GERRIT_MIRROR} | sed -e &apos;s/ssh:\/\/\(.*\):29418/\1/&apos;)
+rm -rf ${PROJECT_NAME}
+git clone ${GERRIT_MIRROR}/${CI_REPO} &amp;&amp; scp -p -P 29418 ${GERRIT_MIRROR_HOST}:hooks/commit-msg ${PROJECT_NAME}/.git/hooks/
+
+cd ${PROJECT_NAME}
+
+if [[ &quot;${REPO_TYPE}&quot; == &quot;Service_Group&quot; ]]; then
+   COMMIT_MESSAGE=&quot;${JIRA_TICKET}: add new Service Group repo&quot;
+   echo &quot;${REPO_NAME}&quot; &gt;&gt; jenkins/projects_service_group
+else
+   COMMIT_MESSAGE=&quot;${JIRA_TICKET}: add new Base Image repo&quot;
+   echo &quot;${REPO_NAME}&quot; &gt;&gt; jenkins/projects_common
+fi
+
+git add --all
+git commit -m &quot;${COMMIT_MESSAGE}&quot;
+git remote set-url origin --push ${GERRIT_CENTRAL}/${CI_REPO}
+    
+git push origin HEAD:refs/for/master/VALIDATION &gt; review_message.txt 2&gt;&amp;1
+cat review_message.txt
+
+REVIEW_DETAILS=$(grep -F &quot;${COMMIT_MESSAGE}&quot; review_message.txt | tr -s &quot; &quot;)
+REVIEW_LINK=$(cut -d&apos; &apos; -f2 &lt;&lt;&lt;&quot;${REVIEW_DETAILS}&quot;)
+
+echo REVIEW_DATE=$(date &quot;+%d-%m-%Y&quot;) &gt;&gt; ${WORKSPACE}/env.properties
+echo REVIEW_LINK=${REVIEW_LINK} &gt;&gt; ${WORKSPACE}/env.properties</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <EnvInjectBuilder plugin="envinject@2.4.0">
+      <info>
+        <propertiesFilePath>${WORKSPACE}/env.properties</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+  </builders>
+  <publishers>
+    <org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher plugin="flexible-publish@0.16.1">
+      <publishers>
+        <org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
+          <condition class="org.jenkins_ci.plugins.run_condition.core.StatusCondition" plugin="run-condition@1.5">
+            <worstResult>
+              <name>SUCCESS</name>
+              <ordinal>0</ordinal>
+              <color>BLUE</color>
+              <completeBuild>true</completeBuild>
+            </worstResult>
+            <bestResult>
+              <name>SUCCESS</name>
+              <ordinal>0</ordinal>
+              <color>BLUE</color>
+              <completeBuild>true</completeBuild>
+            </bestResult>
+          </condition>
+          <publisherList>
+            <com.myyearbook.hudson.plugins.confluence.ConfluencePublisher plugin="confluence-publisher@2.0.6">
+              <siteName>confluence-oss.seli.wh.rnd.internal.ericsson.com</siteName>
+              <spaceName>ECN</spaceName>
+              <pageName>cENM Delivery Queue sprint ${SPRINT_NUMBER}</pageName>
+              <attachArchivedArtifacts>true</attachArchivedArtifacts>
+              <buildIfUnstable>false</buildIfUnstable>
+              <replaceAttachments>false</replaceAttachments>
+              <parentId>0</parentId>
+              <editors>
+                <com.myyearbook.hudson.plugins.confluence.wiki.editors.AfterTokenEditor>
+                  <generator class="com.myyearbook.hudson.plugins.confluence.wiki.generators.PlainTextGenerator">
+                    <text>&lt;tr&gt;
+&lt;td colspan=&quot;1&quot;&gt;n&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;${JIRA_TICKET}&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;Review&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;${REVIEW_DATE}&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;Chakras&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;NA&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;a href=&quot;${REVIEW_LINK}&quot; rel=&quot;nofollow&quot; style=&quot;text-decoration: none;text-align: left;&quot;&gt;${REVIEW_LINK}&lt;/a&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;linked to the corresponding newly created pointfix job for new repo added&lt;/td&gt;
+    &lt;/tr&gt;</text>
+                  </generator>
+                  <markerToken>&lt;th&gt;Additional information and comments&lt;/th&gt;&lt;/tr&gt;</markerToken>
+                </com.myyearbook.hudson.plugins.confluence.wiki.editors.AfterTokenEditor>
+              </editors>
+            </com.myyearbook.hudson.plugins.confluence.ConfluencePublisher>
+            <com.myyearbook.hudson.plugins.confluence.ConfluencePublisher plugin="confluence-publisher@2.0.6">
+              <siteName>confluence-oss.seli.wh.rnd.internal.ericsson.com</siteName>
+              <spaceName>ECN</spaceName>
+              <pageName>cENM Dropback Delivery Queue sprint ${DROPBACK_SPRINT_NUMBER}</pageName>
+              <attachArchivedArtifacts>true</attachArchivedArtifacts>
+              <buildIfUnstable>false</buildIfUnstable>
+              <replaceAttachments>false</replaceAttachments>
+              <parentId>0</parentId>
+              <editors>
+                <com.myyearbook.hudson.plugins.confluence.wiki.editors.AfterTokenEditor>
+                  <generator class="com.myyearbook.hudson.plugins.confluence.wiki.generators.PlainTextGenerator">
+                    <text>  &lt;tr&gt;
+&lt;td colspan=&quot;1&quot;&gt;n&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;${JIRA_TICKET}&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;Review&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;${REVIEW_DATE}&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;Chakras&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;NA&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;a href=&quot;${REVIEW_LINK}&quot; rel=&quot;nofollow&quot; style=&quot;text-decoration: none;text-align: left;&quot;&gt;${REVIEW_LINK}&lt;/a&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;linked to the corresponding newly created release job for new repo added &lt;/td&gt;</text>
+                  </generator>
+                  <markerToken>&lt;th&gt;Additional information and comments&lt;/th&gt;&lt;/tr&gt;</markerToken>
+                </com.myyearbook.hudson.plugins.confluence.wiki.editors.AfterTokenEditor>
+              </editors>
+            </com.myyearbook.hudson.plugins.confluence.ConfluencePublisher>
+          </publisherList>
+          <runner class="org.jenkins_ci.plugins.run_condition.BuildStepRunner$Fail" plugin="run-condition@1.5"/>
+          <executionStrategy class="org.jenkins_ci.plugins.flexible_publish.strategy.FailAtEndExecutionStrategy"/>
+        </org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
+      </publishers>
+    </org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher>
+  </publishers>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.40">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+  </buildWrappers>
+</project>

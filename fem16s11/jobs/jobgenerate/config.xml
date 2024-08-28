@@ -1,0 +1,111 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>Cloud-Native</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>echo review_date=$(date &quot;+%d-%m-%Y&quot;) &gt; ${WORKSPACE}/workspace/${JOB_NAME}/env.properties</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+
+REPO=&quot;OSS/com.ericsson.oss.ci/ci_lc_test1&quot;
+PROJECT_NAME=${REPO##*/}
+
+GERRIT_MIRROR_HOST=$(echo ${GERRIT_MIRROR} | sed -e &apos;s/ssh:\/\/\(.*\):29418/\1/&apos;)
+
+git clone ${GERRIT_MIRROR}/${REPO} &amp;&amp; scp -p -P 29418 ${GERRIT_MIRROR_HOST}:hooks/commit-msg ${PROJECT_NAME}/.git/hooks/
+
+cd ${PROJECT_NAME}
+
+
+git add --all
+git commit -m &quot;${JIRA_TICKET}: add new repo&quot;
+git remote set-url origin --push ${GERRIT_CENTRAL}/${REPO}
+    
+git push origin HEAD:refs/for/master</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <EnvInjectBuilder plugin="envinject@2.4.0">
+      <info>
+        <propertiesFilePath>${WORKSPACE}/env.properties</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+  </builders>
+  <publishers>
+    <com.myyearbook.hudson.plugins.confluence.ConfluencePublisher plugin="confluence-publisher@2.0.6">
+      <siteName>confluence-oss.seli.wh.rnd.internal.ericsson.com</siteName>
+      <spaceName>ENMT</spaceName>
+      <pageName>cENM DQ sprint 1.0</pageName>
+      <attachArchivedArtifacts>true</attachArchivedArtifacts>
+      <buildIfUnstable>false</buildIfUnstable>
+      <replaceAttachments>false</replaceAttachments>
+      <parentId>0</parentId>
+      <editors>
+        <com.myyearbook.hudson.plugins.confluence.wiki.editors.BeforeTokenEditor>
+          <generator class="com.myyearbook.hudson.plugins.confluence.wiki.generators.PlainTextGenerator">
+            <text>  &lt;tr&gt;
+&lt;td colspan=&quot;1&quot;&gt;n&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;No Jira&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;Review&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;${review_date}&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;Chakras&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;NA&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;a href=&quot;${report_url}&quot; rel=&quot;nofollow&quot; style=&quot;text-decoration: none;text-align: left;&quot;&gt;report.html&lt;/a&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+    &lt;/tr&gt;</text>
+          </generator>
+          <markerToken>&lt;/thead&gt;&lt;/table&gt;</markerToken>
+        </com.myyearbook.hudson.plugins.confluence.wiki.editors.BeforeTokenEditor>
+      </editors>
+    </com.myyearbook.hudson.plugins.confluence.ConfluencePublisher>
+  </publishers>
+  <buildWrappers/>
+</project>

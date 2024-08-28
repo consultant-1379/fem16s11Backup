@@ -1,0 +1,226 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>&#xd;
+&lt;p style=&quot;color:blue;&quot;&gt;This job basically imports external CA certs and updates trust profile on ENM (both cloud and pyshical). &#xd;
+  This is mainly a ENM activity needs to be run after Intial Install and there is no interaction with netsim or netsim nodes &lt;br&gt;&#xd;
+  &lt;br&gt;&#xd;
+&lt;/p&gt;&#xd;
+&lt;p style=&quot;color:green;&quot;&gt;&#xd;
+  &#xd;
+  The job needs to &lt;b&gt; wait 30 min&lt;/b&gt; to allow all ENM services to &quot;load&quot; the trust. &lt;br&gt;&#xd;
+  After &quot;INFO: Trust Profile is successfully updated.&quot; there will be 30 minutes sleep.&#xd;
+  &#xd;
+	&#xd;
+&#xd;
+&lt;/p&gt;&#xd;
+&lt;h2&gt;&#xd;
+&lt;a href=&quot;https://confluence-oss.seli.wh.rnd.internal.ericsson.com/display/PDUCD/nssSingleApplyCertsOnENM&quot;&gt;LINK TO &lt;b&gt;&lt;font color=&quot;red&quot;&gt;User Guide&lt;/font&gt;&lt;/b&gt;&lt;/a&gt;&#xd;
+&lt;/h2&gt;&#xd;
+</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>150</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>clusterId</name>
+          <description>&lt;h1 style=&quot;color:blue;&quot;&gt;This parameter refers to cluster id of the deployment on which you want to run update certficates&lt;/h1&gt;
+&lt;h1 style=&quot;color:blue;&quot;&gt;Example: 327 for pshysical servers&lt;/h1&gt;
+&lt;h1 style=&quot;color:blue;&quot;&gt;Example: ieatenmc6b05 for openstack &lt;/h1&gt;
+ </description>
+          <defaultValue>cenmgcp</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>drop</name>
+          <description>&lt;h1 style=&quot;color:blue;&quot;&gt;Please mention NSS drop &lt;/h1&gt;
+
+&lt;h1 style=&quot;color:blue;&quot;&gt;Example:18.14&lt;/h1&gt;</description>
+          <defaultValue>21.04</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>simdep_release</name>
+          <description>&lt;h1 style=&quot;color:blue;&quot;&gt;Please mention latest simdep version&lt;/h1&gt;
+
+&lt;h1 style=&quot;color:blue;&quot;&gt;Example:1.5.449&lt;/h1&gt;</description>
+          <defaultValue>1.5.633</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>deployment_type</name>
+          <description></description>
+          <defaultValue>Cloud</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>MT_utils_version</name>
+          <description>This is the version of the scripts available in Nexus&lt;br&gt;
+The version used will be printed in the console output&lt;br&gt;
+&lt;a href=&quot;https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/repositories/releases/com/ericsson/mtg/utils/&quot;&gt;Nexus Link&lt;/a&gt; </description>
+          <defaultValue>RELEASE</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>enm_gui_link</name>
+          <description>&lt;h1 style=&quot;color:blue;&quot;&gt;This parameter refers to ENM GUI LINK of the deployment on which you want to run update certficates&lt;/h1&gt;
+&lt;h1 style=&quot;color:blue;&quot;&gt;Example: https://cenm.busnwmanagertestecn-34287.europe-north1.gc.ericsson.se/&lt;/h1&gt;
+</description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <jp.ikedam.jenkins.plugins.extensible__choice__parameter.ExtensibleChoiceParameterDefinition plugin="extensible-choice-parameter@1.8.0">
+          <name>MT_utils_version</name>
+          <description>&lt;h1 style=&quot;color:red;&quot;&gt;Customers should ignore this parameter&lt;/h1&gt;</description>
+          <editable>false</editable>
+          <choiceListProvider class="jp.ikedam.jenkins.plugins.extensible_choice_parameter.SystemGroovyChoiceListProvider">
+            <groovyScript plugin="script-security@1138.v8e727069a_025">
+              <script>def xml = new XmlSlurper().parse(&quot;https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/repositories/releases/com/ericsson/mtg/utils/maven-metadata.xml&quot;)
+def list = []
+
+xml.versioning.versions.version.each
+{
+ list.add(it)
+}
+list.add(&quot;RELEASE&quot;) 
+return list.reverse().subList(0, 10)</script>
+              <sandbox>true</sandbox>
+            </groovyScript>
+            <usePredefinedVariables>false</usePredefinedVariables>
+          </choiceListProvider>
+        </jp.ikedam.jenkins.plugins.extensible__choice__parameter.ExtensibleChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>nodesCleanUp</name>
+          <description>&lt;h1 style=&quot;color:red;&quot;&gt;Customers should set this parameter to YES only if NSS 15K network is on the servers linked to ENM&lt;/h1&gt;</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>NO</string>
+              <string>YES</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>Jenkins_cENM_Design_Teams_TAF1_Slave_4Node_20</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>true</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>
+#curl -o ERICTAFenmnisimdep_CXP9031884.jar https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/groups/public/com/ericsson/ci/simnet/ERICTAFenmnisimdep_CXP9031884/${simdep_release}/ERICTAFenmnisimdep_CXP9031884-${simdep_release}.jar
+nssDropAsAnInteger=$(echo ${simdep_release//./})
+if [[ ${nssDropAsAnInteger} -le 15652 ]]
+	then
+     curl -o   ERICTAFenmnisimdep_CXP9031884.jar https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/groups/public/com/ericsson/ci/simnet/ERICTAFenmnisimdep_CXP9031884/1.5.652/ERICTAFenmnisimdep_CXP9031884-1.5.652.jar
+else
+ curl -o   ERICTAFenmnisimdep_CXP9031884.jar https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/groups/public/com/ericsson/ci/simnet/ERICTAFenmnisimdep_CXP9031884/${simdep_release}/ERICTAFenmnisimdep_CXP9031884-${simdep_release}.jar
+fi
+mkdir -p ERICTAFenmnisimdep_CXP9031884/src/main/resources;
+unzip ERICTAFenmnisimdep_CXP9031884.jar -d ERICTAFenmnisimdep_CXP9031884/src/main/resources
+chmod -R 755 ./*
+
+
+if [[ $nodesCleanUp == &quot;YES&quot; ]]
+then
+sh $WORKSPACE/ERICTAFenmnisimdep_CXP9031884/src/main/resources/scripts/simdep/ext/jenkins/updateTrustONENM.sh $clusterId $drop $simdep_release $deployment_type $enm_gui_link
+else
+sh $WORKSPACE/ERICTAFenmnisimdep_CXP9031884/src/main/resources/scripts/simdep/ext/jenkins/updateTrustONENM_MTV.sh $clusterId $drop $simdep_release $deployment_type $enm_gui_link
+fi</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>#!/bin/sh
+curl -O &quot;https://arm901-eiffel004.athtem.eei.ericsson.se:8443/nexus/content/repositories/nss-releases/com/ericsson/nss/scripts/jq/1.0.1/jq-1.0.1.tar&quot;  ; tar -xvf jq-1.0.1.tar ; chmod +x ./jq
+if [[ $2 == &quot;yes&quot; ]]
+then
+map_generator=`/netsim/inst/netsim_pipe&lt;&lt;EOF
+.generateNetworkMap
+.server stop all
+EOF`
+else
+map_generator=`/netsim/inst/netsim_pipe&lt;&lt;EOF
+.generateNetworkMap
+EOF`
+fi
+echo &quot;$map_generator&quot;
+for node in $(echo $1 | sed &quot;s/,/ /g&quot;)
+do
+        Nodedetails=`./jq  --raw-output &apos;.networkMap[] | select(.[&quot;name&quot;]==&quot;&apos;$node&apos;&quot;) &apos; /netsim/netsimdir/networkMap.json `
+            Simname=`echo $Nodedetails | awk -F&apos;Simulation&quot;: &quot;&apos; &apos;{print $2}&apos;| tr -d &apos;&quot; }&apos;`
+                echo &quot;${node} ${Simname}&quot;
+check_output=`/netsim/inst/netsim_pipe&lt;&lt;MML
+              .open $Simname
+              .select $node
+              .start
+MML`
+                echo &quot;$check_output&quot;
+            done</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.40">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+    <hudson.plugins.timestamper.TimestamperBuildWrapper plugin="timestamper@1.17"/>
+    <EnvInjectBuildWrapper plugin="envinject@2.4.0">
+      <info>
+        <propertiesContent>TRUST_PROFILE_LOG=&quot;/var/tmp/trustProfile.log&quot;</propertiesContent>
+        <secureGroovyScript plugin="script-security@1138.v8e727069a_025">
+          <script></script>
+          <sandbox>true</sandbox>
+        </secureGroovyScript>
+        <loadFilesFromMaster>false</loadFilesFromMaster>
+      </info>
+    </EnvInjectBuildWrapper>
+  </buildWrappers>
+</project>

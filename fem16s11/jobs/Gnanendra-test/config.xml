@@ -1,0 +1,165 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><project>
+  <actions/>
+  <description>To automate the jenkin nodes </description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>Select_Label</name>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>import jenkins.model.*</string>
+              <string>def labelAndNodeList = []</string>
+              <string/>
+              <string>Jenkins.instance.nodes.each { node -&gt;</string>
+              <string>  node.assignedLabels.each { label -&gt;</string>
+              <string>    if (label as String != node.name) {</string>
+              <string>        if(label as String == "TEMP-Cloud-Native" || label as String == "Cloud_Native_Dev" || label as String == "INT_Cloud_Native" || label as String == "Cloud-Native-Pointfix" || label as String == "INT_Cloud_Native_Pointfix" || label as String == "Cloud_Native_Dev-IPV6" || label as String == "TEST-NEW-Cloud13A" ||  label as String == "cENM-SUSE" || label as String == "GE-Docker" || label as String == "CENM_RHEL7_GE" || label as String == "Cloud-Native" || label as String == "Docker-POC" || label as String == "Cloud-Native-CSAR" || label as String == "GridEngine_RHEL7") {</string>
+              <string>            labelAndNodeList.add(label.toString().concat(":selected"))</string>
+              <string>        }</string>
+              <string>        else {</string>
+              <string>            labelAndNodeList.add(label)</string>
+              <string>        }</string>
+              <string>    }      </string>
+              <string>  }</string>
+              <string>}</string>
+              <string/>
+              <string>return labelAndNodeList</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix/>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.plugins.groovy.Groovy plugin="groovy@2.4">
+      <scriptSource class="hudson.plugins.groovy.StringScriptSource">
+        <command>import hudson.model.*
+import hudson.node_monitors.*
+import hudson.slaves.*
+import java.util.concurrent.*
+
+jenkins = Hudson.instance
+
+boolean offlineSlavesFound = false
+def emailReport() {
+    def mail_list = ["Admin_Launch_OfflineAgents_ByLabels":"shiva.muriki.ext@ericsson.com"]
+        mail_list.each { each_repo,each_email -&gt;
+                def Repo_Mail = each_email;
+                try {
+                    mail to: "${Repo_Mail}",
+                    subject: "Slave Status: ${currentBuild.fullDisplayName}",
+                    body: "Slave Status on ${env.BUILD_URL}console"
+                } catch( err ){
+                     echo "$err"
+                }
+        };
+}
+
+
+String labelsIWantServersOf = "${Select_Label}" 
+List serverList = [];
+
+ArrayList aList= new ArrayList(Arrays.asList(labelsIWantServersOf.split(",")));
+echo "Selected Labels: " + "${Select_Label}"
+
+//createCsv()
+
+for (i = 0; i &lt; aList.size(); i++)
+{
+   echo "\n################################# Slaves of " + aList[i] + " #################################"
+   echo "----Online Slaves----"
+   for(aSlave in hudson.model.Hudson.instance.slaves) {          
+        if(aSlave.getLabelString() == aList[i]) {
+             if(aSlave.getComputer().isOnline() ){
+                  echo aList[i] + "--&gt;" + aSlave.name;
+                  serverList.add(aSlave.name);        
+             }        
+        }
+    }
+    
+    echo "\n----Offline Slaves----"
+    for (aSlave in hudson.model.Hudson.instance.slaves) {   
+      def computer = aSlave.computer
+      def slaveLabel = aSlave.getLabelString() 
+      
+        if(aSlave.getLabelString() == aList[i]) {
+         if(aSlave.getComputer().isOffline() ){
+              offlineSlavesFound = true
+              echo aList[i] + "--&gt;" + aSlave.name;
+              if(aSlave.getComputer().isTemporarilyOffline()) {
+                println "The Slave ${computer.name} is " + aSlave.getComputer().getOfflineCause() + "\nThis cannot be auto connected, please connect with user for the reason/relaunch";
+              }
+              
+              if(!aSlave.getComputer().isTemporarilyOffline()) {
+                println "The Slave ${computer.name} is " + aSlave.getComputer().getOfflineCause() + " and this was not TemporarilyOffline \nSo, we are trying to relaunch...!";
+                computer.connect(true)
+              }
+              serverList.add(aSlave.name);        
+         }
+      }    
+    }
+}
+if(offlineSlavesFound == true) {
+    emailReport()
+}
+
+def createCsv() {
+    outString = 'Slave,Status\r\n'
+    writeFile file: 'report.csv', text: outString
+}
+
+return serverList;</command>
+      </scriptSource>
+      <groovyName>(Default)</groovyName>
+      <parameters/>
+      <scriptParameters/>
+      <properties/>
+      <javaOpts/>
+      <classPath/>
+    </hudson.plugins.groovy.Groovy>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

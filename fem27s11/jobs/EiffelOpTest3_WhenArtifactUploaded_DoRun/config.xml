@@ -1,0 +1,77 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Installed from eiffel repo -->
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@70.0.5">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>3</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@70.0.5">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@70.0.5">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@70.0.5">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@70.0.5">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers>
+    <com.ericsson.duraci.groovy.trigger.GroovyTrigger plugin="eiffel-core@70.0.5">
+      <spec></spec>
+      <bindingKey>artifact.uploaded.*.eiffel004.seli1.#</bindingKey>
+      <keepQueue>true</keepQueue>
+      <file></file>
+      <script>import groovy.json.*
+
+event = message.getEvent()
+
+if (message.getEventType().equals(&quot;EiffelArtifactUploadedEvent&quot;) &amp;&amp;
+   event.getGav().getGroupId().equals(&quot;eiffelop_test_group_2&quot;) &amp;&amp;
+   event.getGav().getArtifactId().startsWith(&quot;eiffelop_test_artifact_fem27s11_2&quot;) &amp;&amp;
+   event.getExtension().equals(&quot;txt&quot;))
+{
+  optParam = event.getOptionalParameter(&quot;ARTIFACTSUFFIX&quot;)
+  log.info(&quot;optParam 3: &quot; + optParam)
+  env.put(&quot;ARTIFACTSUFFIX&quot;, optParam)
+
+  flowContext = event.getFlowContext()
+  log.info(&quot;flowContext 3: &quot; + flowContext)
+  env.put(&quot;FLOWCONTEXT&quot;, flowContext)
+
+  queue.unique(message)
+}</script>
+      <maxQueueLength>0</maxQueueLength>
+    </com.ericsson.duraci.groovy.trigger.GroovyTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/usr/bin/env bash
+
+date</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

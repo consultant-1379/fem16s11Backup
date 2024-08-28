@@ -1,0 +1,341 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><project>
+  <actions/>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@69.0.3">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.24.1">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@69.0.3">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@69.0.3">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@69.0.3">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty plugin="leastload@1.0.3">
+      <leastLoadDisabled>false</leastLoadDisabled>
+    </org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit/>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@69.0.3">
+      <enabled>false</enabled>
+      <userDomainSuffix/>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    <de.pellepelster.jenkins.walldisplay.WallDisplayJobProperty plugin="jenkinswalldisplay@0.6.30"/>
+    
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>testfile=${WORKSPACE}/workspace/${JOB_NAME}/env.txt
+echo "FEM= fem27s11" &gt;&gt; ${testfile}</command>
+    </hudson.tasks.Shell>
+    <com.ericsson.de.multi.master.ReadFile plugin="multi-master@1.0.13">
+      <filePath>env.txt</filePath>
+    </com.ericsson.de.multi.master.ReadFile>
+    <hudson.tasks.Shell>
+      <command>
+
+# list of Jenkins instance to be processed into an array
+IFS=' ' read -ra ADDR &lt;&lt;&lt; "${FEM}"
+
+#Function to initialize variable used throughout the script
+set_variables()
+{
+    NEXUS_HOST="arm1s11-eiffel004.eiffel.gic.ericsson.se:8443"
+    # PARENT_GROUP variable becomes an input parameter for this script
+    case $PARENT_GROUP_TYPE in
+    "ENM")
+    PARENT_GROUP="com.ericsson.nms"
+    PARENT_ARTIFACT="integration"
+    ;;
+    "CDS")
+    PARENT_GROUP="com.ericsson.cds"
+    PARENT_ARTIFACT="integration"
+    ;;
+    *)
+    PARENT_GROUP="com.ericsson.nms"
+    PARENT_ARTIFACT="integration"
+    ;;
+    esac
+
+    echo "PARENT_GROUP:  $PARENT_GROUP"
+    if [ -z $GERRIT_MIRROR ]
+    then
+        GERRIT_MIRROR="ssh://gerritmirror-ha.lmera.ericsson.se:29418"
+    fi
+
+    #ENM_VERSION=$( curl --silent "https://${NEXUS_HOST}/nexus/service/local/lucene/search?g=${PARENT_GROUP}&amp;a=${PARENT_ARTIFACT}" | sed -n 's|&lt;latestRelease&gt;\(.*\)&lt;/latestRelease&gt;|\1|p' | sed -e 's/^[ \t]*//' | tail -1 )
+    ENM_VERSION=15.2.0.34
+    # It have to get always latest number, so it is indipendend by the number of digits used in current versioning rule (x.y.z or x.y.z.k, etc.)
+    INCREMENTAL_VERSION=`echo $ENM_VERSION | awk -F"." '{print $NF}'`
+    echo $INCREMENTAL_VERSION
+    echo "PARENT_GROUP: $PARENT_GROUP"
+    echo "PARENT_ARTIFACT: $PARENT_ARTIFACT"
+    echo "LATEST INTEGRATION VERSION ON NEXUS: $ENM_VERSION"
+    if [ ! -d "$WORKSPACE/Jobs" ]
+    then
+        mkdir $WORKSPACE/Jobs
+    fi
+    if [ ! -d "$WORKSPACE/Errors" ]
+    then
+        mkdir $WORKSPACE/Errors
+    fi
+}
+
+#Function to create the Job &amp; error files in the workspace.
+create_files()
+{
+    JOBS_LIST=$WORKSPACE/Jobs/${JENKINS_INSTANCE}_jobs_list.txt
+    FAILED_REPOS=$WORKSPACE/Errors/${JENKINS_INSTANCE}_errors.txt
+
+    #Loop through the file names - if they exist delete them and if not create them
+    for FILE_NAME in $JOBS_LIST $FAILED_REPOS
+    do
+        if [ -f $FILE_NAME ]
+        then
+            rm -rf $FILE_NAME
+        else
+            touch $FILE_NAME
+        fi
+    done
+}
+
+#Function to Get the repos on a jenkins instance and call the parent update function on them.
+get_repos()
+{
+    #Set the path to the jobs folder on the relevant jenkins
+    DIR_PATH=/proj/eiffel004_config_$JENKINS_INSTANCE/eiffel_home/jobs
+
+    # List all jobs that execute a Unit role (Pipeline PCR jobs only): they are the ones triggered by changes on master branch
+    dirs=( $(grep -ilr "&lt;pattern&gt;master&lt;\/pattern&gt;" $DIR_PATH/*/config.xml | awk 'BEGIN {FS="/config.xml"}{print $1}' | awk 'BEGIN {FS="jobs/"}{print $2}' | awk '/_PCR/') )
+
+    #If the above command is successful then do the for loop below
+    if [ $? -eq 0 ]
+    then
+        #Loop through the jobs grepping in the config files for the repo and the branch scan array instead output of file cat
+        for JOB_NAME in ${dirs[@]};
+        do
+            # REPO_URL  returns the OSS repository "pattern" value in the  OSS/groupId/artifactId  format, in order to find  both PCRs and old jobs associated Repo names 
+            
+            {
+            a=1
+            REPO_URL=$(cat $DIR_PATH/$JOB_NAME/config.xml | grep '&lt;pattern&gt;' | grep 'OSS/ENM-Parent/SQ-Gate' | grep -o -P '(?&lt;=pattern&gt;).*(?=&lt;/pattern&gt;)') 
+            } || 
+            {
+            a=2
+            REPO_URL=$(cat $DIR_PATH/$JOB_NAME/config.xml | grep '&lt;pattern&gt;' | grep 'OSS' | grep -o -P '(?&lt;=pattern&gt;).*(?=&lt;/pattern&gt;)') 
+            }
+
+            # manage Jenkins job with multiple repositories
+            echo "$REPO_URL" &gt; ARRAYREPO.txt
+            COUNTrepo=0
+            arrayRepo=()
+
+            while read -r line
+            do
+                arrayRepo[COUNTrepo]="$line"
+                COUNTrepo=$(expr $COUNTrepo + 1)
+            done &lt; ARRAYREPO.txt
+            # #############################################
+
+            {
+            CHECKOUT_BRANCH=$(cat $DIR_PATH/$JOB_NAME/config.xml | sed -n '/&lt;hudson.plugins.git.BranchSpec*/,/&lt;\/hudson.plugins.git.BranchSpec&gt;/p' | awk -v FS="(&lt;name&gt;|&lt;/name&gt;)" '{print $2}' | grep -v '^[[:space:]]*$')
+            } ||
+            {
+            CHECKOUT_BRANCH=$(cat $DIR_PATH/$JOB_NAME/config.xml | sed -n '/&lt;com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch*/,/&lt;\/com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch&gt;/p' | awk -v FS="(&lt;pattern&gt;|&lt;/pattern&gt;)" '{print $2}' | grep -v '^[[:space:]]*$')
+            IFS=' ' read -ra arr &lt;&lt;&lt;"$CHECKOUT_BRANCH"
+            CHECKOUT_BRANCH=${arr[0]}
+            }
+            # if in config.xml instead of branch name it is used the "git plugin" env. variable "$GERRIT_BRANCH", is an error then force to "master"
+            if [[ -z $CHECKOUT_BRANCH ]] || [[ $CHECKOUT_BRANCH == *"GERRIT_BRANCH"* ]]
+            then
+                CHECKOUT_BRANCH="master"
+            fi
+
+            #Call the parent update function for each job
+            if [ $a == 1 ]
+            then
+            	parent_update
+            fi
+        done
+    fi
+}
+
+#Function to clone the repo, check if the update needs to be ran and if so run it and push back
+parent_update()
+{
+    #Clone the repo
+    for REPO in "${arrayRepo[@]}"
+    do
+        repoFormed=$REPO
+        # repoFormed is already in the OSS/groupId/artifactId format, the old re-formatting code has been removed
+
+        echo "--------------------------------------------------------------------------------------------------------------------------"
+        echo "Job - $JOB_NAME"
+        echo "Repo - ${repoFormed}"
+        echo "CHECKOUT_BRANCH: $CHECKOUT_BRANCH"
+
+        git clone ${GERRIT_MIRROR}/$repoFormed
+
+        #If the clone fails then output an error message to the failed repo file and continue to the next job.
+        if [ $? -ne 0 ]
+        then
+            echo "git clone ${GERRIT_MIRROR}/$repoFormed - FAILED" &gt;&gt; $FAILED_REPOS
+            continue
+        fi
+
+        LITP_CHECK=`echo $repoFormed | awk -F"/" '{print $1}'`
+        echo "##############################################################################"
+        echo "LITP_CHECK: $LITP_CHECK"
+        
+        #Check if the repo is a LITP/ or the OSS playground repo and if so remove the clone and continue to the next repo
+        if [ "$LITP_CHECK" == "LITP" ] || [ $repoFormed == "OSS/playground" ]
+        then
+            ARTIFACT=`echo $repoFormed | awk -F"/" '{print $2}'`
+            rm -rf $ARTIFACT
+            continue
+        else
+            NEW_PARENT_CHECK=`echo $repoFormed | awk -F"/" '{print $3}'`
+            if [ "$NEW_PARENT_CHECK" == "SQ-Gate" ] || [ "$NEW_PARENT_CHECK" == "PM-Parent" ]
+            then
+                ARTIFACT=`echo $repoFormed | awk -F"/" '{print $5}'`
+            else
+            	ARTIFACT=`echo $repoFormed | awk -F"/" '{print $3}'`
+            fi
+        fi
+
+        cd $ARTIFACT
+        echo "ARTIFACT: $ARTIFACT"
+
+        #If the branch in the job config is not master then checkout the correct branch
+        if [ $CHECKOUT_BRANCH != "master" ]
+        then
+            git checkout "$CHECKOUT_BRANCH"
+        fi
+
+        #If the checkout fails print the error message to the failed repo file, remove the folder and continue to the next repo
+        if [ $? -ne 0 ]
+        then
+            echo "git checkout $CHECKOUT_BRANCH from ${GERRIT_MIRROR}/$repoFormed - FAILED" &gt;&gt; $FAILED_REPOS
+            cd ..
+            rm -rf $ARTIFACT
+            continue
+        fi
+
+        #Find the group ID and artifact ID of the parent of the repo
+        REPO_PARENT_GROUP=`awk '/&lt;parent&gt;/,/&lt;\/parent&gt;/' pom.xml | awk '/&lt;groupId&gt;/,/&lt;\/groupId&gt;/' | awk -v FS="(&lt;groupId&gt;|&lt;/groupId&gt;)" '{print $2}'`
+        REPO_PARENT_ARTIFACT=`awk '/&lt;parent&gt;/,/&lt;\/parent&gt;/' pom.xml | awk '/&lt;artifactId&gt;/,/&lt;\/artifactId&gt;/' | awk -v FS="(&lt;artifactId&gt;|&lt;/artifactId&gt;)" '{print $2}'`
+        echo "PARENT_GROUP: $PARENT_GROUP"
+        echo "PARENT_ARTIFACT: $PARENT_ARTIFACT"
+        echo "REPO_PARENT_GROUP: $REPO_PARENT_GROUP"
+        echo "REPO_PARENT_ARTIFACT: $REPO_PARENT_ARTIFACT"
+
+        #If the parent group and artifact IDs are the same as the ENM integration pom then get the version of the parent in the repo
+        if [ $REPO_PARENT_GROUP == "$PARENT_GROUP" ] &amp;&amp; [ $REPO_PARENT_ARTIFACT == "$PARENT_ARTIFACT" ]
+        then
+            PARENT_VERSION=`awk '/&lt;parent&gt;/,/&lt;\/parent&gt;/' pom.xml | awk '/&lt;version&gt;/,/&lt;\/version&gt;/' | awk -v FS="(&lt;version&gt;|&lt;/version&gt;)" '{print $2}'`
+            echo "PARENT_VERSION: $PARENT_VERSION"
+
+            #If the the version of the parent is not equal to the new version of the parent then update the parent in the repo and push.
+            if [ $PARENT_VERSION != $ENM_VERSION ]
+            then
+                find . -name "pom.xml" -exec sed -i "s/&gt;$PARENT_VERSION&lt;/&gt;$ENM_VERSION&lt;/g" {} \;
+                NEW_PARENT_VERSION=`awk '/&lt;parent&gt;/,/&lt;\/parent&gt;/' pom.xml | awk '/&lt;version&gt;/,/&lt;\/version&gt;/' | awk -v FS="(&lt;version&gt;|&lt;/version&gt;)" '{print $2}'`
+                echo "NEW_PARENT_VERSION: $NEW_PARENT_VERSION"
+                #git add pom.xml
+                #if [ "$(git status --porcelain)" != "" ]
+                #then
+                #    git commit -m "CI: Parent Update - $ENM_VERSION"
+                #fi
+                #git remote set-url --push origin ${GERRIT_CENTRAL}/$repoFormed
+                #git push
+
+                if [ $? -ne 0 ]
+                then
+                    echo "git push to $CHECKOUT_BRANCH in ${GERRIT_MIRROR}/$repoFormed - FAILED" &gt;&gt; $FAILED_REPOS
+                fi
+            fi
+        fi
+
+        #Clean the workspace after each clone
+        cd ..
+    done
+}
+
+
+#------------------------------------------------------------------------------------------------------------------------------------------------------------#
+#                                                                     MAIN FUNCTION
+#    - PARENT_GROUP_TYPE="NMS" or "CDS" is an external parameter
+#------------------------------------------------------------------------------------------------------------------------------------------------------------#
+
+#Call to the set variables function
+set_variables
+
+#If the version of the integration pom in Nexus is 999 then fail the job
+if [ $INCREMENTAL_VERSION -eq 999 ]
+then
+    echo "The latest version of the integration pom is $ENM_VERSION - Please check Nexus as 999 is not correct."
+    exit 1
+else
+    #Loop through the ENM Jenkins instances setting a variable for each one
+    for JENKNAME in "${ADDR[@]}"
+    do
+        JENKINS_INSTANCE=$JENKNAME
+
+        #Unless the jenkins is fem111 or fem112 then call the create files and get repos function
+        echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+        echo "                                   PARENT UPDATE RUNNING FOR $JENKINS_INSTANCE                                         "
+        echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+        create_files
+        get_repos
+        echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+        echo "                                  PARENT UPDATE COMPLETE FOR $JENKINS_INSTANCE                                         "
+        echo "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+
+    done
+fi</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.37">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter/>
+      <externalDelete/>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+  </buildWrappers>
+</project>

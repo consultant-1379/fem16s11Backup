@@ -1,0 +1,199 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.39">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.7.0"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.7.0">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>&lt;p style=&quot;color:red; underline&quot;&gt;&lt;strong&gt;&amp;#9888; &lt;u&gt;QualityGate is OFF&lt;/u&gt;&lt;/strong&gt;&lt;/p&gt;&lt;b&gt;&lt;font color=&quot;red&quot;&gt;CLICK &quot;RETRIGGER&quot; ON THE PATCH YOU WANT TO BUILD, OTHERWISE CLICK &quot;BUILD NOW&quot; TO BUILD THE LAST.&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;a href=&quot;https://confluence-nam.lmera.ericsson.se/display/CIE/Retriggering+a+parameterised%28preCodeReview%29+Jenkins+job&quot;&gt;How to &quot;RETRIGGER&quot; a job&lt;/a&gt;&lt;br&gt;This job is triggered by a &quot;git push origin HEAD:refs/for/master&quot;.&lt;br&gt;It will build the artifact. If the build is successful the code is sent for code review.&lt;br&gt;</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>NODE</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs>bsc-node-model-common_Release</blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>20</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.23.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit></paramsToUseForLimit>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+    <EnvInjectJobProperty plugin="envinject@2.1.5">
+      <info>
+        <propertiesContent>REPO=OSS/com.ericsson.oss.presentation.client.addnode/add-node-app
+ADMIN_CONTROL=true
+SKIP_SONAR=true
+SKIP_SONAR_GLOBAL=true
+PUBLISH_SITE=false
+BRANCH=master
+TEAM_NAME=
+GERRIT_REFSPEC=refs/heads/master
+SLAVE_LABEL= GridEngine_RHEL7
+JDK_HOME=JDK 1.8.0_281
+MVN_HOME=Maven 3.5.3
+MVN_PCR=-V -U jacoco:prepare-agent install jacoco:report pmd:pmd
+MVN_PCR_INT=-V -Dts -P jboss_managed_local install -U
+MVN_Release=-V -Dresume=false release:prepare release:perform -DpreparationGoals=&quot;install -U&quot; -Dgoals=&quot;clean deploy pmd:pmd jacoco:report -U&quot; -DlocalCheckout=true
+MVN_SONAR=sonar:sonar -Dsonar.login=${SONAR_AUTH_TOKEN} -Dsonar.host.url=${SONAR_HOST_URL} -Dsonar.branch.name=${SONAR_BRANCH} -Dsonar.branch.target=${BRANCH}
+MVN_ARQUILLIAN=
+POSTGRES=false
+POSTGRES_DB_NAME=my_pg_db
+POSTGRES_DB_VERSION=9.2.13
+VERSANT=false
+VERSANT_DB_NAME=dps_integration
+VERSANT_DB_VERSION=1.0.33
+SQ_SERVER=sonarqube enterprise 79
+TESTWARE_REPO=
+IT_FOLDER=
+MVN_VERIFY_BASE_OPTIONS=
+SOURCES_DIR=.
+JAVA_MONITORED_SERVICES=.*jboss.*
+IT_REPORT_TYPE=surefire
+COMPOSE_FILE=
+TESTRUNNER_JAVA_VERSION=jdk8_tmp
+SNAPSHOT_CODE_RPMS_CONTAINER=im_jboss
+COMPOSE_HTTP_TIMEOUT=500
+IGNORE_RPMS=
+DEFAULT_TEAM=
+AUTO_DELIVER=false
+CREATE_DELIVERY_GROUP=false
+PRE_TEST_SCRIPT=pre_test.sh
+POST_TEST_SCRIPT=post_test.sh
+DOCKER_COMPOSE_OPTIONS=-f docker-compose.yml
+IT_REPO=OSS/com.ericsson.oss.mediation.pm.testsuite/pm-mediation-vertical-slice
+INTEGRATION_TESTS=
+ADDITIONAL_SYSTSEM_PROPERTIES=
+TOPIC=
+deployPackage=
+PYTHON_HOME=/proj/ciexadm200/tools/python-2.7.8
+ENM_PY=/proj/ciexadm200/tools/enm_py-2.7.8_reqmnts-2.0
+PYTHONPATH=$ENM_PY/usr/lib/python2.7/site-packages:$ENM_PY/usr/lib64/python2.7/site-packages
+PATH+EXTRA=/proj/ciexadm200/tools/python-2.7.8/bin:$ENM_PY/usr/bin
+ARTIFACTS_WILDCARDS=**/*.log,**/*.ear,**/*.rpm</propertiesContent>
+        <secureGroovyScript plugin="script-security@1.78">
+          <script></script>
+          <sandbox>false</sandbox>
+        </secureGroovyScript>
+        <loadFilesFromMaster>false</loadFilesFromMaster>
+      </info>
+      <on>true</on>
+      <keepJenkinsSystemVariables>true</keepJenkinsSystemVariables>
+      <keepBuildVariables>true</keepBuildVariables>
+      <overrideBuildParameters>false</overrideBuildParameters>
+    </EnvInjectJobProperty>
+    <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+      <triggers>
+        <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger plugin="gerrit-trigger@2.30.5">
+          <spec></spec>
+          <gerritProjects>
+            <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject>
+              <compareType>PLAIN</compareType>
+              <pattern></pattern>
+              <branches>
+                <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch>
+                  <compareType>PLAIN</compareType>
+                  <pattern></pattern>
+                </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch>
+              </branches>
+              <disableStrictForbiddenFileVerification>false</disableStrictForbiddenFileVerification>
+            </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject>
+          </gerritProjects>
+          <dynamicGerritProjects class="empty-list"/>
+          <skipVote>
+            <onSuccessful>false</onSuccessful>
+            <onFailed>false</onFailed>
+            <onUnstable>false</onUnstable>
+            <onNotBuilt>false</onNotBuilt>
+          </skipVote>
+          <silentMode>false</silentMode>
+          <notificationLevel></notificationLevel>
+          <silentStartMode>false</silentStartMode>
+          <escapeQuotes>true</escapeQuotes>
+          <nameAndEmailParameterMode>PLAIN</nameAndEmailParameterMode>
+          <dependencyJobsNames></dependencyJobsNames>
+          <commitMessageParameterMode>BASE64</commitMessageParameterMode>
+          <changeSubjectParameterMode>PLAIN</changeSubjectParameterMode>
+          <commentTextParameterMode>BASE64</commentTextParameterMode>
+          <buildStartMessage></buildStartMessage>
+          <buildFailureMessage></buildFailureMessage>
+          <buildSuccessfulMessage></buildSuccessfulMessage>
+          <buildUnstableMessage></buildUnstableMessage>
+          <buildNotBuiltMessage></buildNotBuiltMessage>
+          <buildUnsuccessfulFilepath></buildUnsuccessfulFilepath>
+          <customUrl></customUrl>
+          <serverName>Gerrit_UAT_3.4</serverName>
+          <triggerOnEvents>
+            <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent>
+              <excludeDrafts>false</excludeDrafts>
+              <excludeTrivialRebase>false</excludeTrivialRebase>
+              <excludeNoCodeChange>false</excludeNoCodeChange>
+              <excludePrivateState>false</excludePrivateState>
+              <excludeWipState>false</excludeWipState>
+            </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent>
+            <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginDraftPublishedEvent/>
+          </triggerOnEvents>
+          <dynamicTriggerConfiguration>false</dynamicTriggerConfiguration>
+          <triggerConfigURL></triggerConfigURL>
+          <triggerInformationAction/>
+        </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger>
+      </triggers>
+    </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.80">
+    <script>@Library(&apos;ci-pipeline-lib&apos;) _
+pipeline {
+    agent { label env.SLAVE_LABEL }
+    options {
+        timeout(time: 60, unit: &apos;MINUTES&apos;)
+        timestamps()
+    }
+    stages {
+        stage(&apos;Pre-step&apos;) {
+            steps {
+                ci_pcr_pre()
+            }
+        }
+        stage(&apos;Clone&apos;) {
+            steps {
+                ci_pcr_clone()
+            }
+        }
+    }
+}
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <disabled>false</disabled>
+</flow-definition>

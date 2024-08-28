@@ -1,0 +1,239 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>&lt;b&gt;&lt;font color=&quot;BLUE&quot; size=&quot;3&quot;&gt;&#xd;
+This job is triggered by an upstream job: ci_0.1StartFlow&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&#xd;
+If this build is successful, a downtream job will be triggered to execute pre code review: ci_1.2PreCodeReview&lt;br&gt;&lt;br&gt;&#xd;
+&#xd;
+&lt;b&gt;TEAM NAME:&lt;/b&gt; AxisOps&lt;br&gt;&#xd;
+&lt;b&gt;ERIC DELIVERABLE:&lt;/b&gt; ERICtestflow_CXP7654320&lt;br&gt;&#xd;
+&#xd;
+</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>7</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.23.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty plugin="leastload@1.0.3">
+      <leastLoadDisabled>false</leastLoadDisabled>
+    </org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit></paramsToUseForLimit>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    <de.pellepelster.jenkins.walldisplay.WallDisplayJobProperty plugin="jenkinswalldisplay@0.6.30"/>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>GridEngine_RHEL7</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers>
+    <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger plugin="gerrit-trigger@2.30.5">
+      <spec></spec>
+      <gerritProjects>
+        <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject>
+          <compareType>PLAIN</compareType>
+          <pattern></pattern>
+          <branches>
+            <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch>
+              <compareType>PLAIN</compareType>
+              <pattern></pattern>
+            </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch>
+          </branches>
+          <disableStrictForbiddenFileVerification>false</disableStrictForbiddenFileVerification>
+        </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject>
+      </gerritProjects>
+      <dynamicGerritProjects class="empty-list"/>
+      <skipVote>
+        <onSuccessful>false</onSuccessful>
+        <onFailed>false</onFailed>
+        <onUnstable>false</onUnstable>
+        <onNotBuilt>false</onNotBuilt>
+      </skipVote>
+      <silentMode>false</silentMode>
+      <notificationLevel></notificationLevel>
+      <silentStartMode>false</silentStartMode>
+      <escapeQuotes>true</escapeQuotes>
+      <nameAndEmailParameterMode>PLAIN</nameAndEmailParameterMode>
+      <dependencyJobsNames></dependencyJobsNames>
+      <commitMessageParameterMode>BASE64</commitMessageParameterMode>
+      <changeSubjectParameterMode>PLAIN</changeSubjectParameterMode>
+      <commentTextParameterMode>BASE64</commentTextParameterMode>
+      <buildStartMessage></buildStartMessage>
+      <buildFailureMessage></buildFailureMessage>
+      <buildSuccessfulMessage></buildSuccessfulMessage>
+      <buildUnstableMessage></buildUnstableMessage>
+      <buildNotBuiltMessage></buildNotBuiltMessage>
+      <buildUnsuccessfulFilepath></buildUnsuccessfulFilepath>
+      <customUrl></customUrl>
+      <serverName>Gerrit_UAT_3.4</serverName>
+      <triggerOnEvents>
+        <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent>
+          <excludeDrafts>false</excludeDrafts>
+          <excludeTrivialRebase>false</excludeTrivialRebase>
+          <excludeNoCodeChange>false</excludeNoCodeChange>
+          <excludePrivateState>false</excludePrivateState>
+          <excludeWipState>false</excludeWipState>
+        </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent>
+        <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginDraftPublishedEvent/>
+      </triggerOnEvents>
+      <dynamicTriggerConfiguration>false</dynamicTriggerConfiguration>
+      <triggerConfigURL></triggerConfigURL>
+      <triggerInformationAction/>
+    </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>export M2_HOME=/proj/ciexadm200/tools/apache-maven-3.5.3
+export PATH=$M2_HOME/bin:$PATH
+
+/proj/ciexadm200/tools/git/2.3.0/bin/git --version
+#pwd
+#git --version
+echo &quot;FILES CURRENTLY IN FILE SYSTEM&quot;
+ls -la
+
+echo &quot;CLONING REPO&quot;
+
+
+/proj/ciexadm200/tools/git/2.3.0/bin/git clone &quot;ssh://staging-gerritmirror.sero.gic.ericsson.se:29418/OSS/com.ericsson.oss.ci/ciexe_test&quot; &amp;&amp; scp -p -P 29418 staging-gerritmirror.sero.gic.ericsson.se:hooks/commit-msg &quot;ciexe_test/.git/hooks/&quot;
+#/proj/ciexadm200/tools/git/2.3.0/bin/git clone &quot;ssh://staging-gerritmirror.sero.gic.ericsson.se:29418/OSS/com.ericsson.oss.ci/ciexe_test_flow&quot; &amp;&amp; scp -p -P 29418 staging-gerritmirror.sero.gic.ericsson.se:hooks/commit-msg &quot;ciexe_test_flow/.git/hooks/&quot;
+
+#/usr/bin/git clone ssh://gerritmirror-ha.lmera.ericsson.se:29418/OSS/com.ericsson.oss.de/ci-flow-test &amp;&amp; scp -p -P 29418 gerritmirror-ha.lmera.ericsson.se:hooks/commit-msg ci-flow-test/.git/hooks/
+
+#/usr/bin/git clone ssh://gerrit.ericsson.se:29418/OSS/com.ericsson.oss.de/ci-flow-test &amp;&amp; scp -p -P 29418 gerrit.ericsson.se:hooks/commit-msg ci-flow-test/.git/hooks/
+#/usr/bin/git clone ssh://gerrit.ericsson.se:29418/OSS/com.ericsson.oss.de/ci-flow-test-new &amp;&amp; scp -p -P 29418 gerrit.ericsson.se:hooks/commit-msg ci-flow-test-new/.git/hooks/
+
+echo &quot;FILES CLONED&quot;
+ls -la
+
+echo &quot;MOVING TO REPO FOLDER&quot;
+#ci-flow-test
+cd ciexe_test
+
+echo &quot;CALCULATING VERSION&quot;
+export currentVersion=`mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version|grep &quot;^[0-9]*\.[0-9]*\.[0-9]*&quot;`
+#export currentVersion=`/proj/ciexadm200/tools/apache-maven-3.5.3/bin/mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version|grep &quot;^[0-9]*\.[0-9]*\.[0-9]*&quot;`
+export cleanedVersion=`echo $currentVersion | sed -e &apos;s/[^0-9][^0-9]*$//&apos;`
+export incrementalVersion=`echo $cleanedVersion | cut -d&quot;.&quot; -f3`
+export minorVersion=`echo $cleanedVersion | cut -d&quot;.&quot; -f2`
+export majorVersion=`echo $cleanedVersion | cut -d&quot;.&quot; -f1`
+export nextminorVersion=$(($minorVersion+1))
+export nextincrementalVersion=$(($incrementalVersion+1))
+export newVersion=`echo $majorVersion.$minorVersion.$nextincrementalVersion-SNAPSHOT`
+
+echo &quot;REPLACING VERSION&quot;
+find . -name &quot;pom.xml&quot; -exec sed -i &quot;s/${currentVersion}/${newVersion}/g&quot; {} \; 2&gt;/dev/null
+
+echo &quot;CHECKING BRANCH&quot;
+/proj/ciexadm200/tools/git/2.3.0/bin/git branch
+
+echo &quot;ADDING &gt; COMMITING &gt; PUSHING&quot;
+/proj/ciexadm200/tools/git/2.3.0/bin/git clean -fdx
+/proj/ciexadm200/tools/git/2.3.0/bin/git add --all
+/proj/ciexadm200/tools/git/2.3.0/bin/git commit -m &quot;No Jira - CI Flow Test Automation&quot;
+#/usr/bin/git push origin HEAD:refs/for/master
+
+/proj/ciexadm200/tools/git/2.3.0/bin/git push ssh://staging-gerrit.sero.gic.ericsson.se:29418/OSS/com.ericsson.oss.ci/ciexe_test HEAD:refs/for/master
+
+
+</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <hudson.plugins.emailext.ExtendedEmailPublisher plugin="email-ext@2.63">
+      <recipientList></recipientList>
+      <configuredTriggers>
+        <hudson.plugins.emailext.plugins.trigger.FailureTrigger>
+          <email>
+            <subject>$PROJECT_DEFAULT_SUBJECT</subject>
+            <body>$PROJECT_DEFAULT_CONTENT</body>
+            <recipientProviders>
+              <hudson.plugins.emailext.plugins.recipients.DevelopersRecipientProvider/>
+            </recipientProviders>
+            <attachmentsPattern></attachmentsPattern>
+            <attachBuildLog>false</attachBuildLog>
+            <compressBuildLog>false</compressBuildLog>
+            <replyTo>$PROJECT_DEFAULT_REPLYTO</replyTo>
+            <contentType>project</contentType>
+          </email>
+        </hudson.plugins.emailext.plugins.trigger.FailureTrigger>
+      </configuredTriggers>
+      <contentType>text/html</contentType>
+      <defaultSubject>CI Flow Broken - $DEFAULT_SUBJECT</defaultSubject>
+      <defaultContent>$DEFAULT_CONTENT
+&lt;br&gt;&lt;br&gt;
+For more information please view the following Confluence page:
+&lt;a href=&quot;https://confluence-nam.lmera.ericsson.se/display/CIE/CI-FLOW_TEST+JOBS&quot;&gt;CI Flow Jobs&lt;/a&gt;</defaultContent>
+      <attachmentsPattern></attachmentsPattern>
+      <presendScript>$DEFAULT_PRESEND_SCRIPT</presendScript>
+      <postsendScript>$DEFAULT_POSTSEND_SCRIPT</postsendScript>
+      <attachBuildLog>false</attachBuildLog>
+      <compressBuildLog>false</compressBuildLog>
+      <replyTo>visalakshi.mani@wipro.com</replyTo>
+      <from></from>
+      <saveOutput>false</saveOutput>
+      <disabled>false</disabled>
+    </hudson.plugins.emailext.ExtendedEmailPublisher>
+  </publishers>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.37">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+    <hudson.plugins.build__timeout.BuildTimeoutWrapper plugin="build-timeout@1.19">
+      <strategy class="hudson.plugins.build_timeout.impl.AbsoluteTimeOutStrategy">
+        <timeoutMinutes>10</timeoutMinutes>
+      </strategy>
+      <operationList/>
+    </hudson.plugins.build__timeout.BuildTimeoutWrapper>
+  </buildWrappers>
+</project>

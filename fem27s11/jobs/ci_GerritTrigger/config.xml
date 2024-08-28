@@ -1,0 +1,336 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>&lt;b&gt;&lt;font color=&quot;BLUE&quot; size=&quot;3&quot;&gt;&#xd;
+This job is triggered by an upstream job: ci-flow-test_0.1StartFlow&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&#xd;
+If this build is successful, a downtream job will be triggered to execute pre code review: ci-flow-test_1.2PreCodeReview&lt;br&gt;&lt;br&gt;&#xd;
+&#xd;
+&lt;b&gt;TEAM NAME:&lt;/b&gt; Gitmo&lt;br&gt;&#xd;
+&lt;b&gt;ERIC DELIVERABLE:&lt;/b&gt; ERICtest_CXP1234567&lt;br&gt;&#xd;
+&#xd;
+</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>7</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.23.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty plugin="leastload@1.0.3">
+      <leastLoadDisabled>false</leastLoadDisabled>
+    </org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit></paramsToUseForLimit>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    <de.pellepelster.jenkins.walldisplay.WallDisplayJobProperty plugin="jenkinswalldisplay@0.6.30"/>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>ENM-SLAVE-GE-7_2</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>true</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+git --version
+/proj/ciexadm200/tools/git/2.20.0/bin/git --version
+
+echo &quot;FILES CURRENTLY IN FILE SYSTEM&quot;
+ls -la
+
+echo &quot;CLONING REPO&quot;
+git  clone ssh://staging-gerritmirror.sero.gic.ericsson.se:29418/OSS/com.ericsson.oss.ci/ciexe_GerritTriggerTest &amp;&amp; scp -p -P 29418 staging-gerritmirror.sero.gic.ericsson.se:hooks/commit-msg ciexe_GerritTriggerTest/.git/hooks/
+
+echo &quot;FILES CLONED&quot;
+ls -la
+
+echo &quot;MOVING TO REPO FOLDER&quot;
+cd ciexe_GerritTriggerTest
+
+echo &quot;CALCULATING VERSION&quot;
+export currentVersion=`/proj/ciexadm200/tools/apache-maven-3.5.3/bin/mvn org.apache.maven.plugins:maven-help-plugin:2.1.1:evaluate -Dexpression=project.version|grep &quot;^[0-9]*\.[0-9]*\.[0-9]*&quot;`
+export cleanedVersion=`echo $currentVersion | sed -e &apos;s/[^0-9][^0-9]*$//&apos;`
+export incrementalVersion=`echo $cleanedVersion | cut -d&quot;.&quot; -f3`
+export minorVersion=`echo $cleanedVersion | cut -d&quot;.&quot; -f2`
+export majorVersion=`echo $cleanedVersion | cut -d&quot;.&quot; -f1`
+export nextminorVersion=$(($minorVersion+1))
+export nextincrementalVersion=$(($incrementalVersion+1))
+export newVersion=`echo $majorVersion.$minorVersion.$nextincrementalVersion-SNAPSHOT`
+
+echo &quot;REPLACING VERSION&quot;
+echo $currentVersion
+echo $newVersion
+find . -name &quot;pom.xml&quot; -exec sed -i &quot;s/${currentVersion}/${newVersion}/g&quot; {} \; 2&gt;/dev/null
+echo $?
+echo &quot;CHECKING BRANCH&quot;
+git branch
+
+echo &quot;ADDING &gt; COMMITING &gt; PUSHING&quot;
+/proj/ciexadm200/tools/git/2.20.0/bin/git clean -fdx
+/proj/ciexadm200/tools/git/2.20.0/bin/git add --all
+/proj/ciexadm200/tools/git/2.20.0/bin/git commit -m &quot;No Jira - CI Flow Test Automation&quot;
+#git clean -fdx
+#git add .
+#git commit -m &quot;No Jira - CI Flow Test Automation&quot;
+git remote set-url origin --push ssh://staging-gerrit.sero.gic.ericsson.se:29418/OSS/com.ericsson.oss.ci/ciexe_GerritTriggerTest
+/proj/ciexadm200/tools/git/2.20.0/bin/git push ssh://staging-gerrit.sero.gic.ericsson.se:29418/OSS/com.ericsson.oss.de/ciexe_GerritTriggerTest HEAD:refs/for/master
+#/proj/ciexadm200/tools/git/2.20.0/bin/git push ssh://staging-gerrit.sero.gic.ericsson.se:29418/OSS/com.ericsson.oss.de/ciexe_GerritTriggerTest master
+#git push origin HEAD:refs/for/master &amp;&gt; git_push.txt
+/proj/ciexadm200/tools/git/2.20.0/bin/git push origin HEAD:refs/for/master &amp;&gt; git_push.txt
+echo &quot;git operations done here&quot;
+cat git_push.txt
+
+#echo &quot;========================================================================================= &quot;
+#echo &quot;========================== USE LINK BEFORE TO CHECK Fems reply ========================== &quot;
+#echo &quot;========================================================================================= &quot;
+
+#wait for PreCOdeReviews to start in each fem
+echo &quot;///////////////////////////////&quot;
+sleep 5m
+
+# abandon patch
+
+#Check for open changes on this project in Gerrit
+
+#clean files
+file_name=&quot;open-changes.txt&quot;
+echo &quot;////////////open file//////////////&quot;
+
+if [ -f $file_name ]
+then
+    rm -rf $file_name
+    touch $file_name
+else
+    touch $file_name
+fi
+
+echo &quot;CHECKING GERRIT FOR OPEN CHANGES&quot;
+ssh -p 29418 staging-gerrit.sero.gic.ericsson.se gerrit query &apos;status:open project:OSS/com.ericsson.oss.ci/ciexe_GerritTriggerTest&apos; | grep &quot;number&quot; | cut -d: -f2 | sed &apos;s/^ *//g&apos; &gt; $file_name
+sleep 5m
+#Remove open changed in Gerrit
+echo &quot;LIST FEM&apos;s FEEDBACK &amp; REMOVING OPEN CHANGES FROM GERRIT&quot;
+for i in `cat open-changes.txt`
+do 
+#echo &quot;========================================================================================= &quot;
+#echo &quot; Result for commit Id:&quot; $i
+#ssh -p 29418 gerrit.ericsson.se gerrit query  --format=JSON --all-approvals  project:OSS/com.ericsson.oss.ci/ciexe_GerritTriggerTest change:$i &gt; ApprovalList.json
+#ssh -p 29418 gerrit.ericsson.se gerrit query  --comments project:OSS/com.ericsson.oss.ci/ciexe_GerritTriggerTest change:$i  | grep &quot; : &quot;|sort -u
+#echo &quot;========================================================================================= &quot;
+    ssh -p 29418 staging-gerrit.sero.gic.ericsson.se gerrit review --abandon $i,1
+    echo REMOVED $i
+done
+
+# set review link to use on to build descriptor
+#REVIEW_ID=$(cat open-changes.txt)
+
+REVIEW_MESSAGE=$(awk &quot;/https:\/\/staging-gerrit.sero.gic.ericsson.se/,/No Jira/p&quot; git_push.txt)
+REVIEW_ID=$(echo &quot;${REVIEW_MESSAGE}&quot; | awk -F&apos; No Jira - CI Flow Test Automation&apos; &apos;{sub(/^remote:   https:\/\/staging-gerrit.sero.gic.ericsson.se\//,&quot;&quot;,$1); print $1 }&apos;)
+
+echo &quot;REVIEW_ID=&quot;${REVIEW_ID} &gt; ${WORKSPACE}/workspace/${JOB_NAME}/env.txt
+
+echo &quot;${WORKSPACE}/workspace/${JOB_NAME}/env.txt&quot;
+ls -lrt ${WORKSPACE}/workspace/${JOB_NAME}/env.txt
+
+# pull project.config file
+git pull origin refs/meta/config</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <com.ericsson.de.multi.master.ReadFile plugin="multi-master@1.0.13">
+      <filePath>env.txt</filePath>
+    </com.ericsson.de.multi.master.ReadFile>
+    <hudson.plugins.python.Python plugin="python@1.3">
+      <command>#!/usr/bin/python
+
+&apos;&apos;&apos;
+By using this script will be possible to check the result of https://femXXX-eiffel004.lmera.ericsson.se:8443/jenkins/job/Admin_GerritTriggerTest_PreCodeReview_UAT/.
+If Gerrit Trigger doesn&apos;t work for a specific Jenkins instance the following string will be shown -&gt; Jenkins Job was not triggered
+&apos;&apos;&apos;
+
+import subprocess
+import datetime
+import sys
+from xml.dom import minidom
+from datetime import datetime
+
+sys.path.insert(0, &apos;/proj/ciexadm200/tools/utils/scripts/Monitoring_tools/Various_methods&apos;)
+from getXMLvalues import getValueFromTag
+from findBetweenStrings import find_between_strings
+from getRestApi import getRestApiXML
+
+jenkins_instances = []
+timeDelta = 9000
+
+todayTime = datetime.today().strftime(&quot;%Y-%m-%d %H:%M:%S&quot;)
+todayTime = datetime.strptime(todayTime, &quot;%Y-%m-%d %H:%M:%S&quot;)
+
+configFile = open(&apos;ciexe_GerritTriggerTest/project.config&apos;)
+for line in configFile:
+    if &quot;label-TriggerTest-&quot; in line and &quot;#&quot; not in line:
+        jenkins_instances.append(find_between_strings(line, &quot;label-TriggerTest-Fem&quot;, &quot; = -1..+1 group ENM_DE_Gitmo_CodeReviewer&quot;))
+configFile.close()
+
+for jenkins_instance in jenkins_instances:  
+	if jenkins_instance != &quot;1s11&quot;:
+		break
+	else:
+		pass
+    # get .xml file from REST API for jobs queue details
+    #print(jenkins_instance)
+	fem_name=&quot;fem&quot;+jenkins_instance
+	rest_command = &quot;https://&quot; + fem_name + &quot;-eiffel004.eiffel.gic.ericsson.se:8443/jenkins/job/Admin_GerritTriggerTest_PreCodeReview_UAT/lastBuild/api/xml&quot;
+    #print(rest_command)
+	getRestApiXML(fem_name, rest_command, &quot;lastBuildAPI.xml&quot;)
+	buildDate = getValueFromTag(&quot;lastBuildAPI.xml&quot;, &quot;date&quot;)
+	buildResult = getValueFromTag(&quot;lastBuildAPI.xml&quot;, &quot;result&quot;)
+	try:
+		try:
+			buildTime = datetime.strptime(buildDate[0].firstChild.nodeValue, &quot;%Y-%m-%d %H:%M:%S +%f&quot;)
+			print(buildTime)
+			buildTime = buildTime.strftime(&quot;%Y-%m-%d %H:%M:%S&quot;)
+			print(buildTime)
+			buildTime = datetime.strptime(buildTime, &quot;%Y-%m-%d %H:%M:%S&quot;)
+			print(buildTime)
+		except:
+			buildTime = datetime.strptime(buildDate[0].firstChild.nodeValue, &quot;%Y-%m-%dT%H:%M:%S+%f&quot;)
+			print(buildTime)
+			buildTime = buildTime.strftime(&quot;%Y-%m-%dT%H:%M:%S&quot;)
+			print(buildTime)
+			buildTime = datetime.strptime(buildTime, &quot;%Y-%m-%dT%H:%M:%S&quot;)
+			print(buildTime)
+        
+		delta_in_seconds = (todayTime - buildTime).total_seconds()
+		print(delta_in_seconds)
+		if delta_in_seconds &lt; timeDelta:
+			if buildResult[0].firstChild.nodeValue == &apos;SUCCESS&apos;:
+				print &quot;fem&quot; + jenkins_instance + &quot;: &quot; + buildResult[0].firstChild.nodeValue
+				break
+			else:
+				print &quot;fem&quot; + jenkins_instance + &quot;:  &quot; + buildResult[0].firstChild.nodeValue + &quot;  ==&gt; https://fem&quot; + jenkins_instance + &quot;-eiffel004.eiffel.gic.ericsson.se:8443/jenkins/job/Admin_GerritTriggerTest_PreCodeReview_UAT&quot;
+		else:
+			print &quot;fem&quot; + jenkins_instance + &quot;: Jenkins Job was not triggered &quot; + &quot;https://fem&quot; + jenkins_instance + &quot;-eiffel004.eiffel.gic.ericsson.se:8443/jenkins/job/Admin_GerritTriggerTest_PreCodeReview_UAT&quot;
+			sys.exit(1)
+	except IndexError as error: #manage HANGING process or issue with concurrent gerrit reviews -&gt; https://stackoverflow.com/questions/34271912/random-error-from-gerrit-cli-over-ssh-cannot-post-review
+		print &quot;fem&quot; + jenkins_instance + &quot;: &quot; + &quot;https://fem&quot; + jenkins_instance + &quot;-eiffel004.eiffel.gic.ericsson.se:8443/jenkins/job/Admin_GerritTriggerTest_PreCodeReview_UAT HANGING on GE slave&quot;
+		continue
+</command>
+      <configuredLocalRules/>
+    </hudson.plugins.python.Python>
+  </builders>
+  <publishers>
+    <hudson.plugins.descriptionsetter.DescriptionSetterPublisher plugin="description-setter@1.10">
+      <regexp></regexp>
+      <regexpForFailed></regexpForFailed>
+      <description>&lt;a href=&quot;https://staging-gerrit.sero.gic.ericsson.se /${REVIEW_ID}&quot;&gt;Review link&lt;/a&gt;</description>
+      <setForMatrix>false</setForMatrix>
+    </hudson.plugins.descriptionsetter.DescriptionSetterPublisher>
+    <hudson.plugins.emailext.ExtendedEmailPublisher plugin="email-ext@2.63">
+      <recipientList>PDLDEAXISO@pdl.internal.ericsson.com</recipientList>
+      <configuredTriggers>
+        <hudson.plugins.emailext.plugins.trigger.FailureTrigger>
+          <email>
+            <subject>$PROJECT_DEFAULT_SUBJECT</subject>
+            <body>$PROJECT_DEFAULT_CONTENT</body>
+            <recipientProviders>
+              <hudson.plugins.emailext.plugins.recipients.DevelopersRecipientProvider/>
+            </recipientProviders>
+            <attachmentsPattern></attachmentsPattern>
+            <attachBuildLog>false</attachBuildLog>
+            <compressBuildLog>false</compressBuildLog>
+            <replyTo>$PROJECT_DEFAULT_REPLYTO</replyTo>
+            <contentType>project</contentType>
+          </email>
+        </hudson.plugins.emailext.plugins.trigger.FailureTrigger>
+      </configuredTriggers>
+      <contentType>text/html</contentType>
+      <defaultSubject>CI Flow Broken - $DEFAULT_SUBJECT</defaultSubject>
+      <defaultContent>$DEFAULT_CONTENT
+&lt;br&gt;&lt;br&gt;
+For more information please view the following Confluence page:
+&lt;a href=&quot;https://confluence-nam.lmera.ericsson.se/display/CIE/CI-FLOW_TEST+JOBS&quot;&gt;CI Flow Jobs&lt;/a&gt;</defaultContent>
+      <attachmentsPattern></attachmentsPattern>
+      <presendScript>$DEFAULT_PRESEND_SCRIPT</presendScript>
+      <postsendScript>$DEFAULT_POSTSEND_SCRIPT</postsendScript>
+      <attachBuildLog>false</attachBuildLog>
+      <compressBuildLog>false</compressBuildLog>
+      <replyTo>PDLDEAXISO@pdl.internal.ericsson.com</replyTo>
+      <from></from>
+      <saveOutput>false</saveOutput>
+      <disabled>false</disabled>
+    </hudson.plugins.emailext.ExtendedEmailPublisher>
+    <hudson.plugins.parameterizedtrigger.BuildTrigger plugin="parameterized-trigger@2.35.2">
+      <configs>
+        <hudson.plugins.parameterizedtrigger.BuildTriggerConfig>
+          <configs>
+            <hudson.plugins.parameterizedtrigger.PredefinedBuildParameters>
+              <properties>REVIEW_LINK=${REVIEW_ID}</properties>
+              <textParamValueOnNewLine>false</textParamValueOnNewLine>
+            </hudson.plugins.parameterizedtrigger.PredefinedBuildParameters>
+          </configs>
+          <projects>ci_TriggerTimes</projects>
+          <condition>ALWAYS</condition>
+          <triggerWithNoParameters>false</triggerWithNoParameters>
+          <triggerFromChildProjects>false</triggerFromChildProjects>
+        </hudson.plugins.parameterizedtrigger.BuildTriggerConfig>
+      </configs>
+    </hudson.plugins.parameterizedtrigger.BuildTrigger>
+  </publishers>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.37">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+    <hudson.plugins.build__timeout.BuildTimeoutWrapper plugin="build-timeout@1.19">
+      <strategy class="hudson.plugins.build_timeout.impl.AbsoluteTimeOutStrategy">
+        <timeoutMinutes>20</timeoutMinutes>
+      </strategy>
+      <operationList/>
+    </hudson.plugins.build__timeout.BuildTimeoutWrapper>
+    <hudson.plugins.timestamper.TimestamperBuildWrapper plugin="timestamper@1.8.10"/>
+  </buildWrappers>
+</project>

@@ -1,0 +1,157 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>Jenkins Job to update the official Chakras Openstack template, validate it and spread it across Openstack servers and Jenkins.&lt;br&gt;&#13;
+Confluence page: &lt;a href="https://confluence-oss.seli.wh.rnd.internal.ericsson.com/display/cENMCICD/Openstack+slave+automatic+update+and+provisioning"&gt;Openstack+slave+automatic+update+and+provisioning&lt;/a&gt;</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>VM_TEMPLATE</name>
+          <description>Please choose the Openstack template you want to use as baseline for the new one.&lt;br&gt;
+Please refer to this confluence page to check the template change log -&gt; &lt;a href="https://confluence-oss.seli.wh.rnd.internal.ericsson.com/display/cENMCICD/Openstack+slave+automatic+update+and+provisioning"&gt;Openstack+slave+automatic+update+and+provisioning&lt;/a&gt;</description>
+          <defaultValue>enm-cloud-native-ci-0.0.6</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <EnvInjectJobProperty plugin="envinject@2.4.0">
+      <info>
+        <propertiesContent>VM_TEMP_NAME=enm_cn_ci_openstack-temporary
+JENKINS_FEM=fem16s11-eiffel004.eiffel.gic.ericsson.se
+OPENRC_OPENSTACK_FILE=DE_CHAKRAS_C5AF03-openrc.sh,DE_CHAKRAS_C3BF04-openrc.sh</propertiesContent>
+        <secureGroovyScript plugin="script-security@1138.v8e727069a_025">
+          <script/>
+          <sandbox>false</sandbox>
+        </secureGroovyScript>
+        <loadFilesFromMaster>false</loadFilesFromMaster>
+      </info>
+      <on>true</on>
+      <keepJenkinsSystemVariables>true</keepJenkinsSystemVariables>
+      <keepBuildVariables>true</keepBuildVariables>
+      <overrideBuildParameters>false</overrideBuildParameters>
+    </EnvInjectJobProperty>
+    
+    <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+      <triggers>
+        <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger plugin="gerrit-trigger@2.35.2">
+          <spec/>
+          <gerritProjects>
+            <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject>
+              <compareType>PLAIN</compareType>
+              <pattern>OSS/com.ericsson.oss.de/ci-prototypes</pattern>
+              <branches>
+                <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch>
+                  <compareType>PLAIN</compareType>
+                  <pattern>master</pattern>
+                </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch>
+              </branches>
+              <topics>
+                <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Topic>
+                  <compareType>PLAIN</compareType>
+                  <pattern>Admin_Create_Openstack_Template</pattern>
+                </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Topic>
+              </topics>
+              <disableStrictForbiddenFileVerification>false</disableStrictForbiddenFileVerification>
+            </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject>
+          </gerritProjects>
+          <dynamicGerritProjects class="empty-list"/>
+          <skipVote>
+            <onSuccessful>false</onSuccessful>
+            <onFailed>false</onFailed>
+            <onUnstable>false</onUnstable>
+            <onNotBuilt>false</onNotBuilt>
+            <onAborted>false</onAborted>
+          </skipVote>
+          <silentMode>false</silentMode>
+          <enableTopicAssociation>false</enableTopicAssociation>
+          <notificationLevel/>
+          <silentStartMode>false</silentStartMode>
+          <escapeQuotes>true</escapeQuotes>
+          <nameAndEmailParameterMode>PLAIN</nameAndEmailParameterMode>
+          <dependencyJobsNames/>
+          <commitMessageParameterMode>BASE64</commitMessageParameterMode>
+          <changeSubjectParameterMode>PLAIN</changeSubjectParameterMode>
+          <commentTextParameterMode>BASE64</commentTextParameterMode>
+          <buildStartMessage/>
+          <buildFailureMessage/>
+          <buildSuccessfulMessage/>
+          <buildUnstableMessage/>
+          <buildNotBuiltMessage/>
+          <buildAbortedMessage/>
+          <buildUnsuccessfulFilepath/>
+          <customUrl/>
+          <serverName>Gerrit Central</serverName>
+          <triggerOnEvents>
+            <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent>
+              <excludeDrafts>false</excludeDrafts>
+              <excludeTrivialRebase>false</excludeTrivialRebase>
+              <excludeNoCodeChange>false</excludeNoCodeChange>
+              <excludePrivateState>false</excludePrivateState>
+              <excludeWipState>false</excludeWipState>
+              <commitMessageContainsRegEx/>
+            </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent>
+            <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginDraftPublishedEvent/>
+            <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginChangeMergedEvent/>
+          </triggerOnEvents>
+          <dynamicTriggerConfiguration>false</dynamicTriggerConfiguration>
+          <triggerConfigURL/>
+          <triggerInformationAction/>
+        </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger>
+      </triggers>
+    </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <scm class="hudson.plugins.git.GitSCM" plugin="git@4.10.3">
+      <configVersion>2</configVersion>
+      <userRemoteConfigs>
+        <hudson.plugins.git.UserRemoteConfig>
+          <url>ssh://lciadm100@gerritmirror-ha.lmera.ericsson.se:29418/OSS/com.ericsson.oss.de/ci-prototypes</url>
+          <credentialsId>lciadm100_private_key</credentialsId>
+        </hudson.plugins.git.UserRemoteConfig>
+      </userRemoteConfigs>
+      <branches>
+        <hudson.plugins.git.BranchSpec>
+          <name>master</name>
+        </hudson.plugins.git.BranchSpec>
+      </branches>
+      <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+      <gitTool>Default</gitTool>
+      <submoduleCfg class="empty-list"/>
+      <extensions/>
+    </scm>
+    <scriptPath>cloud_native/Openstack_slaves_utilities/create_openstack_template</scriptPath>
+    <lightweight>false</lightweight>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

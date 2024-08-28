@@ -1,0 +1,169 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.39">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.7.0"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.7.0">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>PRODUCT_SET</string>
+        <string>ENM_ISO_REPO_VERSION</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.23.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty/>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>PRODUCT_SET</name>
+          <description>Enter the product set version (e.g. 20.11.52).                      Please ensure to give latest product set version compared to last built product set.</description>
+          <defaultValue>20.13.25</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>ENM_ISO_REPO_VERSION</name>
+          <description>Enter the ISO Repo Version (e.g. ENM_20_13_ERICenm_CXP9027091_1_97_10).</description>
+          <defaultValue>ENM_20_13_ERICenm_CXP9027091_1_97_10</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>SKIP_STAGE</name>
+          <defaultValue>True</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit></paramsToUseForLimit>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.80">
+    <script>pipeline {
+    agent { 
+        label &apos;Docker-POC&apos; 
+        //label &apos;TEMP-Cloud-Native&apos;
+    }
+	parameters {
+        string(name: &apos;PRODUCT_SET&apos;, description: &apos;Enter the product set version (e.g. 20.11.52).\
+                      Please ensure to give latest product set version compared to last built product set.&apos;, defaultValue: &quot;20.13.25&quot;)
+					  
+		string(name: &apos;ENM_ISO_REPO_VERSION&apos;, description: &apos;Enter the ISO Repo Version (e.g. ENM_20_13_ERICenm_CXP9027091_1_97_10).&apos;, defaultValue: &quot;ENM_20_13_ERICenm_CXP9027091_1_97_10&quot;)
+    }
+    stages {
+        stage(&apos;Gathering Information - Step 1&apos;) {
+            steps {
+                script {
+                    if (&quot;${PRODUCT_SET}&quot; == &quot;&quot;) {
+                        echo &quot;Triggered without the PRODUCT_SET. Considering the latest PRODUCT_SET/ISO.&quot;
+                        get_product_set()
+                    } else {
+                        echo &quot;Triggered with the PRODUCT_SET: ${PRODUCT_SET}&quot;
+                        env.PRODUCT_SET = &quot;${PRODUCT_SET}&quot;
+                    }
+                }
+                echo env.PRODUCT_SET
+                get_iso_version()
+                echo env.ISO_VERSION
+            }
+        }
+        stage(&apos;Create Yum repo - Step 2&apos;) {
+            steps {
+				script {
+					env.ENM_ISO_REPO_VERSION = &quot;${ENM_ISO_REPO_VERSION}&quot;
+				}
+				echo env.ENM_ISO_REPO_VERSION
+            }
+        }
+        stage(&apos;Set Yum repo to latest - Step 3&apos;) {
+            when { expression { env.SKIP_STAGE != &apos;True&apos; } }
+            steps {
+                retry(3) {
+                    set_to_latest()
+                    echo env.LATEST_YUM_REPO_SETUP
+                }
+            }
+        }
+        stage(&apos;Create cENM Product Set - Step 4&apos;) {
+            steps {
+                script {
+                    get_last_cn_build_version()
+                }
+            }
+        }
+    }
+}
+
+def get_last_cn_build_version(){
+    echo &quot;Running get last cENM PS build version &amp; bump the build version&quot;
+    env.CENM_PRODUCT_SET = sh(script: &apos;curl --location --request GET https://ci-portal.seli.wh.rnd.internal.ericsson.com/api/cloudNative/getLinkedCNProductSetVersion/${PRODUCT_SET}&apos;, returnStdout: true).trim().replaceAll(&apos;&quot;&apos;, &apos;&apos;)
+    if (env.CENM_PRODUCT_SET == &apos;False&apos;) {
+        sh(script: &apos;wget -q -O - --no-check-certificate --post-data=&quot;&quot; https://ci-portal.seli.wh.rnd.internal.ericsson.com/api/manageCNProductSet/${PRODUCT_SET}/cENM-Build-Images/in_progress/&apos;, returnStdout: true).trim()
+    } else {
+        if (env.CENM_PRODUCT_SET.contains(&quot;-&quot;)){
+            def product_set = env.CENM_PRODUCT_SET.split(&apos;-&apos;)
+            env.PRODUCT_SET = product_set[0] + &quot;-&quot; + (Integer.parseInt(product_set[1])+1)
+            sh(script: &apos;wget -q -O - --no-check-certificate --post-data=&quot;&quot; https://ci-portal.seli.wh.rnd.internal.ericsson.com/api/manageCNProductSet/${PRODUCT_SET}/cENM-Build-Images/in_progress/&apos;, returnStdout: true).trim()
+        } else {
+            env.PRODUCT_SET = env.PRODUCT_SET + &quot;-&quot; + 1
+            sh(script: &apos;wget -q -O - --no-check-certificate --post-data=&quot;&quot; https://ci-portal.seli.wh.rnd.internal.ericsson.com/api/manageCNProductSet/${PRODUCT_SET}/cENM-Build-Images/in_progress/&apos;, returnStdout: true).trim()
+        }
+    }
+}
+
+def get_product_set() {
+    echo &quot;Running product set function&quot;
+    env.PRODUCT_SET = sh(script: &apos;wget -q -O - --no-check-certificate https://ci-portal.seli.wh.rnd.internal.ericsson.com/getLastGoodProductSetVersion/?productSet=ENM&apos;, returnStdout: true).trim()
+}
+
+def get_iso_version() {
+    echo &quot;Running iso version function&quot;
+    def iso_version_json = $/eval &quot;wget -q -O - --no-check-certificate &apos;https://ci-portal.seli.wh.rnd.internal.ericsson.com/getProductSetVersionContents/?productSet=ENM&amp;version=${PRODUCT_SET}&amp;pretty=true&apos; | grep &apos;ERICenm_CXP9027091&apos; -A4 | grep &apos;version&apos; | sed -n -e &apos;s/^.*\&quot;version\&quot;: //p&apos; | sed &apos;s/\&quot;//g&apos;&quot;/$
+    env.ISO_VERSION = sh(script: &quot;${iso_version_json}&quot;, returnStdout: true).trim()
+
+    if (env.ISO_VERSION == &quot;&quot;) {
+        error(&quot;Invalid Product Set provided. There is no ENM ISO content for the given Product Set Version.&quot;)
+    }
+}
+
+
+def set_to_latest() {
+    echo &quot;Setting yum repo to latest&quot;
+    /*env.LATEST_YUM_REPO_SETUP = sh(script: &apos;wget -q -O - --no-check-certificate --post-data=&quot;&quot; https://ci-portal.seli.wh.rnd.internal.ericsson.com/api/createLatestYumRepoPath/product/ENM/yumRepo/${ENM_ISO_REPO_VERSION}/&apos;, returnStdout: true).trim()*/
+}
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

@@ -1,0 +1,489 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>REPO_NAME</name>
+          <defaultValue>OSS/ENM-Parent/SQ-Gate/com.ericsson.oss.containerisation/REPO_NAME</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>REPO_TYPE</name>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>Service_Group</string>
+              <string>Base_Image</string>
+              <string>Empty</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>PARENT_GROUP_RIGHTS</name>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>OSS/ENM-Parent</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>Jobs_required</name>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>Yes</string>
+              <string>No</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.plugins.validating__string__parameter.ValidatingStringParameterDefinition plugin="validating-string-parameter@2.8">
+          <name>JIRA_TICKET</name>
+          <description>&lt;font size=&quot;2&quot;&gt;Jira Ticket reference, e.g. CIS-12345.&lt;/font&gt;</description>
+          <defaultValue></defaultValue>
+          <regex>(CIS-).*(\d)</regex>
+          <failedValidationMessage></failedValidationMessage>
+        </hudson.plugins.validating__string__parameter.ValidatingStringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>Docker-POC-e2e</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+
+CI_REPO=&quot;OSS/com.ericsson.oss.containerisation/enm-containerisation-ci-pipeline&quot;
+ARCH_REPO=&quot;OSS/com.ericsson.oss.containerisation/enm-cn-ci-pipeline-archtype-generator&quot;
+
+git clone ${GERRIT_MIRROR}/${ARCH_REPO}
+git clone ${GERRIT_MIRROR}/${CI_REPO}
+
+REPO=${REPO_NAME// /}
+ARTIFACT_ID=${REPO##*/}
+ARCH_ARTIFACT_ID=${ARCH_REPO##*/}
+PARENT_GROUP_RIGHTS=${PARENT_GROUP_RIGHTS// /}
+
+#define Gerrit guardian groups
+GUARD_GROUP_NAME=&quot;CTF_guard Cloud_Native_TC_Group cENM_Guard&quot;
+GURAD_GROUP1=&quot;CTF_guard&quot;
+GURAD_GROUP2=&quot;Cloud_Native_TC_Group&quot;
+GURAD_GROUP3=&quot;cENM_Guard&quot;
+
+echo &quot;Tell $ARTIFACT_ID&quot;
+
+echo &quot;*******************Creating the repository in Gerrit*****************&quot;
+
+echo &quot;*******************Creating repository &quot;$REPO&quot; with required master branch only********************&quot;
+
+GERRIT_CENTRAL_HOST=$(echo ${GERRIT_CENTRAL} | sed -e &apos;s/ssh:\/\/\(.*\):29418/\1/&apos;)
+
+ssh -p 29418 ${GERRIT_CENTRAL_HOST} gerrit ls-projects | grep -Fx ${REPO}
+
+if [ $? -eq 0 ]; then
+    echo &quot;${REPO} already existing&quot;
+else
+    echo &quot;Proceed to ${REPO} creation&quot;
+    ssh -p 29418 ${GERRIT_CENTRAL_HOST} gerrit create-project --parent ${PARENT_GROUP_RIGHTS} ${REPO} -b master --empty-commit -o CI_Infrastructure_ENM_admin || { echo &apos;ERROR: Check Job Parameters&apos;; exit 1; }
+fi
+
+echo &quot;*******************Adding access rights for &quot;${GUARD_GROUP_NAME}&quot;*******************&quot;
+
+mkdir temporary_folder
+mkdir test
+cd test
+git init
+
+git pull ${GERRIT_CENTRAL}/${REPO} refs/meta/config
+
+#manage multiple guardian groups
+IFS=&apos; &apos; read -ra ADDR &lt;&lt;&lt; &quot;${GUARD_GROUP_NAME}&quot;
+for group in &quot;${ADDR[@]}&quot;; do
+    ssh -p 29418 ${GERRIT_CENTRAL_HOST} gerrit ls-groups -v | grep ${group} &gt; output.txt
+    GroupID_Sub=$(grep ^${group} output.txt | cut -f 2)
+    rm output.txt
+    echo -e &quot;${GroupID_Sub}\t${group}&quot; &gt;&gt; groups
+done
+
+git add .
+git commit -m &quot;${JIRA_TICKET}: Added new group&quot;
+git push ${GERRIT_CENTRAL}/${REPO} HEAD:refs/meta/config
+
+echo &quot;************* groups file pushed **************&quot;
+echo &quot;*************config file push******************&quot;
+
+
+
+rm -rf project.config
+
+echo -e &quot;[access]
+        inheritFrom = ${PARENT_GROUP_RIGHTS}
+[access \&quot;refs/*\&quot;]
+        owner = group CI_Infrastructure_ENM_admin&quot; &gt; project.config
+
+
+
+echo -e &quot;create = group ${GURAD_GROUP1}&quot; &gt;&gt; project.config;
+echo -e &quot;create = group ${GURAD_GROUP2}&quot; &gt;&gt; project.config;
+echo -e &quot;forgeCommitter = group ${GURAD_GROUP1}&quot; &gt;&gt; project.config;
+echo -e &quot;forgeCommitter = group ${GURAD_GROUP2}&quot; &gt;&gt; project.config;
+echo -e &quot;pushTag = group ${GURAD_GROUP1}&quot; &gt;&gt; project.config;
+echo -e &quot;pushTag = group ${GURAD_GROUP2}&quot; &gt;&gt; project.config;
+echo -e &quot;label-Code-Review = -2..+2 group ${GURAD_GROUP1}&quot; &gt;&gt; project.config;
+echo -e &quot;label-Code-Review = -2..+2 group ${GURAD_GROUP2}&quot; &gt;&gt; project.config;
+echo -e &quot;label-Code-Review = -2..+2 group ${GURAD_GROUP3}&quot; &gt;&gt; project.config;
+echo -e &quot;label-Verified = -1..+1 group ${GURAD_GROUP1}&quot; &gt;&gt; project.config;
+echo -e &quot;label-Verified = -1..+1 group ${GURAD_GROUP2}&quot; &gt;&gt; project.config;
+echo -e &quot;label-Verified = -1..+1 group ${GURAD_GROUP3}&quot; &gt;&gt; project.config;
+echo -e &quot;rebase = group ${GURAD_GROUP1}&quot; &gt;&gt; project.config;
+echo -e &quot;rebase = group ${GURAD_GROUP2}&quot; &gt;&gt; project.config;
+echo -e &quot;submit = group ${GURAD_GROUP3}&quot; &gt;&gt; project.config;
+
+echo -e &quot;[project]
+        description = 
+[receive]
+        requireChangeId = true
+[submit]
+        action = fast forward only
+        mergeContent = false
+[access \&quot;refs/for/refs/heads/master\&quot;]&quot; &gt;&gt; project.config
+
+echo -e &quot;pushMerge = group ${GURAD_GROUP3}&quot; &gt;&gt; project.config;
+
+echo -e &quot;[access \&quot;refs/heads/master\&quot;]&quot; &gt;&gt; project.config
+
+echo -e &quot;push = group ${GURAD_GROUP3}&quot; &gt;&gt; project.config;
+echo -e &quot;exclusiveGroupPermissions = push pushMerge&quot; &gt;&gt; project.config;
+echo -e &quot;pushMerge = group ${GURAD_GROUP3}&quot; &gt;&gt; project.config;
+
+echo -e &quot;[plugin \&quot;eiffel\&quot;]
+        enabled = true
+        rmq-domain = eiffel004.camo.gerrit
+        rmq-exchange = mb401-eiffel004
+        rmq-server = amqp://mb401-eiffel004.mo.ca.am.ericsson.se:5672&quot; &gt;&gt; project.config
+
+git add .
+git commit -m &quot;${JIRA_TICKET}: Added access controls&quot;
+git push ssh://gerrit.ericsson.se:29418/${REPO} HEAD:refs/meta/config
+cd ..
+rm -rf test/
+myWorkspace=$(pwd)
+
+
+echo REPO=${REPO} &gt; $myWorkspace/env.properties
+echo CI_REPO=${CI_REPO} &gt;&gt; $myWorkspace/env.properties
+echo RELEASE_JOB=${REPO_NAME##*/} &gt;&gt; $myWorkspace/env.properties
+echo PRECOMMIT_JOB=${REPO_NAME##*/}&apos;_precommit&apos; &gt;&gt; $myWorkspace/env.properties
+
+echo &quot;*******************Running Archetype Generator Tool*****************&quot;
+
+if [ &quot;${REPO_TYPE}&quot; == Empty ]; then
+   exit 0
+elif [ &quot;${REPO_TYPE}&quot; == Service_Group ]; then
+   service_type=0
+else 
+   service_type=2
+fi
+echo &quot;Tell $service_type&quot;
+git clone ssh://gerrit.ericsson.se:29418/${REPO}
+
+cd ${ARCH_ARTIFACT_ID}
+
+#chmod -R 777 $myWorkspace
+#mkdir temporary_folder
+
+docker build . -t archgen_pcr
+
+#echo docker run --entrypoint &quot;sh&quot; $(for group in $(id -G); do printf &apos; --group-add %s&apos; &quot;$group&quot;; done) --group-add $(stat -c &apos;%g&apos; /var/run/docker.sock) --user &quot;$(id -u):$(id -g)&quot; -v ${HOME}/.docker:${HOME}/.docker -v /var/run/docker.sock:/var/run/docker.sock -v $myWorkspace/temporary_folder:/data/output archgen_pcr -c &quot;python run.py --service_name  $ARTIFACT_ID --service_type $service_type --service_description TestSG --path_of_archtype /data/output --product_number 123456 --is_depend_on_jboss_base_image n&quot;
+docker run --entrypoint &quot;sh&quot; $(for group in $(id -G); do printf &apos; --group-add %s&apos; &quot;$group&quot;; done) --group-add $(stat -c &apos;%g&apos; /var/run/docker.sock) --user &quot;$(id -u):$(id -g)&quot; -v ${HOME}/.docker:${HOME}/.docker -v /var/run/docker.sock:/var/run/docker.sock -v $myWorkspace/temporary_folder:/data/output archgen_pcr -c &quot;python run.py --service_name  $ARTIFACT_ID --service_type $service_type --service_description TestSG --path_of_archtype /data/output --product_number 123456 --is_depend_on_jboss_base_image n&quot;
+
+cd ..
+
+cp -r $myWorkspace/temporary_folder/${ARTIFACT_ID}/* ${ARTIFACT_ID}
+
+cd ${ARTIFACT_ID}
+
+git add --all
+git commit -m &quot;${JIRA_TICKET}: Adding artifacts/archetype&quot;
+git push
+
+
+echo &quot;************* end ******************&quot;
+
+</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <EnvInjectBuilder plugin="envinject@2.4.0">
+      <info>
+        <propertiesFilePath>${WORKSPACE}/env.properties</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+    <javaposse.jobdsl.plugin.ExecuteDslScripts plugin="job-dsl@1.78.3">
+      <scriptText>import java.io.File
+
+if( Jobs_required == &quot;Yes&quot;) {
+  createPipelineBuildJob(RELEASE_JOB)
+  queue(RELEASE_JOB)
+  createPipelineBuildJobPrecommit(PRECOMMIT_JOB)
+  //queue(PRECOMMIT_JOB) - we are executing after review link creation
+}
+
+def createPipelineBuildJob(project_name) {
+    jenkinsFile_path = &quot;Jenkinsfile&quot;
+    pipeline_name = project_name
+  
+    println &quot;************* Creating Release JOB &quot; + pipeline_name + &quot; *************&quot;
+    pipelineJob(pipeline_name) {
+        description (&apos;ENM Cloud Native Build pipeline &apos; + pipeline_name + &apos; - autogenerated using JobDSL - all manual changes will be overwritten!&apos;)
+        properties {
+        	disableConcurrentBuilds()
+    	}
+        parameters {
+            stringParam(&apos;ISO_VERSION&apos;)
+        }
+        logRotator {
+            numToKeep(30)
+        }
+        definition {
+            cpsScm {
+                scm {
+                    git {
+                        branch(&apos;master&apos;)
+                        remote {
+                            credentials(&apos;lciadm100_private_key&apos;)
+                            url(&quot;${GERRIT_MIRROR}/&quot; + REPO)
+                        }
+                        extensions {
+                             cleanBeforeCheckout()
+                        }
+                    }
+                }
+                scriptPath(jenkinsFile_path)
+            }
+        }
+   }
+}
+
+def createPipelineBuildJobPrecommit(project_name) {
+	jenkinsfile_path = &apos;JenkinsfilePreCommit&apos;
+    pipeline_name_precommit = project_name
+	def repo_url = &quot;ssh://lciadm100@gerritmirror-ha.lmera.ericsson.se:29418/&quot; + REPO
+
+    println &quot;************* Creating PreCommit JOB &quot; + pipeline_name_precommit + &quot; *************&quot;
+    pipelineJob(pipeline_name_precommit) {
+      description (&apos;ENM Cloud Native precommit pipeline &apos; + pipeline_name_precommit + &apos; - autogenerated using JobDSL - all manual changes will be overwritten!&apos;)
+      properties {
+          disableConcurrentBuilds()
+      }
+      triggers {
+          gerrit {
+              events {
+                  patchsetCreated()
+              }
+              repo_name = repo_url.split(&quot;ssh://lciadm100@gerritmirror-ha.lmera.ericsson.se:29418/&quot;).last()
+              project(repo_name, [&apos;plain:master&apos;])
+          }
+      }
+        definition {
+            cpsScm {
+                scm {
+                    git {
+                        branch(&apos;$GERRIT_REFSPEC&apos;)
+                        remote {
+                            credentials(&apos;lciadm100_private_key&apos;)
+                            url(repo_url)
+                            refspec(&apos;$GERRIT_REFSPEC:$GERRIT_REFSPEC&apos;)
+                        }
+                    }
+                }
+            scriptPath(jenkinsfile_path)
+            }
+    	}
+	}
+}</scriptText>
+      <usingScriptText>true</usingScriptText>
+      <sandbox>false</sandbox>
+      <ignoreExisting>false</ignoreExisting>
+      <ignoreMissingFiles>false</ignoreMissingFiles>
+      <failOnMissingPlugin>false</failOnMissingPlugin>
+      <failOnSeedCollision>false</failOnSeedCollision>
+      <unstableOnDeprecation>false</unstableOnDeprecation>
+      <removedJobAction>IGNORE</removedJobAction>
+      <removedViewAction>IGNORE</removedViewAction>
+      <removedConfigFilesAction>IGNORE</removedConfigFilesAction>
+      <lookupStrategy>JENKINS_ROOT</lookupStrategy>
+    </javaposse.jobdsl.plugin.ExecuteDslScripts>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+
+if [[ &quot;${REPO_TYPE}&quot; == &quot;Empty&quot; ]]; then
+   exit 0
+fi
+CI_REPO=&quot;OSS/com.ericsson.oss.containerisation/enm-containerisation-ci-pipeline&quot;
+PROJECT_NAME=${CI_REPO##*/}
+PROJECT_NAME1=${REPO_NAME##*/}
+
+myWorkspace=$(pwd)
+
+ISO_VERSION=&apos;0.0.0&apos;
+echo pipeline_name1=&quot;${pipeline_name}&quot; &gt;&gt; $myWorkspace/env.properties
+echo pipeline_name2=&quot;${pipeline_name_precommit}&quot; &gt;&gt; $myWorkspace/env.properties
+echo ISO_VERSION=&quot;${ISO_VERSION}&quot; &gt;&gt; $myWorkspace/env.properties
+GERRIT_MIRROR_HOST=$(echo ${GERRIT_MIRROR} | sed -e &apos;s/ssh:\/\/\(.*\):29418/\1/&apos;)
+rm -rf ${PROJECT_NAME}
+git clone ${GERRIT_MIRROR}/${CI_REPO} &amp;&amp; scp -p -P 29418 ${GERRIT_MIRROR_HOST}:hooks/commit-msg ${PROJECT_NAME}/.git/hooks/
+
+cd ${PROJECT_NAME}
+
+if [[ &quot;${REPO_TYPE}&quot; == &quot;Service_Group&quot; ]]; then
+   COMMIT_MESSAGE=&quot;${JIRA_TICKET}: add new Service Group repo&quot;
+   echo &quot;${REPO_NAME}&quot; &gt;&gt; jenkins/projects_service_group
+else
+   COMMIT_MESSAGE=&quot;${JIRA_TICKET}: add new Base Image repo&quot;
+   echo &quot;${REPO_NAME}&quot; &gt;&gt; jenkins/projects_common
+fi
+
+git add --all
+git commit -m &quot;${COMMIT_MESSAGE}&quot;
+git remote set-url origin --push ${GERRIT_CENTRAL}/${CI_REPO}
+    
+git push origin HEAD:refs/for/master &gt; review_message.txt 2&gt;&amp;1
+cat review_message.txt
+
+REVIEW_DETAILS=$(grep -F &quot;${COMMIT_MESSAGE}&quot; review_message.txt | tr -s &quot; &quot;)
+REVIEW_LINK=$(cut -d&apos; &apos; -f2 &lt;&lt;&lt;&quot;${REVIEW_DETAILS}&quot;)
+
+echo REVIEW_DATE=$(date &quot;+%d-%m-%Y&quot;) &gt;&gt; $myWorkspace/env.properties
+echo REVIEW_LINK=${REVIEW_LINK} &gt;&gt; $myWorkspace/env.properties
+
+
+git clone ${GERRIT_MIRROR}/${REPO_NAME} &amp;&amp; scp -p -P 29418 ${GERRIT_MIRROR_HOST}:hooks/commit-msg ${PROJECT_NAME1}/.git/hooks/
+cd ${PROJECT_NAME1}
+
+touch testfile
+echo &quot;testing123&quot; &gt; testfile
+
+git add testfile
+git commit -m &quot;testing&quot;
+git remote set-url origin --push ${GERRIT_CENTRAL}/${REPO_NAME}
+git push origin HEAD:refs/for/master
+</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <javaposse.jobdsl.plugin.ExecuteDslScripts plugin="job-dsl@1.78.3">
+      <scriptText>import java.io.File
+
+if( Jobs_required == &quot;Yes&quot; &amp;&amp; &quot;${REPO_TYPE}&quot; != &quot;Empty&quot;) {
+  //Release Job Status
+  try {
+
+        def jobRelease = jenkins.model.Jenkins.instance.getItemByFullName(&quot;${RELEASE_JOB}&quot;)
+        println &apos;Job: &apos; + &quot;${RELEASE_JOB}&quot;
+    
+    	def releaseJobStatus = jobRelease.isBuilding()
+        println &apos;IsBuilding: &apos; + &quot;${releaseJobStatus}&quot;
+    
+        while (releaseJobStatus) {
+            releaseJobStatus = jobRelease.isBuilding()
+        } 
+
+        if (jobRelease.getLastBuild()) {
+            last_job_num = jobRelease.getLastBuild()
+            println &apos;LastBuildNumer: &apos; + last_job_num
+            println &quot;Status&quot; + &quot;: &quot; + jobRelease.getLastBuild().getResult().toString()
+        } 
+        else {
+            println &apos;LastBuildNumer: Null&apos;
+        }
+  } 
+  catch (Exception e) {
+        println &apos; Ignoring exception &apos; + e
+  }
+  
+  //Precommit Job Status
+  try {
+        def jobPreCommit = jenkins.model.Jenkins.instance.getItemByFullName(&quot;${PRECOMMIT_JOB}&quot;)
+        println &apos;Job: &apos; + &quot;${PRECOMMIT_JOB}&quot;
+       
+        def preCommitJobStatus = jobPreCommit.isBuilding()
+        println &apos;IsBuilding: &apos; + &quot;${preCommitJobStatus}&quot;
+    
+        while (preCommitJobStatus) {
+            preCommitJobStatus = jobPreCommit.isBuilding()
+        }
+    
+        if (jobPreCommit.getLastBuild()) {
+            last_job_num = jobPreCommit.getLastBuild()
+            println &apos;LastBuildNumer: &apos; + last_job_num
+            println &quot;Status&quot; + &quot;: &quot; + jobPreCommit.getLastBuild().getResult().toString()
+        } 
+        else {
+            println &apos;LastBuildNumer: Null&apos;
+        }
+  } 
+  catch (Exception e) {
+        println &apos; Ignoring exception &apos; + e
+  }
+}</scriptText>
+      <usingScriptText>true</usingScriptText>
+      <sandbox>false</sandbox>
+      <ignoreExisting>false</ignoreExisting>
+      <ignoreMissingFiles>false</ignoreMissingFiles>
+      <failOnMissingPlugin>false</failOnMissingPlugin>
+      <failOnSeedCollision>false</failOnSeedCollision>
+      <unstableOnDeprecation>false</unstableOnDeprecation>
+      <removedJobAction>IGNORE</removedJobAction>
+      <removedViewAction>IGNORE</removedViewAction>
+      <removedConfigFilesAction>IGNORE</removedConfigFilesAction>
+      <lookupStrategy>JENKINS_ROOT</lookupStrategy>
+    </javaposse.jobdsl.plugin.ExecuteDslScripts>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.40">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+  </buildWrappers>
+</project>

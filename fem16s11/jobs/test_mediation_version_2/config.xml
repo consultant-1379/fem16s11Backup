@@ -1,0 +1,279 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>KUBE_CRED</name>
+          <description>Kuberenetes Access Credentails</description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>NAMESPACE</name>
+          <description>Namespace</description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@4.10.3">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>ssh://gerrit.ericsson.se:29418/OSS/com.ericsson.oss.containerisation/eric-enm-integration-pipeline-code</url>
+        <credentialsId>34f6017c-d71b-4e72-9f80-26a8576e1beb</credentialsId>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>master</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <submoduleCfg class="list"/>
+    <extensions>
+      <hudson.plugins.git.extensions.impl.CleanBeforeCheckout>
+        <deleteUntrackedNestedRepositories>false</deleteUntrackedNestedRepositories>
+      </hudson.plugins.git.extensions.impl.CleanBeforeCheckout>
+    </extensions>
+  </scm>
+  <assignedNode>Transformation_CSAR_Slave_4Node</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>true</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+mkdir -p ${PWD}/.kube
+chmod 775 ${PWD}/.kube
+cp -v ${PWD}/Kube-Config-Files/${KUBE_CRED} ${PWD}/.kube/${KUBE_CRED}
+chmod 664 ${PWD}/.kube/${KUBE_CRED}
+kubeConfig=&quot;${PWD}/.kube/${KUBE_CRED}&quot;
+helm=&quot;KUBECONFIG=${kubeConfig} helm3&quot;
+kubectl=&quot;kubectl --kubeconfig=${kubeConfig}&quot;
+${kubectl} get pods -n ${NAMESPACE} | egrep -w &apos;msfm|mscm|mspm|msap|mskpirt|secserv|mscmce|mssnmpfm|mscmip|mspmip&apos;
+
+DATE=`date &apos;+%Y-%m-%d-%H:%M:%S&apos;`
+declare -a failure_list=()
+
+#####################################################
+#                    Logger                         #
+#####################################################
+
+logger() {
+    echo &quot;`date &apos;+%Y-%m-%d %H:%M:%S:&apos;` $@&quot;
+}
+
+#####################################################
+#             Check If Pod Restarted                #
+#####################################################
+
+check_Pod_Restarted() {
+    pod_name=$1
+    ready=`${kubectl} get pods -n ${NAMESPACE} | grep $pod_name | awk &apos;{print $2}&apos;`
+	old_IFS=$IFS
+    IFS=&apos;/&apos;
+    read -a array &lt;&lt;&lt;&quot;$ready&quot;
+	IFS=$old_IFS
+    if [[ ${array[0]} == ${array[1]} ]];
+    then
+        return 0
+    else
+        return 1
+    fi
+}
+
+#####################################################
+#            Restart Mediation Pods                 #
+#####################################################
+
+restart_Pods(){
+    pods_list=(&quot;$@&quot;)
+    declare -a restart_count_array=()
+    declare -a flag_array_to_know_restarted_pods=()
+    for pod in &quot;${pods_list[@]}&quot;
+    do
+        pod_restart_count=`${kubectl} get pods -n ${NAMESPACE} | grep $pod | awk &apos;{print $4}&apos;`
+        pod_restart_count=$(($pod_restart_count + 0))
+        restart_count_array+=(&quot;$pod_restart_count&quot;)
+        flag_array_to_know_restarted_pods+=(0)
+        `${kubectl} exec -it $pod -n ${NAMESPACE} touch /opt/ericsson/ERICcredentialmanagercli/.state &amp;&gt;/dev/null`
+    done
+    logger &quot;Checking weather pods are restarted or not&quot;
+    loop_count=0
+    while [ $loop_count -lt 30 ]
+    do
+        sleep 30
+        index=0
+        while [ $index -lt ${#pods_list[@]} ]
+        do
+            if [[ ${flag_array_to_know_restarted_pods[$index]} == 0 ]];
+            then
+			    restart_count=`${kubectl} get pods -n ${NAMESPACE} |grep ${pods_list[$index]} | awk &apos;{print $4}&apos;`
+                restart_count_1=$((${restart_count}-1))
+				if [[ $restart_count_1 == ${restart_count_array[$index]} ]];
+                then
+                    if check_Pod_Restarted ${pods_list[$index]};
+                    then
+                        logger &quot;Pod ${pods_list[$index]} restarted successfully&quot;
+                        flag_array_to_know_restarted_pods[$index]=1
+                    else
+                        logger &quot;Waiting for all container to come up and running for pod ${pods_list[$index]}&quot;
+                    fi
+                else
+                    logger &quot;Pod ${pods_list[$index]} isn&apos;t restarted yet&quot;
+                fi
+            fi
+            ((index=index+1))
+        done
+        already_restarted_pods_count=0
+        for element in &quot;${flag_array_to_know_restarted_pods[@]}&quot;
+        do
+            if [[ $element == 1 ]];
+            then
+                ((already_restarted_pods_count = already_restarted_pods_count + 1))
+            fi
+        done
+        if [[ $already_restarted_pods_count == ${#pods_list[@]} ]];
+        then
+            break
+        fi
+        ((loop_count=loop_count + 1))
+    done
+    index=0
+    while [ $index -lt ${#pods_list[@]} ]
+    do
+        if [[ ${flag_array_to_know_restarted_pods[$index]} == 0 ]];
+        then
+            failure_list+=(&quot;${pods_list[$index]}&quot;)
+        fi
+        ((index=index+1))
+    done
+}
+
+#####################################################
+#                      Main                         #
+#####################################################
+
+main()
+{
+    declare -a mediation_pods_batch_1=()
+    declare -a mediation_pods_batch_2=()
+    mediation_service_group_array=( mscmce- mscm- mscmip- mssnmpfm- msfm- mspm- mspmip- msap- mskpirt- secserv-)
+    logger &quot;Starting to split mediation pods into batches&quot;
+    for mediation_pod in &quot;${mediation_service_group_array[@]}&quot;
+    do
+        mediation_list=`${kubectl} get pods -n ${NAMESPACE} | grep $mediation_pod | awk &apos;{print $1}&apos;`
+        flag=0
+        for pod in $mediation_list
+        do
+            if [[ $flag == 0 ]];
+            then
+                mediation_pods_batch_1+=(&quot;$pod&quot;)
+                flag=1
+            else
+                mediation_pods_batch_2+=(&quot;$pod&quot;)
+            fi
+        done
+    done
+    logger &quot;Pods in mediation batch 1 are: &quot;
+    logger &quot;${mediation_pods_batch_1[@]}&quot;
+    logger &quot;Pods in mediation batch 2 are: &quot;
+    logger &quot;${mediation_pods_batch_2[@]}&quot;
+    logger &quot;Finished spliting mediation pods into batches&quot;
+    if [[ ${#mediation_pods_batch_1[@]} -gt 0 ]];
+    then
+        logger &quot;Starting batch 1 pods restarts&quot;
+        restart_Pods &quot;${mediation_pods_batch_1[@]}&quot;
+        logger &quot;Batch 1 pods restarted&quot;
+    fi
+    if [[ ${#mediation_pods_batch_2[@]} -gt 0 ]];
+    then
+        logger &quot;Starting batch 2 pods restarts&quot;
+        restart_Pods &quot;${mediation_pods_batch_2[@]}&quot;
+        logger &quot;Batch 2 pods restarted&quot;
+    fi
+}
+
+#####################################################
+#              Script Start Point                   #
+#####################################################
+
+logger &quot;Starting mediation restart.&quot;
+
+if [ &quot;${NAMESPACE}&quot; == &quot;&quot; ]; then
+    logger &quot;Invalid Namespace&quot;
+	exit 1
+fi
+
+if [[ &quot;${NAMESPACE}&quot; =~ [A-Z] ]] || [ &quot;${NAMESPACE}&quot; = &quot;&quot; ] ; then
+    logger &quot;Value used for name-space is invalid. The name space can not contain upper case letters or underscores or be empty.&quot;
+    exit 1
+fi
+
+main
+for pod in &quot;${failure_list[@]}&quot;
+do
+    logger &quot;Pod ${pod} restart failed&quot;
+done
+logger &quot;&quot;
+
+if [ &quot;${#failure_list[@]}&quot; -eq 0 ]; then
+    logger &quot;Script Execution Completed.&quot;
+else
+    logger &quot;Script Execution Failed.&quot;
+    exit 1
+fi
+</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.40">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+  </buildWrappers>
+</project>

@@ -1,0 +1,120 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>Check &lt;b&gt;build_distribution_file.txt&lt;/b&gt; in the job&apos;s workspace&lt;br&gt;&#xd;
+to verify the average build time (in minutes) for each pointfix job on fem16s11.</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>5</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>jenkins_job_label</name>
+          <description></description>
+          <defaultValue>-pointfix</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>GridEngine_RHEL7</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.plugins.python.Python plugin="python@1.3">
+      <command>#!/usr/bin/python
+
+&apos;&apos;&apos;
+
+&apos;&apos;&apos;
+
+import sys
+import subprocess
+
+sys.path.insert(0, &apos;/proj/ciexadm200/tools/utils/scripts/Monitoring_tools/Various_methods&apos;)
+from getXMLvalues import getValueFromTag
+from getRestApi import getRestApiXML
+
+# Import environment variables
+jenkins_job_label = os.environ[&apos;jenkins_job_label&apos;]
+
+jenkins_instance=&quot;fem16s11&quot;
+build_distribution_file = open(&quot;build_distribution_file.txt&quot;, &quot;w&quot;)
+
+urlJenkinsJob = &quot;https://&quot; + jenkins_instance + &quot;-eiffel004.eiffel.gic.ericsson.se:8443/jenkins/job/&quot;
+
+# list all Jenkins Jobs
+listAllJobs = &quot;ssh -l enmadm100 -p 53801 &quot; + jenkins_instance + &quot;-eiffel004.eiffel.gic.ericsson.se &quot; + &quot;list-jobs All | grep -v &apos;Skipping&apos; &gt; listAllJobs.txt&quot;
+proc = subprocess.Popen(listAllJobs, stdout=subprocess.PIPE, shell=True)
+output = proc.stdout.read()
+
+with open(&quot;listAllJobs.txt&quot;) as textFile:
+    for jenkins_job in textFile:
+        jenkins_job = &quot; &quot;.join(jenkins_job.split()) # remove whitespaces from string
+        
+        if jenkins_job.endswith(jenkins_job_label):        
+            # get .xml file from REST API for lastbuild details
+            rest_command = urlJenkinsJob + jenkins_job + &quot;/lastBuild/api/xml&quot;
+            getRestApiXML(jenkins_instance, rest_command, &quot;Duration.xml&quot;)
+            estimatedDuration = getValueFromTag(&quot;Duration.xml&quot;, &quot;estimatedDuration&quot;)
+            
+            if estimatedDuration:
+                estimatedDuration_converted = int(estimatedDuration[0].firstChild.nodeValue)/60000
+                # if int(estimatedDuration[0].firstChild.nodeValue) &lt; 60000:
+                    # timeUnit = &quot;seconds&quot;
+                    # estimatedDuration_converted = float(estimatedDuration[0].firstChild.nodeValue)/1000 
+                # else:
+                    # timeUnit = &quot;minutes&quot;
+                    # estimatedDuration_converted = int(estimatedDuration[0].firstChild.nodeValue)/60000
+                build_distribution_file.write(jenkins_job + &quot;:&quot; + str(estimatedDuration_converted) + &quot;\n&quot;)
+            else:
+                build_distribution_file.write(jenkins_job + &quot;:0\n&quot;)
+
+build_distribution_file.close()</command>
+    </hudson.plugins.python.Python>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

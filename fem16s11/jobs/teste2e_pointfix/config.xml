@@ -1,0 +1,264 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@2.25">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.3.2"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.3.2">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>BRANCH</string>
+        <string>product_set_version</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>product_set_version</name>
+          <description>Enter the product set version (e.g. 20.11.52).Please ensure to give latest product set version compared to last built product set.</description>
+          <defaultValue/>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>BRANCH</name>
+          <description>Enter the GIT Branch (e.g. master).</description>
+          <defaultValue/>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@69.0.3">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.19.2">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty/>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@69.0.3">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.57.2">
+    <script>pipeline {
+    agent { node { label 'Cloud-Native' } }
+    options {
+        timestamps()
+    }
+    environment {
+        PIPELINE_LAST_STAGE_STATUS = 'UNKNOWN'
+    }
+    parameters {
+        string(name: 'product_set_version', description: 'Enter the product set version (e.g. 20.11.52).Please ensure to give latest product set version compared to last built product set.', defaultValue: "")
+		string(name: 'BRANCH', description: 'Enter the GIT Branch (e.g. master).', defaultValue: "")
+    }
+    stages {
+        stage ('Initialization of ENM Versions') {
+            steps {
+                script {
+				    def productSet = ""
+					def branch = ""
+					// For nightly build this parameters would be empty
+                    if (params.product_set_version) {
+                        productSet = params.product_set_version.trim()
+                    }
+                    // Check if product set version is given
+                    if (productSet != "") {
+                        env.PRODUCT_SET = productSet
+                        echo "Triggered manually with the PRODUCT_SET: ${productSet}"
+                        currentBuild.description = "Triggered Mode: &lt;b&gt;Manual&lt;/b&gt;&lt;br/&gt;"
+                    } else {
+                        echo "Triggered automatically."
+                        currentBuild.description = "Triggered Mode: &lt;b&gt;Auto&lt;/b&gt;&lt;br/&gt;"
+                    }
+                    // Call eric-enm-green-iso-build-trigger with PRODUCT_SET parameter
+                    def b = build(job: "green_iso", parameters: [[$class:'StringParameterValue', name:'PRODUCT_SET', value:String.valueOf("${productSet}")]], propagate: true, wait: true)
+                    env.ISO_VERSION = "$b.buildVariables.ISO_VERSION"
+                    echo "ISO VERSION: $ISO_VERSION"
+                    env.PRODUCT_SET = "$b.buildVariables.PRODUCT_SET"
+                    echo "PRODUCT SET VERSION: $PRODUCT_SET"
+                    env.ENM_ISO_REPO_VERSION = "$b.buildVariables.ENM_ISO_REPO_VERSION"
+                    echo "ENM_ISO_REPO_VERSION: $ENM_ISO_REPO_VERSION"
+					echo "BRANCH: $BRANCH"
+					// Update the Build Description
+                    currentBuild.description += "Product Set Version: $PRODUCT_SET&lt;br/&gt;"
+                    currentBuild.description += "ISO Version: $ISO_VERSION&lt;br/&gt;"
+                    currentBuild.description += "Yum Repo Setup: $ENM_ISO_REPO_VERSION&lt;br/&gt;"
+					currentBuild.description += "GIT Branch: $BRANCH&lt;br/&gt;"
+					
+					environment_list = [[$class:'StringParameterValue', name:"ISO_VERSION", value:String.valueOf("${ISO_VERSION}")],
+                                        [$class:'StringParameterValue', name:"ENM_ISO_REPO_VERSION", value:String.valueOf("${ENM_ISO_REPO_VERSION}")],
+										[$class:'StringParameterValue', name:"BRANCH", value:String.valueOf("${BRANCH}")]]
+                    echo "$environment_list"
+                }
+            }
+        }
+		stage ('Building rhel6Base Image') {
+		    parallel {
+                stage ('Build eric-enm-rhel6base') {    
+                    steps {
+                        script {
+                            def eric_enm_rhel6base_build = build(job: "eric-enm-rhel6base-test_baseimages_pointfix", propagate: true, wait: true, parameters: environment_list)
+                            env.ERIC_ENM_RHEL6BASE_IMAGE_TAG = "$eric_enm_rhel6base_build.buildVariables.IMAGE_TAG"
+                        }
+                    }
+                }
+                stage ('Build eric-enm-sles-base') {
+                    steps {
+                        script {
+                            def eric_enm_sles_base_build = build(job: "eric-enm-sles-base-test_baseimages_pointfix", propagate: true, wait: true, parameters: environment_list)
+                            env.ERIC_ENM_SLES_BASE_IMAGE_TAG = "\$eric_enm_sles_base_build.buildVariables.IMAGE_TAG"
+                        }
+                    }
+                }
+                stage('Build eric-oss-monitoring-master') {
+                    steps {
+                        script {
+                            def eric_oss_monitoring_master_build = build(job: "eric-oss-monitoring-master-test_baseimages_pointfix", propagate: true, wait: true, parameters: environment_list)
+                            env.ERIC_ENM_OSS_MONITORING_MASTER_IMAGE_TAG = "\$eric_oss_monitoring_master_build.buildVariables.IMAGE_TAG"
+                        }
+                    }
+                }
+            }
+        }
+        stage ('Building Base Images') {
+            parallel {
+                stage('Build eric-enm-httpd-sidecar') {
+                    steps {
+                        script {
+                            def eric_enm_httpd_sidecar_build = build(job: "eric-enm-httpd-sidecar-test_baseimages_pointfix", propagate: true, wait: true, parameters: environment_list)
+                            env.ERIC_ENM_HTTPD_SIDECAR_IMAGE_TAG = "\$eric_enm_httpd_sidecar_build.buildVariables.IMAGE_TAG"
+                        }
+                    }
+                }
+                stage ('Build eric-enm-monitoring-master') {
+                    steps {
+                        script {
+                            def eric_enm_monitoring_master_build = build(job: "eric-enm-monitoring-master-test_baseimages_pointfix", propagate: true, wait: true, parameters: environment_list)
+                            env.ERIC_ENM_MONITORING_MASTER_IMAGE_TAG = "\$eric_enm_monitoring_master_build.buildVariables.IMAGE_TAG"
+                        }
+                    }
+                }
+                stage ('Build eric-enm-monitoring-remotewriter') {
+                    steps {
+                        script {
+                            def eric_enm_monitoring_remotewriter_build = build(job: "eric-enm-monitoring-remotewriter-test_baseimages_pointfix", propagate: true, wait: true, parameters: environment_list)
+                            env.ERIC_ENM_MONITORING_REMOTEWRITER_IMAGE_TAG = "\$eric_enm_monitoring_remotewriter_build.buildVariables.IMAGE_TAG"
+                        }
+                    }
+                }
+                stage ('Build eric-enm-neo4j-extension-plugin') {
+                    steps {
+                        script {
+                            def eric_enm_neo4j_extension_plugin_build = build(job: "eric-enm-neo4j-extension-plugin-test_baseimages_pointfix", propagate: true, wait: true, parameters: environment_list)
+                            env.ERIC_ENM_NEO4J_EXTENSION_PLUGIN_IMAGE_TAG = "\$eric_enm_neo4j_extension_plugin_build.buildVariables.IMAGE_TAG"
+                        }
+                    }
+                }
+                stage ('Build eric-enm-rhel6jboss') {
+                    steps {
+                        script {
+                            def eric_enm_rhel6jboss_build = build(job: "eric-enm-rhel6jboss-test_baseimages_pointfix", propagate: true, wait: true, parameters: environment_list)
+                            env.ERIC_ENM_RHEL6JBOSS_IMAGE_TAG = "\$eric_enm_rhel6jboss_build.buildVariables.IMAGE_TAG"
+                        }
+                    }
+                }
+                stage ('Build eric-enm-init-wait') {
+                    steps {
+                        script {
+                            def eric_enm_init_wait_build = build(job: "eric-enm-init-wait-test_baseimages_pointfix", propagate: true, wait: true, parameters: environment_list)
+                            env.ERIC_ENM_INIT_CONTAINER_IMAGE_TAG = "\$eric_enm_init_wait_build.buildVariables.IMAGE_TAG"
+                        }
+                    }
+                }
+                stage ('Build eric-enm-sles-eap6') {
+                    steps {
+                        script {
+                            def eric_enm_sles_eap6_build = build(job: "eric-enm-sles-eap6-test_baseimages_pointfix", propagate: true, wait: true, parameters: environment_list)
+                            env.ERIC_ENM_SLES_EAP6_IMAGE_TAG = "\$eric_enm_sles_eap6_build.buildVariables.IMAGE_TAG"
+                        }
+                    }
+                }
+                stage ('Build eric-enm-sles-eap7') {
+                    steps {
+                        script {
+                            def eric_enm_sles_eap7_build = build(job: "eric-enm-sles-eap7-test_baseimages_pointfix", propagate: true, wait: true, parameters: environment_list)
+                            env.ERIC_ENM_SLES_EAP7_IMAGE_TAG = "\$eric_enm_sles_eap7_build.buildVariables.IMAGE_TAG"
+                        }
+                    }
+                }
+                stage ('Build eric-enm-securestorage-init-base') {
+                    steps {
+                        script {
+                            def eric_enm_securestorage_init_base_build = build(job: "eric-enm-securestorage-init-base-test_baseimages_pointfix", propagate: true, wait: true, parameters: environment_list)
+                            env.ERIC_ENM_SECURESTORAGE_INIT_BASE_IMAGE_TAG = "\$eric_enm_securestorage_init_base_build.buildVariables.IMAGE_TAG"
+                        }
+                    }
+                }				
+            }
+        }
+        stage ('Building more Base Images') {
+            parallel {
+                stage('Build eric-enm-rhel-jbossconfig') {
+                    steps {
+                        script {
+                            def eric_enm_rhel_jbossconfig_build = build(job: "eric-enm-rhel-jbossconfig-test_baseimages_pointfix", propagate: true, wait: true, parameters: environment_list)
+                            env.ERIC_ENM_RHEL_JBOSSCONFIG_IMAGE_TAG = "\$eric_enm_rhel_jbossconfig_build.buildVariables.IMAGE_TAG"
+                        }
+                    }
+                }
+                stage('Build eric-enm-sles-base-scripting') {
+                    steps {
+                        script {
+                            def eric_enm_sles_base_scripting_build = build(job: "eric-enm-sles-base-scripting-test_baseimages_pointfix", propagate: true, wait: true, parameters: environment_list)
+                            env.ERIC_ENM_SLES_BASE_SCRIPTING_IMAGE_TAG = "\$eric_enm_sles_base_scripting_build.buildVariables.IMAGE_TAG"
+                        }
+                    }
+                }
+                stage ('Build eric-enm-monitoring-eap6') {
+                    steps {
+                        script {
+                            def eric_enm_monitoring_eap6_build = build(job: "eric-enm-monitoring-eap6-test_baseimages_pointfix", propagate: true, wait: true, parameters: environment_list)
+                            env.ERIC_ENM_MONITORING_EAP6_IMAGE_TAG = "\$eric_enm_monitoring_eap6_build.buildVariables.IMAGE_TAG"
+                        }
+                    }
+                }
+                stage ('Build eric-enm-monitoring-eap7') {
+                    steps {
+                        script {
+                            def eric_enm_monitoring_eap7_build = build(job: "eric-enm-monitoring-eap7-test_baseimages_pointfix", propagate: true, wait: true, parameters: environment_list)
+                            env.ERIC_ENM_MONITORING_EAP7_IMAGE_TAG = "\$eric_enm_monitoring_eap7_build.buildVariables.IMAGE_TAG"
+                        }
+                    }
+                }
+                stage ('Build eric-enm-monitoring-jre') {
+                    steps {
+                        script {
+                            def eric_enm_monitoring_jre_build = build(job: "eric-enm-monitoring-jre-test_baseimages_pointfix", propagate: true, wait: true, parameters: environment_list)
+                            env.ERIC_ENM_MONITORING_JRE_IMAGE_TAG = "\$eric_enm_monitoring_jre_build.buildVariables.IMAGE_TAG"
+                        }
+                    }
+                }
+            }
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>true</disabled>
+</flow-definition>

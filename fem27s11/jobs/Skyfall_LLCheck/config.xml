@@ -1,0 +1,405 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>This Job checks LL and RFA250 failures scanning all the testsuites for a given team name.</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>20</daysToKeep>
+        <numToKeep>15</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.23.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty plugin="leastload@1.0.3">
+      <leastLoadDisabled>false</leastLoadDisabled>
+    </org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>Team_name</name>
+          <description>Your team name used to retrieve the test-suites.</description>
+          <defaultValue>Skyfall</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>Check_type</name>
+          <description>Choose which tests result to check.</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>LL&amp;RFA250</string>
+              <string>LongLoopOnly</string>
+              <string>RFA250Only</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.TextParameterDefinition>
+          <name>Distribution_list</name>
+          <description>Distributin list to notify the failures to.</description>
+          <defaultValue>cinzia.nicoletti@ericsson.com
+giacomo.rufaldi@ericsson.com
+giuseppe.rulli@ericsson.com
+marco.borzone@ericsson.com
+marco.crovato@ericsson.com
+massimo.costacurta@ericsson.com
+maurizio.lagana@ericsson.com
+paola.bona@ericsson.com
+pierpaolo.cazzola@ericsson.com</defaultValue>
+          <trim>false</trim>
+        </hudson.model.TextParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>Cleanup_files</name>
+          <description>Select if you only want to remove the old files from workspace without checking the failures. All the above fields excluding Team_name will be ignored.</description>
+          <defaultValue>false</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit></paramsToUseForLimit>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    <de.pellepelster.jenkins.walldisplay.WallDisplayJobProperty plugin="jenkinswalldisplay@0.6.30"/>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>ENM-SLAVE-GE-7_1</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers>
+    <hudson.triggers.TimerTrigger>
+      <spec>H 8 * * *</spec>
+    </hudson.triggers.TimerTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <customWorkspace>despicable_workspace</customWorkspace>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>echo -n &quot;Who am I=&quot;
+whoami
+echo -n &quot;where I am=&quot; 
+hostname
+cat /etc/*ease</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <hudson.plugins.python.Python plugin="python@1.3">
+      <command>import json
+import subprocess
+import os.path
+from os import path
+import datetime
+
+host = &apos;mtportal.seli.wh.rnd.internal.ericsson.com&apos;
+
+drop = &quot;&quot;
+iso = &quot;&quot;
+iso_from = &quot;&quot;
+iso_to = &quot;&quot;
+suite = &quot;&quot;
+
+
+def execute_command(command):
+    command_array = command.split(&quot;  &quot;)
+    process = subprocess.Popen(command_array, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
+    output = process.communicate()[0]
+    return output
+
+
+def retrieveDrop(is_ll):
+    global drop
+    command = &apos;curl  --header  Content-Type:application/json  -X  GET  https://&apos; + host + &apos;/metrics-services/&apos;\
+                                &apos;sprint-details-from?sprint=19.01&apos;
+    output_json = execute_command(command)
+    dati = json.loads(output_json)
+    if len(dati) == 0:
+        print(&quot;No DROP available, exiting.&quot;)
+        exit(0)
+    if is_ll:
+        drop = dati[0][&apos;name&apos;]
+    else:
+        for i in range(2):
+            drop += dati[i][&apos;name&apos;] + &quot;,&quot;
+        drop = drop[:-1]
+    print(&quot;Checking drop : {}&quot;.format(drop))
+
+
+def retrieveIso(is_ll):
+    global drop
+    global iso_from
+    global iso_to
+    global iso
+    job_type = &apos;&apos;
+    if not is_ll:
+        job_type = &apos;-failreport&apos;
+    command = &apos;curl  --header  Content-Type:application/json  -X  GET  https://&apos; + host + &apos;/metrics-services/&apos;\
+                                &apos;list-iso-versions&apos; + job_type + &apos;?drop=&apos;+drop
+    output_json = execute_command(command)
+    dati = json.loads(output_json)
+    if len(dati) == 0:
+        print(&quot;No ISO available, we are likely on a sprint change, exiting.&quot;)
+        exit(0)
+    if is_ll:
+        #get the first and last isos
+        iso_from_temp = dati[0][&apos;value&apos;].strip()
+        iso_to = dati[-1][&apos;value&apos;].strip()
+        if iso_from_temp[0] != iso_to[0]:
+            for i in dati:
+                if i[&apos;value&apos;][0] == iso_to[0]:
+                    iso_from_temp = i[&apos;value&apos;].strip()
+                    break
+        iso_from = iso_from_temp
+        print(&quot;Checking ISOs: from {} to {}&quot;.format(iso_from, iso_to))
+    else:
+        # get the last 20 isos
+        for i in dati[-20:]:
+            iso += i[&apos;value&apos;].strip() + &quot;,&quot;
+        iso = iso[:-1]
+        print(&quot;Checking ISOs: {}&quot;.format(iso))
+
+
+def retrieveSuite(is_ll):
+    global suite
+    job_type = &apos;longloop-suite-names&apos;
+    if not is_ll:
+        job_type = &apos;rfa-suite-names&apos;
+    command = &apos;curl  --header  Content-Type:application/json  -X  GET  https://&apos; + host + &apos;/metrics-services/&apos;\
+                                + job_type +&apos;  -d  {}&apos;
+    output_json = execute_command(command)
+    dati = json.loads(output_json)
+    for element in dati:
+        if team_name in element[&apos;value&apos;]:
+            new_suite = element[&apos;value&apos;].encode(&apos;utf8&apos;).replace(&apos;\xe2\x80\x93&apos;, &apos;-&apos;)  # this is to replace long dash character in some suite name.
+            suite+=new_suite + &quot;*&quot;
+    suite = suite[:-1]
+
+
+def cleanup(tmp_message_file_name):
+    if path.exists(tmp_message_file_name):
+        os.remove(tmp_message_file_name)
+        print(&apos;Found and removed {}&apos;.format(tmp_message_file_name))
+
+
+def save_new_failures(tmp_message_file_name, mail_sent_file, message_file):
+    global to_be_sent
+    if path.exists(tmp_message_file_name) and os.stat(tmp_message_file_name).st_size != 0:
+        kind = &apos;LL&apos; if &apos;LL&apos; in tmp_message_file_name else &apos;RFA250&apos;
+        print(&quot;{} Failures will be notified.&quot;.format(kind))
+        with open(mail_sent_file, &quot;a&quot;) as mail_file:
+            mail_file.write(datetime.datetime.now().strftime(&apos;%Y-%m-%d %H:%M:%S&apos;) + &quot; send mail\n&quot;)
+        to_be_sent = True
+        # after mail notification, the failures are added in the message file and temporary file is removed.
+        with open(tmp_message_file_name, &quot;r&quot;) as tmp_message_file:
+            message_file.write(tmp_message_file.read())
+
+def reset_variables():
+    global drop
+    global iso
+    global suite
+    global iso_from
+    global iso_to
+    drop = &quot;&quot;
+    iso = &quot;&quot;
+    suite = &quot;&quot;
+    iso_from = &quot;&quot;
+    iso_to = &quot;&quot;
+    
+def cleanup_old_files():
+    files = os.listdir(os.getcwd())
+    for el in files:
+        if el.startswith(team_name):
+            print(&quot;Removing {}&quot;.format(el))
+            os.remove(el)
+
+    
+def execute_ll():
+    print(&quot;Running LL failures check for team {}&quot;.format(team_name))
+    reset_variables()
+    message_file_name = &apos;{}-LLmessage.txt&apos;.format(team_name)
+    tmp_message_file_name = &apos;{}-LLtmp_message.txt&apos;.format(team_name)
+    mail_sent_file = &apos;{}-LLcheckScriptFailure&apos;.format(team_name)
+    cleanup(tmp_message_file_name)
+    message_file = open(message_file_name, &quot;a+&quot;)
+
+    signaledFailures = []
+    if path.exists(message_file_name):
+        signaledFailures = message_file.read().splitlines()
+    print(&quot;LL already signalled failures size: {}&quot;.format(len(signaledFailures)))
+    retrieveDrop(True)
+    retrieveIso(True)
+    retrieveSuite(True)
+
+    command = &apos;curl  --header  Content-Type:application/json  -X  POST  https://&apos; + host + &apos;/metrics-services/&apos; \
+                                    &apos;long-loop-trends-by-teams  -d  {&quot;drop&quot;: &quot;&apos; + drop + &apos;&quot;,&apos; \
+                                    &apos;&quot;isosFrom&quot;:&quot;&apos; + iso_from + &apos;&quot;,&quot;isosTo&quot;:&quot;&apos; + iso_to + &apos;&quot;,&quot;suites&quot;:&quot;&apos; + suite + &apos;&quot; }&apos;
+    output_json = execute_command(command)
+    dati = json.loads(output_json)
+
+    # looking for failures in the response
+    for iso_el in dati:
+        base = iso_el[&apos;trendsByTeamIsoVOs&apos;]
+        version = iso_el[&apos;isoVersion&apos;].strip()
+        for x in base:
+            if team_name in x[&apos;suiteName&apos;]:
+                if x[&apos;testPassed&apos;] != x[&apos;testTotal&apos;]:
+                    stringa = version + &quot; &quot; + x[&apos;suiteName&apos;] + &quot;\n&quot;
+                    if stringa.strip() not in signaledFailures:
+                        with open(tmp_message_file_name, &quot;a&quot;) as tmp_message_file:
+                            tmp_message_file.write(stringa)
+
+    # new failures are notified, if any
+    save_new_failures(tmp_message_file_name, mail_sent_file, message_file)
+    message_file.close()
+
+def execute_rfa():
+    print(&quot;Running RFA250 failures check for team {}&quot;.format(team_name))
+    reset_variables()
+    global iso
+    message_file_name = &apos;{}-RFAmessage.txt&apos;.format(team_name)
+    tmp_message_file_name = &apos;{}-RFAtmp_message.txt&apos;.format(team_name)
+    mail_sent_file = &apos;{}-RFAcheckScriptFailure&apos;.format(team_name)
+    cleanup(tmp_message_file_name)
+
+    retrieveDrop(False)
+    retrieveIso(False)
+    retrieveSuite(False)
+
+    body = &apos;&quot;drop&quot;:&quot;&apos; + drop + &apos;&quot;,&quot;isos&quot;:&quot;&apos; + iso + &apos;&quot;,&quot;suites&quot;:&quot;&apos; + suite + &apos;&quot;,&quot;isoStatus&quot;:&quot;Working ISO&quot;&apos;
+    # rest to retrieve the global results including all the test suites and iso
+    command = &apos;curl  --header  Content-Type:application/json  -X  POST  https://&apos; + host + \
+              &apos;/metrics-services/rfa-trends-by-teams-failreport  -d  {&apos; + body + &apos;}&apos;
+
+    # rest call to retrieve the results for a given iso and suite
+    command2 = &apos;curl  --header  Content-Type:application/json  -X  POST  https://&apos; + host + \
+               &apos;/metrics-services/rfa-trends-jira-tickets  -d  {\&quot;iso\&quot;:\&quot;%s\&quot;,\&quot;rfa250_testcase\&quot;:\&quot;%s\&quot;,\&quot;jira_ticket\&quot;:\&quot;1111\&quot;}&apos;
+
+    message_file = open(message_file_name, &quot;a+&quot;)
+
+    signaledFailures = []
+    if path.exists(message_file_name):
+        signaledFailures = message_file.read().splitlines()
+    print(&quot;RFA already signalled failures size: {}&quot;.format(len(signaledFailures)))
+    output_json = execute_command(command)
+    dati = json.loads(output_json)
+
+    # looking for failures in the response
+    for iso_el in dati:
+        base = iso_el[&apos;trendsByTeamIsoVOs&apos;]
+        version = iso_el[&apos;isoVersion&apos;].strip()
+        for x in base:
+            if team_name in x[&apos;suiteName&apos;]:
+                if x[&apos;testPassed&apos;] != x[&apos;testTotal&apos;]:
+                    find_torf = command2 % (version, x[&apos;suiteName&apos;])
+                    output = execute_command(find_torf)
+                    jira_results = json.loads(output)
+                    # only failures without a TORF associated should be collected
+                    if &apos;Enter Jira Ticket Number&apos; in jira_results[0][&apos;jira&apos;]:
+                        stringa = version + &quot; &quot; + x[&apos;suiteName&apos;] + &quot;\n&quot;
+                        if stringa.strip() not in signaledFailures:
+                            with open(tmp_message_file_name, &quot;a&quot;) as tmp_message_file:
+                                tmp_message_file.write(stringa)
+    # new failures are notified by email, if any
+    save_new_failures(tmp_message_file_name, mail_sent_file, message_file)
+    message_file.close()
+
+
+########## MAIN ##########
+team_name = os.environ[&apos;Team_name&apos;]
+check_type = os.environ[&apos;Check_type&apos;]
+cleanup_old_f = os.environ[&apos;Cleanup_files&apos;]
+to_be_sent = False
+
+if cleanup_old_f == &apos;true&apos;:
+    cleanup_old_files()
+else:
+    if &apos;LongLoopOnly&apos; in check_type:
+        execute_ll()
+    elif &apos;RFA250Only&apos; in check_type:
+        execute_rfa()
+    #elif &apos;CleanupOldFiles&apos; in check_type:
+    #	cleanup_old_files()
+    else:
+        execute_ll()
+        execute_rfa()
+
+if to_be_sent:
+    exit(1)</command>
+      <configuredLocalRules/>
+    </hudson.plugins.python.Python>
+  </builders>
+  <publishers>
+    <hudson.plugins.emailext.ExtendedEmailPublisher plugin="email-ext@2.63">
+      <recipientList>$Distribution_list</recipientList>
+      <configuredTriggers>
+        <hudson.plugins.emailext.plugins.trigger.FailureTrigger>
+          <email>
+            <subject>$PROJECT_DEFAULT_SUBJECT</subject>
+            <body>$PROJECT_DEFAULT_CONTENT</body>
+            <recipientProviders>
+              <hudson.plugins.emailext.plugins.recipients.DevelopersRecipientProvider/>
+              <hudson.plugins.emailext.plugins.recipients.ListRecipientProvider/>
+            </recipientProviders>
+            <attachmentsPattern></attachmentsPattern>
+            <attachBuildLog>false</attachBuildLog>
+            <compressBuildLog>false</compressBuildLog>
+            <replyTo>$PROJECT_DEFAULT_REPLYTO</replyTo>
+            <contentType>project</contentType>
+          </email>
+        </hudson.plugins.emailext.plugins.trigger.FailureTrigger>
+      </configuredTriggers>
+      <contentType>default</contentType>
+      <defaultSubject>There are RFA or LL failures</defaultSubject>
+      <defaultContent>The attached file contains the $Team_name failures.
+
+$DEFAULT_CONTENT</defaultContent>
+      <attachmentsPattern>$Team_name*tmp_messa*.txt</attachmentsPattern>
+      <presendScript>$DEFAULT_PRESEND_SCRIPT</presendScript>
+      <postsendScript>$DEFAULT_POSTSEND_SCRIPT</postsendScript>
+      <attachBuildLog>false</attachBuildLog>
+      <compressBuildLog>false</compressBuildLog>
+      <replyTo>$DEFAULT_REPLYTO</replyTo>
+      <from>DespicableUs</from>
+      <saveOutput>false</saveOutput>
+      <disabled>false</disabled>
+    </hudson.plugins.emailext.ExtendedEmailPublisher>
+  </publishers>
+  <buildWrappers/>
+</project>

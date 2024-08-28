@@ -1,0 +1,300 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>Just for test, this job prints out the team name.</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.23.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty plugin="leastload@1.0.3">
+      <leastLoadDisabled>false</leastLoadDisabled>
+    </org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>user_name</name>
+          <description>Your username to access DDP site</description>
+          <defaultValue>eandrpa</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.PasswordParameterDefinition>
+          <name>passw</name>
+          <description>Your password to access DDP site.</description>
+          <defaultValue>{AQAAABAAAAAQPK3LucW5NKbQgZPJpBcR6HEElp+Lw9HtZGlcM/i3EPA=}</defaultValue>
+        </hudson.model.PasswordParameterDefinition>
+        <hudson.model.TextParameterDefinition>
+          <name>Distribution_list</name>
+          <description>Distribution list to notify the event to.</description>
+          <defaultValue>cinzia.nicoletti@ericsson.com
+giacomo.rufaldi@ericsson.com
+giuseppe.rulli@ericsson.com
+marco.borzone@ericsson.com
+marco.crovato@ericsson.com
+massimo.costacurta@ericsson.com
+maurizio.lagana@ericsson.com
+paola.bona@ericsson.com
+pierpaolo.cazzola@ericsson.com</defaultValue>
+          <trim>false</trim>
+        </hudson.model.TextParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit></paramsToUseForLimit>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    <de.pellepelster.jenkins.walldisplay.WallDisplayJobProperty plugin="jenkinswalldisplay@0.6.30"/>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>ENM-SLAVE-GE-7_3</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.plugins.python.Python plugin="python@1.3">
+      <command>import time
+import requests
+import datetime
+import sys
+import os
+import urllib3
+
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+#ENM sites list with relevant base urls
+ENMd = {&apos;LMI_ENM296&apos;: &apos;https://ddpenm7.athtem.eei.ericsson.se/&apos;,
+        &apos;LMI_ENM416&apos;: &apos;https://ddpi.athtem.eei.ericsson.se/&apos;,
+        &apos;LMI_ENM664&apos;: &apos;https://ddpi.athtem.eei.ericsson.se/&apos;,
+        &apos;LMI_ENM244&apos;: &apos;https://ddpenm6.athtem.eei.ericsson.se/&apos;,
+        &apos;LMI_ENM636&apos;: &apos;https://ddpenm5.athtem.eei.ericsson.se/&apos;}
+login_URL = &apos;php/common/loginPage.php?location=%2Fphp%2Fsite_index.php&apos;
+
+to_be_sent = False
+events_file_name = &quot;vcs_events_file&quot;
+message_file_name = &apos;notified_VCS_EVENTS.txt&apos;
+report_file_name = &apos;report.txt&apos;
+total_counter = 0
+message = &apos;&apos;&apos;&apos;&apos;&apos;
+un = os.environ[&apos;user_name&apos;]
+pw = os.environ[&apos;passw&apos;]
+
+
+yesterday = datetime.date.today() - datetime.timedelta(days=1)
+dir = yesterday.strftime(&apos;%d%m%y&apos;)
+
+#Data structure for the events record
+events = {}
+for el in ENMd.keys():
+    events[el] = {}
+    events[el][&apos;accesscontrol&apos;] = {}
+    events[el][&apos;accesscontrol&apos;][&apos;MonitorOffline&apos;]=[]
+    events[el][&apos;accesscontrol&apos;][&apos;CleanStart&apos;]=[]
+    events[el][&apos;sps&apos;] = {}
+    events[el][&apos;sps&apos;][&apos;MonitorOffline&apos;]=[]
+    events[el][&apos;sps&apos;][&apos;CleanStart&apos;]=[]
+    events[el][&apos;vaultserv&apos;] = {}
+    events[el][&apos;vaultserv&apos;][&apos;MonitorOffline&apos;] = []
+    events[el][&apos;vaultserv&apos;][&apos;CleanStart&apos;] = []
+
+ses = requests.Session()
+
+
+def retrieve_events():
+    with open(events_file_name, &apos;w&apos;) as f:
+        for enm in ENMd.keys():
+            login_url = ENMd[enm] + login_URL
+            outp = ses.post(login_url, data={&apos;userID&apos;: un.strip(), &apos;password&apos;: pw.strip()}, verify=False)
+            decoded_output = outp.content
+            if sys.version_info[0] == 3:
+                decoded_output = outp.content.decode()
+            if &quot;Password validation failed&quot; in decoded_output:
+                print(&quot;Password validation failed, exiting.&quot;)
+                f.write(&quot;Password validation failed, exiting.\n&quot;)
+                exit(1)
+            vcs_url = ENMd[enm] + &apos;php/TOR/vcs_events.php?site=&apos; + enm + &apos;&amp;dir=&apos; + dir + &apos;&amp;date=&apos; + str(yesterday) + &apos;&amp;oss=tor&apos;
+            vcs_events = ses.get(vcs_url, verify=False)
+            f.write(&apos;ENMSERVER:&apos; + enm + &apos;\n&apos;)
+            decoded_vcs_events = vcs_events.content
+            if sys.version_info[0] == 3:
+                decoded_vcs_events = vcs_events.content.decode()
+            for line in (decoded_vcs_events).splitlines():
+                if &quot; time:&quot; in line:
+                    f.write(line + &apos;\n&apos;)
+
+
+def search_for_services():
+    global to_be_sent
+    global total_counter
+    with open(events_file_name, &apos;r&apos;) as f:
+        for line in f:
+            if &apos;ENMSERVER:&apos; in line:
+                current_server = line[10:20]
+            if &quot;CleanStart&quot; in line:
+                if &quot;accesscontrol&quot; in line:
+                    to_be_sent = True
+                    total_counter += 1
+                    events[current_server][&apos;accesscontrol&apos;][&apos;CleanStart&apos;].append(line)
+                elif &quot;sps&quot; in line:
+                    to_be_sent = True
+                    total_counter += 1
+                    events[current_server][&apos;sps&apos;][&apos;CleanStart&apos;].append(line)
+                elif &quot;vaultserv&quot; in line:
+                    to_be_sent = True
+                    total_counter += 1
+                    events[current_server][&apos;vaultserv&apos;][&apos;CleanStart&apos;].append(line)
+            elif &quot;MonitorOffline&quot; in line:
+                if &quot;accesscontrol&quot; in line:
+                    to_be_sent = True
+                    total_counter += 1
+                    events[current_server][&apos;accesscontrol&apos;][&apos;MonitorOffline&apos;].append(line)
+                elif &quot;sps&quot; in line:
+                    to_be_sent = True
+                    total_counter += 1
+                    events[current_server][&apos;sps&apos;][&apos;MonitorOffline&apos;].append(line)
+                elif &quot;vaultserv&quot; in line:
+                    to_be_sent = True
+                    total_counter += 1
+                    events[current_server][&apos;vaultserv&apos;][&apos;MonitorOffline&apos;].append(line)
+
+
+def build_message():
+    global message
+    message = &apos;&apos;&apos;&apos;&apos;&apos;
+    for server in events.keys():
+        message += &apos;&apos;&apos;\n{} \t  {}\t{}php/TOR/vcs_events.php?site={}&amp;dir={}&amp;date={}&amp;oss=tor
+        SERVICE\t\tCLEANSTART\tMONITOR OFFLINE
+        cacs\t\t{}\t\t\t{}
+        sps \t\t{}\t\t\t{}
+        vault\t\t{}\t\t\t{}
+        &apos;&apos;&apos;.format(server, yesterday, ENMd[server],server,dir,yesterday,
+                   len(events[server][&apos;accesscontrol&apos;][&apos;CleanStart&apos;]), len(events[server][&apos;accesscontrol&apos;][&apos;MonitorOffline&apos;]),
+                   len(events[server][&apos;sps&apos;][&apos;CleanStart&apos;]), len(events[server][&apos;sps&apos;][&apos;MonitorOffline&apos;]),
+                   len(events[server][&apos;vaultserv&apos;][&apos;CleanStart&apos;]), len(events[server][&apos;vaultserv&apos;][&apos;MonitorOffline&apos;]))
+
+        with open(report_file_name, &apos;w&apos;) as report:
+            report.write(message)
+
+def generate_report():
+    if to_be_sent:
+        print(&quot;Found vcs event in DDP sites.&quot;)
+        with open(message_file_name, &quot;a+&quot;) as f:
+            f.seek(0)
+            actual = f.readlines()
+            print(actual)
+            if str(yesterday) + &apos;-&apos; + str(total_counter) in actual:
+                print(&quot;failures already notified, nothing to do&quot;)
+                exit(0)
+            else:
+                print(&quot;Failures will be notified&quot;)
+                f.seek(0)
+                f.truncate()
+                f.write(str(yesterday) + &apos;-&apos; + str(total_counter))
+                exit(1)
+    else:
+        print(&quot;No issue found.&quot;)
+        #exit(1)#this is just for test, to be removed
+
+
+retrieve_events()
+search_for_services()
+build_message()
+print(message)
+generate_report()
+
+</command>
+      <configuredLocalRules/>
+    </hudson.plugins.python.Python>
+  </builders>
+  <publishers>
+    <hudson.plugins.emailext.ExtendedEmailPublisher plugin="email-ext@2.63">
+      <recipientList>$Distribution_list</recipientList>
+      <configuredTriggers>
+        <hudson.plugins.emailext.plugins.trigger.FailureTrigger>
+          <email>
+            <subject>$PROJECT_DEFAULT_SUBJECT</subject>
+            <body>$PROJECT_DEFAULT_CONTENT</body>
+            <recipientProviders>
+              <hudson.plugins.emailext.plugins.recipients.DevelopersRecipientProvider/>
+              <hudson.plugins.emailext.plugins.recipients.ListRecipientProvider/>
+            </recipientProviders>
+            <attachmentsPattern></attachmentsPattern>
+            <attachBuildLog>false</attachBuildLog>
+            <compressBuildLog>false</compressBuildLog>
+            <replyTo>$PROJECT_DEFAULT_REPLYTO</replyTo>
+            <contentType>project</contentType>
+          </email>
+        </hudson.plugins.emailext.plugins.trigger.FailureTrigger>
+      </configuredTriggers>
+      <contentType>default</contentType>
+      <defaultSubject>There are bad vcs events in MT</defaultSubject>
+      <defaultContent>$DEFAULT_CONTENT</defaultContent>
+      <attachmentsPattern>*report*txt</attachmentsPattern>
+      <presendScript>$DEFAULT_PRESEND_SCRIPT</presendScript>
+      <postsendScript>$DEFAULT_POSTSEND_SCRIPT</postsendScript>
+      <attachBuildLog>false</attachBuildLog>
+      <compressBuildLog>false</compressBuildLog>
+      <replyTo>$DEFAULT_REPLYTO</replyTo>
+      <from>DespicableUs</from>
+      <saveOutput>false</saveOutput>
+      <disabled>false</disabled>
+    </hudson.plugins.emailext.ExtendedEmailPublisher>
+    <hudson.plugins.ws__cleanup.WsCleanup plugin="ws-cleanup@0.37">
+      <patterns>
+        <hudson.plugins.ws__cleanup.Pattern>
+          <pattern>*vcs_event*</pattern>
+          <type>INCLUDE</type>
+        </hudson.plugins.ws__cleanup.Pattern>
+      </patterns>
+      <deleteDirs>false</deleteDirs>
+      <skipWhenFailed>false</skipWhenFailed>
+      <cleanWhenSuccess>true</cleanWhenSuccess>
+      <cleanWhenUnstable>true</cleanWhenUnstable>
+      <cleanWhenFailure>true</cleanWhenFailure>
+      <cleanWhenNotBuilt>true</cleanWhenNotBuilt>
+      <cleanWhenAborted>true</cleanWhenAborted>
+      <notFailBuild>false</notFailBuild>
+      <cleanupMatrixParent>false</cleanupMatrixParent>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.WsCleanup>
+  </publishers>
+  <buildWrappers/>
+</project>

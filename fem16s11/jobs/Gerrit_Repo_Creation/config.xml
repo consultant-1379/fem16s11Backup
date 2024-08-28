@@ -1,0 +1,226 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>30</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>REPO</name>
+          <description>&lt;font size=&quot;2&quot;&gt;Enter the gerrit repo above (Example: OSS/com.ericsson.oss.ci/ciexe_test)&lt;/font&gt;</description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>PARENT_GROUP_RIGHTS</name>
+          <description></description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>OSS/ENM-Parent</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@4.10.3">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>${GERRIT_MIRROR}/OSS/com.ericsson.oss.containerisation/enm-cn-ci-pipeline-archtype-generator</url>
+        <credentialsId>lciadm100_private_key</credentialsId>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>master</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <submoduleCfg class="list"/>
+    <extensions>
+      <hudson.plugins.git.extensions.impl.CleanBeforeCheckout>
+        <deleteUntrackedNestedRepositories>false</deleteUntrackedNestedRepositories>
+      </hudson.plugins.git.extensions.impl.CleanBeforeCheckout>
+    </extensions>
+  </scm>
+  <assignedNode>enm_cn_pf_ci_openstack-08022021-11</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>true</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+
+export REPO=${REPO// /}
+export Parent_Group_Rights=${PARENT_GROUP_RIGHTS// /}
+GUARD_GROUP_NAME=&quot;CTF_guard Cloud_Native_TC_Group cENM_Guard&quot;
+group1=&quot;CTF_guard&quot;
+group2=&quot;Cloud_Native_TC_Group&quot;
+group3=&quot;cENM_Guard&quot;
+ARTIFACT_ID=${REPO##*/}
+
+echo &quot;Tell $ARTIFACT_ID&quot;
+
+echo &quot;*******************Creating the repository in Gerrit*****************&quot;
+
+echo &quot;*******************Creating repository &quot;$REPO&quot; with required master branch only********************&quot;
+
+ssh -p 29418 gerrit.ericsson.se gerrit ls-projects | grep -Fx ${REPO}
+
+if [ $? -eq 0 ]; then
+    echo &quot;${REPO} already existing&quot;
+else
+    echo &quot;Proceed to ${REPO} creation&quot;
+    ssh -p 29418 gerrit.ericsson.se self-service create-project --parent $Parent_Group_Rights $REPO -b master --empty-commit -o CI_Infrastructure_ENM_admin || { echo &apos;ERROR: Check Job Parameters&apos;; exit 1; }
+fi
+
+echo &quot;*******************Adding access rights for &quot;$GUARD_GROUP_NAME&quot;*******************&quot;
+
+#module add git
+mkdir test
+cd test
+git init
+
+git pull ssh://gerrit.ericsson.se:29418/$REPO refs/meta/config
+
+# manage multiple guardian groups
+IFS=&apos; &apos; read -ra ADDR &lt;&lt;&lt; &quot;$GUARD_GROUP_NAME&quot;
+for group in &quot;${ADDR[@]}&quot;; do
+    ssh -p 29418 gerrit.ericsson.se gerrit ls-groups -v | grep $group &gt; output.txt
+    GroupID_Sub=$(grep ^$group output.txt | cut -f 2)
+    rm output.txt
+    echo -e &quot;$GroupID_Sub\t$group&quot; &gt;&gt; groups
+done
+
+git add .
+git commit -m &quot;Added new group&quot;
+git push ssh://gerrit.ericsson.se:29418/$REPO HEAD:refs/meta/config
+
+echo &quot;************* groups file pushed **************&quot;
+echo &quot;*************config file push******************&quot;
+
+
+rm -rf project.config
+
+echo -e &quot;[access]
+        inheritFrom = $Parent_Group_Rights
+[access \&quot;refs/*\&quot;]
+        owner = group CI_Infrastructure_ENM_admin&quot; &gt; project.config
+
+echo -e &quot;create = group $group1&quot; &gt;&gt; project.config;
+echo -e &quot;create = group $group2&quot; &gt;&gt; project.config;
+echo -e &quot;forgeCommitter = group $group1&quot; &gt;&gt; project.config;
+echo -e &quot;forgeCommitter = group $group2&quot; &gt;&gt; project.config;
+echo -e &quot;pushTag = group $group1&quot; &gt;&gt; project.config;
+echo -e &quot;pushTag = group $group2&quot; &gt;&gt; project.config;
+echo -e &quot;label-Code-Review = -2..+2 group $group1&quot; &gt;&gt; project.config;
+echo -e &quot;label-Code-Review = -2..+2 group $group2&quot; &gt;&gt; project.config;
+echo -e &quot;label-Code-Review = -2..+2 group $group3&quot; &gt;&gt; project.config;
+echo -e &quot;label-Verified = -1..+1 group $group1&quot; &gt;&gt; project.config;
+echo -e &quot;label-Verified = -1..+1 group $group2&quot; &gt;&gt; project.config;
+echo -e &quot;label-Verified = -1..+1 group $group3&quot; &gt;&gt; project.config;
+echo -e &quot;rebase = group $group1&quot; &gt;&gt; project.config;
+echo -e &quot;rebase = group $group2&quot; &gt;&gt; project.config;
+echo -e &quot;submit = group $group3&quot; &gt;&gt; project.config;
+
+echo -e &quot;[project]
+        description = $Deliverable
+[receive]
+        requireChangeId = true
+[submit]
+        action = fast forward only
+        mergeContent = false
+[access \&quot;refs/for/refs/heads/master\&quot;]&quot; &gt;&gt; project.config
+
+echo -e &quot;pushMerge = group $group3&quot; &gt;&gt; project.config;
+
+echo -e &quot;[access \&quot;refs/heads/master\&quot;]&quot; &gt;&gt; project.config
+
+echo -e &quot;push = group $group3&quot; &gt;&gt; project.config;
+echo -e &quot;exclusiveGroupPermissions = push pushMerge&quot; &gt;&gt; project.config;
+echo -e &quot;pushMerge = group $group3&quot; &gt;&gt; project.config;
+
+echo -e &quot;[plugin \&quot;eiffel\&quot;]
+        enabled = true
+        rmq-domain = eiffel004.camo.gerrit
+        rmq-exchange = mb401-eiffel004
+        rmq-server = amqp://mb401-eiffel004.mo.ca.am.ericsson.se:5672&quot; &gt;&gt; project.config
+
+git add .
+git commit -m &quot;Added access controls&quot;
+git push ssh://gerrit.ericsson.se:29418/$REPO HEAD:refs/meta/config
+cd ..
+rm -rf test/
+
+echo &quot;*******************Running Archetype Generator Tool*****************&quot;
+git clone ssh://gerrit.ericsson.se:29418/${REPO}
+
+docker build . -t archgen_pcr
+docker run --entrypoint &quot;sh&quot; -v ${WORKSPACE}/temporary_folder:/data/output archgen_pcr -c &quot;python run.py --service_name  $ARTIFACT_ID --service_type 0 --service_description TestSG --path_of_archtype /data/output --product_number 123456 --is_depend_on_jboss_base_image n&quot;
+
+
+cp -r temporary_folder/${ARTIFACT_ID}/* ${ARTIFACT_ID}
+cd ${ARTIFACT_ID}
+
+git add --all
+git commit -m &quot;No Jira: Adding artifacts/archetype&quot;
+git push
+
+echo &quot;************* end ******************&quot;</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.40">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+  </buildWrappers>
+</project>

@@ -1,0 +1,184 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>This job allow us to move a Jenkins job or a batch of Jenkins jobs to another Jenkins instance.&lt;br&gt;&lt;br&gt;&#xd;
+&lt;b&gt;If you desire to move only one job, please use the entire name (JOB_NAME parameter).&lt;/b&gt;&lt;br&gt; &#xd;
+&lt;b&gt;Otherwise you can move a whole job family by entering a string that is the first common part of a set of Job names.&lt;/b&gt;&lt;br&gt;&#xd;
+&lt;b&gt;You can also move several set of jobs family (that have different first part of name), adding all different common radix separated by a blank&lt;/b&gt;&lt;br&gt;&lt;br&gt;&#xd;
+&lt;b&gt;Example: we have to move all Jobs (Unit,Release,Acceptance,etc) of both two job projects with names starting with &quot;ci-upgrade-test_&quot;  and &quot;ci_lc_test2_&quot;&lt;/b&gt;&lt;br&gt;&#xd;
+&lt;b&gt;  to do that you simply have to set in &quot;JOB_NAME&quot;  field both above common radix strings and don&apos;t check the field &quot;COPY_ONLY_EXACT_NAME_JOB &quot;&lt;/b&gt;&lt;br&gt;&lt;br&gt;&#xd;
+&lt;b&gt;JOB_NAME = &quot;ci-upgrade-test_ ci_lc_test2_&quot; will move all ci-upgrade-test_Release/Unit/Precode and all ci_lc_test2_Release/Unit/Precode jobs&lt;/b&gt;&lt;br&gt;&lt;br&gt;&#xd;
+&#xd;
+&lt;b&gt;Once jobs are moved the old jobs will be disabled.&lt;/b&gt;&#xd;
+&#xd;
+&lt;div align=&quot;left&quot;&gt;&#xd;
+  &lt;br&gt;&#xd;
+    &lt;b&gt;&lt;font color=&quot;red&quot;&gt;Please consult the responsible teams before moving Jobs between FEM120 and FEM134&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&#xd;
+     &lt;b&gt;&lt;font color=&quot;red&quot;&gt;FEM115 is no longer available &lt;/font&gt;&lt;/b&gt;&lt;br&gt;&#xd;
+&lt;/div&gt;</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>20</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>HOST</name>
+          <description>&lt;font size=&quot;2&quot;&gt;Select the host Jenkins instance from where job are currently located&lt;/font&gt;&lt;br&gt;&lt;br&gt;</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>fem1s11</string>
+              <string>fem2s11</string>
+              <string>fem3s11</string>
+              <string>fem4s11</string>
+              <string>fem6s11</string>
+              <string>fem7s11</string>
+              <string>fem10s11</string>
+              <string>fem11s11</string>
+              <string>fem6s11</string>
+              <string>fem7s11</string>
+              <string>fem8s11</string>
+              <string>fem10s11</string>
+              <string>fem16s11</string>
+              <string>fem19s11</string>
+              <string>fem20s11</string>
+              <string>fem21s11</string>
+              <string>fem22s11</string>
+              <string>fem23s11</string>
+              <string>fem25s11</string>
+              <string>fem26s11</string>
+              <string>fem27s11</string>
+              <string>fem30s11</string>
+              <string>fem42s11</string>
+              <string>fem44s11</string>
+              <string>fem45s11</string>
+              <string>fem46s11</string>
+              <string>fem47s11</string>
+              <string>fem48s11</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>DESTINATION</name>
+          <description>&lt;font size=&quot;2&quot;&gt;Select the destination Jenkins instance where the jobs will be moved&lt;/font&gt;&lt;br&gt;&lt;br&gt;</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>fem1s11</string>
+              <string>fem2s11</string>
+              <string>fem3s11</string>
+              <string>fem4s11</string>
+              <string>fem6s11</string>
+              <string>fem7s11</string>
+              <string>fem8s11</string>
+              <string>fem10s11</string>
+              <string>fem11s11</string>
+              <string>fem16s11</string>
+              <string>fem17s11</string>
+              <string>fem18s11</string>
+              <string>fem19s11</string>
+              <string>fem20s11</string>
+              <string>fem21s11</string>
+              <string>fem22s11</string>
+              <string>fem23s11</string>
+              <string>fem25s11</string>
+              <string>fem26s11</string>
+              <string>fem27s11</string>
+              <string>fem30s11</string>
+              <string>fem31s11</string>
+              <string>fem34s11</string>
+              <string>fem35s11</string>
+              <string>fem39s11</string>
+              <string>fem42s11</string>
+              <string>fem44s11</string>
+              <string>fem45s11</string>
+              <string>fem46s11</string>
+              <string>fem47s11</string>
+              <string>fem48s11</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>JOB_NAME</name>
+          <description>&lt;font size=&quot;2&quot;&gt;Select the destination Jenkins instance where the jobs will be moved&lt;br&gt;
+  Example: move single job: Use the full job name you want to move i.e. cba-sync-node-testware_PreCodeReview &lt;b&gt;and click on the below &quot;COPY_ONLY_EXACT_NAME_JOB&quot; checkbutton&lt;/b&gt;&lt;br&gt;
+  Example: move all cba-sync-node-testware jobs: Use the artifact id of job name you want to move i.e. cba-sync-node-testware_ and &lt;b&gt;DON&apos;T&lt;/b&gt; click on the below checkbutton&lt;br&gt;
+  Example: move all ci-upgrade-test_Release/Unit/Precode and all ci_lc_test2_Release/Unit/Precode jobs, fill JOB_NAME = &quot;ci-upgrade-test_ ci_lc_test2_&quot; blank spaced and &lt;b&gt;DON&apos;T&lt;/b&gt; click on the below checkbutton&lt;/font&gt;&lt;br&gt;&lt;br&gt;</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>COPY_ONLY_EXACT_NAME_JOB</name>
+          <description>&lt;font size=&quot;2&quot;&gt;&lt;b&gt;If checked&lt;/b&gt; only the job with the exact name is copied/moved.&lt;br&gt;
+  Otherwise &lt;b&gt;if not checked&lt;/b&gt; all Jenkins jobs with names that contain this &quot;JOB_NAME&quot; string will be copied/moved.&lt;/font&gt;&lt;br&gt;&lt;br&gt; </description>
+          <defaultValue>false</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>GridEngine_RHEL7</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>/proj/cdsadm100/tools/utils/scripts/move_jobs_e2c.sh</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.40">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+    <hudson.plugins.build__timeout.BuildTimeoutWrapper plugin="build-timeout@1.20">
+      <strategy class="hudson.plugins.build_timeout.impl.AbsoluteTimeOutStrategy">
+        <timeoutMinutes>3</timeoutMinutes>
+      </strategy>
+      <operationList/>
+    </hudson.plugins.build__timeout.BuildTimeoutWrapper>
+  </buildWrappers>
+</project>

@@ -1,0 +1,322 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.39">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.7.0"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.7.0">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>SPRINT_TAG</string>
+        <string>ISO_VERSION</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>ENM Cloud Native Build pipeline shiva_test_sg</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>30</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.23.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty/>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>ISO_VERSION</name>
+          <description>The ENM ISO version (e.g. 1.65.77)</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>SPRINT_TAG</name>
+          <description>Tag for GIT tagging the repository after build</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit></paramsToUseForLimit>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.80">
+    <script>#!/usr/bin/env groovy
+
+/* IMPORTANT:
+ *
+ * In order to make this pipeline work, the following configuration on Jenkins is required:
+ * - slave with a specific label (see pipeline.agent.label below)
+ * - credentials plugin should be installed and have the secrets with the following names:
+ *   + lciadm100credentials (token to access Artifactory)
+ */
+def defaultBobImage = &apos;armdocker.rnd.ericsson.se/sandbox/adp-staging/adp-cicd/bob.2.0:1.5.2-0&apos;
+def bob = new BobCommand()
+        .bobImage(defaultBobImage)
+        .envVars([ISO_VERSION: &apos;${ISO_VERSION}&apos;])
+        .needDockerSocket(true)
+        .toString()
+def failedStage = &apos;&apos;
+def GIT_COMMITTER_NAME = &apos;cenmbuild&apos;
+def GIT_COMMITTER_EMAIL = &apos;cenmbuild@ericsson.com&apos;
+
+pipeline {
+    agent {
+        label &apos;Docker-POC&apos;
+        //label &apos;enm_cn_ci_openstack-30062022-48&apos;
+    }
+    parameters {
+        string(name: &apos;ISO_VERSION&apos;, description: &apos;The ENM ISO version (e.g. 1.65.77)&apos;)
+        string(name: &apos;SPRINT_TAG&apos;, description: &apos;Tag for GIT tagging the repository after build&apos;)
+    }
+    environment {
+        GERRIT_CREDENTIALS = credentials(&apos;cenmbuild_gerrit_api_token&apos;) 
+    }
+    stages {
+        stage(&apos;Clean&apos;) {
+            steps {
+                deleteDir()
+            }
+        }
+        /*
+        stage(&apos;Inject Credential Files&apos;) {
+            steps {
+                withCredentials([file(credentialsId: &apos;lciadm100-docker-auth&apos;, variable: &apos;dockerConfig&apos;)]) {
+                    sh &quot;install -m 600 ${dockerConfig} ${HOME}/.docker/config.json&quot;
+                }
+            }
+        }
+        */
+        stage(&apos;Checkout Cloud-Native SG Git Repository&apos;) {
+            steps {
+                sh &apos;&apos;&apos;
+                  git --version
+                &apos;&apos;&apos;
+                echo &quot;Gerrit Mirror Staging: ${GERRIT_MIRROR_new}&quot;
+                echo &quot;Gerrit Central: ${GERRIT_CENTRAL}&quot;
+                echo &quot;Gerrit Central Staging: ${GERRIT_CENTRAL_UAT}&quot;
+                git branch: &apos;master&apos;,
+                    credentialsId: &apos;enmadm100_private_key&apos;,
+                     url: &apos;${GERRIT_MIRROR_UAT_TEST}/OSS/ENM-Parent/SQ-Gate/com.ericsson.oss.containerisation/shiva_test_sg&apos;
+                     
+                withCredentials([usernameColonPassword(credentialsId: &apos;cenmbuild_gerrit_api_token&apos;, variable: &apos;cenmbuild&apos;)]) {
+                    sh &apos;&apos;&apos;
+                        git remote set-url origin --push ${GERRIT_CENTRAL_UAT}/OSS/ENM-Parent/SQ-Gate/com.ericsson.oss.containerisation/shiva_test_sg                       
+                        #git remote set-url origin --push https://${GERRIT_CREDENTIALS}@${GERRIT_CENTRAL_HTTP_TEST}/OSS/ENM-Parent/SQ-Gate/com.ericsson.oss.containerisation/shiva_test_sg
+                        
+                    &apos;&apos;&apos;    
+                }
+            }
+        }
+
+        stage(&apos;Push timestamp-1&apos;) {
+            steps{
+                
+                    sh &apos;&apos;&apos;
+                    #git remote set-url origin --push https://${GERRIT_CREDENTIALS}@${GERRIT_CENTRAL_HTTP_TEST}/OSS/ENM-Parent/SQ-Gate/com.ericsson.oss.containerisation/shiva_test_sg
+                    #whoami
+                    git remote show origin
+                    echo `date` &gt; timestamp
+                    git add timestamp
+                    git commit -m &quot;NO JIRA - Time Stamp - testing - push1&quot;
+                    git push --verbose origin HEAD:master
+                    /proj/ciexadm200/tools/git/2.28.0/bin/git --version
+                    git --version
+                &apos;&apos;&apos;
+                
+                
+            }
+        }
+         /*
+        stage(&apos;Push timestamp-2&apos;) {
+            steps{
+                sh &apos;&apos;&apos;
+                    echo `date` &gt; timestamp
+                    git add timestamp
+                    git commit -m &quot;NO JIRA - Time Stamp - testing - push2&quot;
+                    git push origin HEAD:master
+                &apos;&apos;&apos;
+            }
+        }
+        stage(&apos;Tag Base Image Git Repository&apos;) {
+            environment { 
+                GIT_TAG = &quot;jenkins-${BUILD_NUMBER}&quot;
+            }
+            steps {
+                script {
+                    sh &quot;&quot;&quot;
+                        git tag -a \$GIT_TAG -m &quot;[Jenkins CI] New Tag&quot;
+                        git push origin ${GIT_TAG}
+                    &quot;&quot;&quot;
+                }
+            }
+        }
+        stage(&apos;Bump Version1&apos;) {
+            steps {
+                script {
+                    sh &apos;&apos;&apos;
+                        echo ${WORKSPACE}
+                        chmod -R 777 ${WORKSPACE}
+                    &apos;&apos;&apos;
+                    Version = readFile &quot;VERSION_PREFIX&quot;
+                    sh &apos;docker run --rm -v $PWD/VERSION_PREFIX:/app/VERSION -w /app armdocker.rnd.ericsson.se/proj-enm/bump patch&apos;
+                    sh &apos;&apos;&apos;
+                        git add VERSION_PREFIX
+                        git commit -m &quot;Version updated&quot;
+                        git push origin HEAD:master
+                    &apos;&apos;&apos;
+                }
+            }
+        }
+        stage(&apos;Bump Version2&apos;) {
+            steps {
+                script {
+                    sh &apos;&apos;&apos;
+                        echo ${WORKSPACE}
+                        chmod -R 777 ${WORKSPACE}
+                    &apos;&apos;&apos;
+                    Version = readFile &quot;VERSION_PREFIX&quot;
+                    sh &apos;docker run --rm -v $PWD/VERSION_PREFIX:/app/VERSION -w /app armdocker.rnd.ericsson.se/proj-enm/bump patch&apos;
+                    sh &apos;&apos;&apos;
+                        git add VERSION_PREFIX
+                        git commit -m &quot;Version updated&quot;
+                        git push origin HEAD:master
+                    &apos;&apos;&apos;
+                }
+            }
+            post {
+                failure {
+                    script {
+                        failedStage = env.STAGE_NAME
+                    }
+                }
+            }
+        }
+        */
+        /*
+        stage(&apos;Helm Lint&apos;) {
+            steps {
+                sh &quot;${bob} lint-helm&quot;
+            }
+            post {
+                failure {
+                    script {
+                        failedStage = env.STAGE_NAME
+                    }
+                }
+            }
+        }
+        */
+        /*
+        stage(&apos;Linting Dockerfile&apos;) {
+            steps {
+                sh &quot;${bob} lint-dockerfile&quot;
+                archiveArtifacts &apos;*dockerfilelint.log&apos;
+            }
+            post {
+                failure {
+                    script {
+                        failedStage = env.STAGE_NAME
+                    }
+                }
+            }
+        }
+        */
+    }
+    post {
+        success {
+            script {
+                sh &apos;&apos;&apos;
+                    #set +x
+                    echo &quot;success&quot;
+                    #git tag --annotate --message &quot;Tagging latest in sprint&quot; --force 1 HEAD
+                    #git push --force origin 1
+                    #git tag --annotate --message &quot;Tagging latest in sprint with ISO version&quot; --force 1_iso_1 HEAD
+                    #git push --force origin 1_iso_1
+                    #git tag --annotate --message &quot;Tagging latest in sprint with Product Set version&quot; --force ps_1 HEAD
+                    #git push --force origin ps_1
+                &apos;&apos;&apos;
+            }
+        }
+        failure {
+           script {
+               sh &apos;&apos;&apos;
+                   echo &quot;Failed&quot;
+               &apos;&apos;&apos;
+           }
+        }
+    }
+}
+
+// More about @Builder: http://mrhaki.blogspot.com/2014/05/groovy-goodness-use-builder-ast.html
+import groovy.transform.builder.Builder
+import groovy.transform.builder.SimpleStrategy
+
+@Builder(builderStrategy = SimpleStrategy, prefix = &apos;&apos;)
+class BobCommand {
+    def bobImage = &apos;bob.2.0:latest&apos;
+    def envVars = [:]
+    def needDockerSocket = false
+
+    String toString() {
+        def env = envVars
+                .collect({ entry -&gt; &quot;-e ${entry.key}=\&quot;${entry.value}\&quot;&quot; })
+                .join(&apos; &apos;)
+
+        def cmd = &quot;&quot;&quot;\
+            |docker run
+            |--init
+            |--rm
+            |--workdir \${PWD}
+            |--user \$(id -u):\$(id -g)
+            |-v \${PWD}:\${PWD}
+            |-v /etc/group:/etc/group:ro
+            |-v /etc/passwd:/etc/passwd:ro
+            |-v \${HOME}/.m2:\${HOME}/.m2
+            |-v \${HOME}/.docker:\${HOME}/.docker
+            |${needDockerSocket ? &apos;-v /var/run/docker.sock:/var/run/docker.sock&apos; : &apos;&apos;}
+            |${env}
+            |\$(for group in \$(id -G); do printf &apos; --group-add %s&apos; &quot;\$group&quot;; done)
+            |--group-add \$(stat -c &apos;%g&apos; /var/run/docker.sock)
+            |${bobImage}
+            |&quot;&quot;&quot;
+        return cmd
+                .stripMargin()           // remove indentation
+                .replace(&apos;\n&apos;, &apos; &apos;)      // join lines
+                .replaceAll(/[ ]+/, &apos; &apos;) // replace multiple spaces by one
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

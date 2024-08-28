@@ -1,0 +1,178 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>#!/usr/bin/env groovy
+
+/* IMPORTANT:
+ *
+ * In order to make this pipeline work, the following configuration on Jenkins is required:
+ * - slave with a specific label (see pipeline.agent.label below)
+ * - credentials plugin should be installed and have the secrets with the following names:
+ *   + lciadm100credentials (token to access Artifactory)
+ */
+def defaultBobImage = 'armdocker.rnd.ericsson.se/sandbox/adp-staging/adp-cicd/bob.2.0:1.5.0-1'
+def bob = new BobCommand()
+         .bobImage(defaultBobImage)
+         .envVars([ISO_VERSION: '${ISO_VERSION}'])
+         .needDockerSocket(true)
+         .toString()
+
+def GIT_COMMITTER_NAME = 'lciadm100'
+def GIT_COMMITTER_EMAIL = 'lciadm100@ericsson.com'
+def failedStage = ''
+pipeline {
+    agent {
+        label 'Cloud-Native'
+    }
+    stages {
+        stage('Inject Credential Files') {
+            steps {
+                withCredentials([file(credentialsId: 'lciadm100-docker-auth', variable: 'dockerConfig')]) {
+                    sh "install -m 600 ${dockerConfig} ${HOME}/.docker/config.json"
+                }
+            }
+        }
+        stage('Checkout Cloud-Native SG Git Repository') {
+            steps {
+                git branch: 'dtest',
+                url: 'ssh://lciadm100@gerrit.ericsson.se:29418/OSS/com.ericsson.oss.containerisation/enm-containerisation-artifacts.git'
+            }
+        }
+        stage('Generate new version') {
+            steps {
+                sh "${bob} -r utilities/cenm-build-utilities/ruleset2.0.yaml generate-new-version"
+            }
+        }
+        stage('Build Image') {
+            steps {
+                sh "${bob} -r utilities/cenm-build-utilities/ruleset2.0.yaml build-image"
+            }
+            post {
+                failure {
+                    script {
+                        failedStage = env.STAGE_NAME
+                        sh "${bob} -r utilities/cenm-build-utilities/ruleset2.0.yaml remove-image"
+                    }
+                }
+            }
+        }
+        stage('Build Image With All Tags') {
+            steps {
+                sh "${bob} -r utilities/cenm-build-utilities/ruleset2.0.yaml  build-image-with-all-tags"
+            }
+            post {
+                failure {
+                    script {
+                        failedStage = env.STAGE_NAME
+                        sh "${bob} -r utilities/cenm-build-utilities/ruleset2.0.yaml remove-image-with-all-tags"
+                    }
+                }
+            }
+        }
+        stage('Publish Images to Artifactory') {
+            steps {
+                sh "${bob} -r utilities/cenm-build-utilities/ruleset2.0.yaml push-image-with-all-tags"
+            }
+            post {
+                always {
+                    sh "${bob} -r utilities/cenm-build-utilities/ruleset2.0.yaml  remove-image-with-all-tags"
+                }
+            }
+        }
+       stage('Bump Version') {
+          steps {
+              script {
+                  sh 'hostname'
+                  Version = readFile "utilities/cenm-build-utilities/VERSION_PREFIX"
+                  sh 'docker run --rm -v $PWD/utilities/cenm-build-utilities/VERSION_PREFIX:/app/VERSION -w /app armdocker.rnd.ericsson.se/proj-enm/bump patch'
+                  newVersion = readFile "utilities/cenm-build-utilities/VERSION_PREFIX"
+                  env.VERSION_PREFIX = newVersion
+                  currentBuild.displayName = "${BUILD_NUMBER} - Version - " + Version
+                  sh '''
+                       git add utilities/cenm-build-utilities/VERSION_PREFIX
+                       git commit -m "Version $VERSION_PREFIX"
+                       git push origin HEAD:dtest
+                   '''
+               }
+           }
+       }
+   }
+}
+
+// More about @Builder: http://mrhaki.blogspot.com/2014/05/groovy-goodness-use-builder-ast.html
+import groovy.transform.builder.Builder
+import groovy.transform.builder.SimpleStrategy
+
+@Builder(builderStrategy = SimpleStrategy, prefix = '')
+class BobCommand {
+    def bobImage = 'bob.2.0:latest'
+    def envVars = [:]
+    def needDockerSocket = false
+
+    String toString() {
+        def env = envVars
+                .collect({ entry -&gt; "-e ${entry.key}=\"${entry.value}\"" })
+                .join(' ')
+
+        def cmd = """\
+            |docker run
+            |--init
+            |--rm
+            |--workdir \${PWD}
+            |--user \$(id -u):\$(id -g)
+            |-v \${PWD}:\${PWD}
+            |-v /etc/group:/etc/group:ro
+            |-v /etc/passwd:/etc/passwd:ro
+            |-v \${HOME}/.m2:\${HOME}/.m2
+            |-v \${HOME}/.docker:\${HOME}/.docker
+            |${needDockerSocket ? '-v /var/run/docker.sock:/var/run/docker.sock' : ''}
+            |${env}
+            |\$(for group in \$(id -G); do printf ' --group-add %s' "\$group"; done)
+            |${bobImage}
+            |"""
+        return cmd
+                .stripMargin()           // remove indentation
+                .replace('\n', ' ')      // join lines
+                .replaceAll(/[ ]+/, ' ') // replace multiple spaces by one
+    }
+}
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

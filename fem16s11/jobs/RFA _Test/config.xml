@@ -1,0 +1,144 @@
+<flow-definition plugin="workflow-job@2.25">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.3.2"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.3.2">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>ISO_VERSION</string>
+        <string>PRODUCT_SET</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>ISO_VERSION</name>
+          <description>ISO version (e.g.1.91.62 )</description>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>PRODUCT_SET</name>
+          <description>Product set version (e.g 20.07.61)</description>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@65.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.19.2">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@65.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.57.2">
+    <script>#!/usr/bin/env groovy
+
+/* IMPORTANT:
+ *
+ * In order to make this pipeline work, the following configuration on Jenkins is required:
+ * - slave with a specific label (see pipeline.agent.label below)
+ * - credentials plugin should be installed and have the secrets with the following names:
+ *   + lciadm100credentials (token to access Artifactory)
+ */
+
+
+def get_fixedvalues(){
+    echo "Fixed values are mt_utils,simdep,clusterid"
+    env.MT_UTILS_VERSION="20.4.1"
+	env.CLUSTER_ID="ieatenmc12a009"
+	env.SIMDEP_VERSION="1.5.542"
+	env.TEST_PHASE="MTE"
+}
+
+
+def get_drop(){
+    echo "Running iso version function"
+    def drop_number = $/eval "wget -q -O - --no-check-certificate 'https://cifwk-oss.lmera.ericsson.se/getProductSetVersionContents/?productSet=ENM&amp;version=${PRODUCT_SET}&amp;pretty=true' | grep 'ERICenm_CXP9027091' -A4 | grep 'deliveredTo' | sed -n -e 's/^.*\"deliveredTo\": //p' | sed 's/\"//g'|sed 's/\,//g'"/$
+    env.DROP = sh(script: "${drop_number}", returnStdout: true).trim()
+}
+
+pipeline {
+    agent { label 'Cloud-Native' }
+	    parameters {
+        string(description: 'ISO version (e.g.1.91.62 )',  name: 'ISO_VERSION')
+        string(description: 'Product set version (e.g 20.07.61)',  name: 'PRODUCT_SET')
+    }
+    stages {
+	    stage('Gather Parameters'){
+		    steps {
+			      get_fixedvalues()
+                  echo env.MT_UTILS_VERSION
+				  echo env.CLUSTER_ID
+				  echo env.SIMDEP_VERSION
+				  echo env.ISO_VERSION
+				  echo env.PRODUCT_SET
+				  echo env.TEST_PHASE
+                  get_drop()
+                  echo env.DROP
+			}
+		}	
+        stage('CentralizedJob gathering parameters for RFA') {
+            steps {
+			    script
+				    {
+				  environment_list = [[$class:'StringParameterValue', name:"enm_iso_version", value:String.valueOf("${ISO_VERSION}")],
+				                      [$class:'StringParameterValue', name:"product_set_version", value:String.valueOf("${PRODUCT_SET}")],
+									  [$class:'StringParameterValue', name:"drop", value:String.valueOf("${DROP}")],
+									  [$class:'StringParameterValue', name:"test_phase", value:String.valueOf("${TEST_PHASE}")],
+									  [$class:'StringParameterValue', name:"mt_utils_version", value:String.valueOf("${MT_UTILS_VERSION}")],
+									  [$class:'StringParameterValue', name:"cluster_id", value:String.valueOf("${CLUSTER_ID}")],
+									  [$class:'StringParameterValue', name:"simdep_release", value:String.valueOf("${SIMDEP_VERSION}")]]
+                  echo "$environment_list"
+                }				
+				
+            }
+        }
+		
+		stage('Add License Job') {
+		    steps{
+			    script{
+				    def License_Add_Clone_build = build(job: "TEST1(RFA)", propagate: true, wait: true, parameters: environment_list)
+				}
+			}
+		}
+		
+        stage('Generate RFA Parameters') {
+            steps {
+                script {
+                            sh 'echo "ISO_VERSION=${ISO_VERSION}" &gt; artifact.properties'
+	                        sh 'echo "PRODUCT_SET_VERSION=${PRODUCT_SET}" &gt;&gt; artifact.properties'
+                            sh 'echo "DROP_NUMBER=${DROP}" &gt;&gt; artifact.properties'
+                            sh 'echo "MT_UTILS=${MT_UTILS_VERSION}" &gt;&gt; artifact.properties'
+							sh 'echo "CLUSTER_ID=${CLUSTER_ID}" &gt;&gt; artifact.properties'
+							sh 'echo "SIMDEP_VERSION=${SIMDEP_VERSION}" &gt;&gt; artifact.properties'
+                            archiveArtifacts 'artifact.properties'
+                }
+            }
+        }		
+    }
+}
+
+
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>true</disabled>
+</flow-definition>

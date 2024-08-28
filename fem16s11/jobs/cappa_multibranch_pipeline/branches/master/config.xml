@@ -1,0 +1,298 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>drop</string>
+        <string>InstallCappa</string>
+        <string>cenm_product_set_version</string>
+        <string>new_kernel_version</string>
+        <string>upload_kubeconfig_file</string>
+        <string>TriggerRFA250</string>
+        <string>podname</string>
+        <string>cappa_tgz</string>
+        <string>ArchiveEntireDatabase</string>
+        <string>taf_version</string>
+        <string>rpms</string>
+        <string>director_node_B64</string>
+        <string>hostname</string>
+        <string>password</string>
+        <string>cluster_id</string>
+        <string>product_set_version</string>
+        <string>kubeconfig_B64</string>
+        <string>cappa_create_kernel_symlinks</string>
+        <string>director_node_pem_file</string>
+        <string>kubeconfig_file</string>
+        <string>old_kernel_version</string>
+        <string>kubeconfig_location</string>
+        <string>cappa_running_time</string>
+        <string>use_keyfile</string>
+        <string>cappa_namespace</string>
+        <string>Security_Context_File</string>
+        <string>grouping</string>
+        <string>central_csv_version</string>
+        <string>mt_utils_version</string>
+        <string>send_confidence_level</string>
+        <string>Security_Context_Diff</string>
+        <string>test_phase</string>
+        <string>kernel_rpms</string>
+        <string>taf_scheduler_version</string>
+        <string>username</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <org.jenkinsci.plugins.workflow.multibranch.BranchJobProperty plugin="workflow-multibranch@711.vdfef37cda_816">
+      <branch plugin="branch-api@2.7.0">
+        <sourceId>22b22dac-38d7-4e44-ad88-20cdbf93d789</sourceId>
+        <head class="jenkins.plugins.git.GitBranchSCMHead" plugin="git@4.10.3">
+          <name>master</name>
+        </head>
+        <scm class="hudson.plugins.git.GitSCM" plugin="git@4.10.3">
+          <configVersion>2</configVersion>
+          <userRemoteConfigs>
+            <hudson.plugins.git.UserRemoteConfig>
+              <name>origin</name>
+              <refspec>+refs/heads/*:refs/remotes/origin/*</refspec>
+              <url>ssh://lciadm100@gerrit.ericsson.se:29418/OSS/ENM-Parent/SQ-Gate/com.ericsson.oss.containerisation/eric-enm-cappa-utils</url>
+              <credentialsId>lciadm100_private_key</credentialsId>
+            </hudson.plugins.git.UserRemoteConfig>
+          </userRemoteConfigs>
+          <branches class="singleton-list">
+            <hudson.plugins.git.BranchSpec>
+              <name>master</name>
+            </hudson.plugins.git.BranchSpec>
+          </branches>
+          <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+          <submoduleCfg class="empty-list"/>
+          <extensions>
+            <jenkins.plugins.git.GitSCMSourceDefaults>
+              <includeTags>false</includeTags>
+            </jenkins.plugins.git.GitSCMSourceDefaults>
+          </extensions>
+        </scm>
+        <properties/>
+        <actions>
+          <jenkins.scm.api.metadata.PrimaryInstanceMetadataAction plugin="scm-api@595.vd5a_df5eb_0e39"/>
+        </actions>
+      </branch>
+    </org.jenkinsci.plugins.workflow.multibranch.BranchJobProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.BooleanParameterDefinition>
+          <name>upload_kubeconfig_file</name>
+          <description>Mark true if you want to upload a kubeconfig or false to use kubeconfig on eccd</description>
+          <defaultValue>false</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>kubeconfig_file</name>
+          <description>kubeconfig file</description>
+          <defaultValue>ccd-c15a042.admin.conf</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>kubeconfig_B64</name>
+          <description>Your kubeconfig file converted to Base64</description>
+          <defaultValue>Null</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>kubeconfig_location</name>
+          <description>Your kubeconfig file converted to Base64</description>
+          <defaultValue>/home/eccd/.kube/config</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>podname</name>
+          <description>The pod you want to run cappa against</description>
+          <defaultValue>all</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>grouping</name>
+          <description>A csv of all podnames you want capabilities grouped for</description>
+          <defaultValue>accesscontrol,amos,apserv,autoidservice,cellserv,cmserv,cmevents,cmutilities,comecimpolicy,consul,dc-history,dlms,domain-proxy,dp-mediation,elex,elasticsearch,elementmanager,eventbasedclient,flowautomation,flsserv,fmalarmprocessing,fm-history,fmserv,general-scripting,gossiprouter-cache,gossiprouter-eap7,gossiprouter-remoting,haproxy,impexpserv,jms,ipsmserv,itservices,kpicalcserv,kpiserv,kvstore,lcmserv,medrouter,Modeldeployservice,models,msap,mscmip,msapgfm,mspmip,mscm,mscmapg,mscmce,mskpirt,msfm,msnetlog,mspm,mssnmpfm,mssnmpcm,nbalarmirp,nb-fm-snmp,nbi-bnsi-fm,nedoserv,netex,neo4j,nodecli,nodeplugins,ops,openidm,opendj,pkiraserv,pmrouterpolicy,pmserv,postgres,secserv,sentinel,shmcoreserv,shmserv,smrsserv,sps,sso,supervc,saserv,solr,solrautoid,eric-enm-troubleshooting-utils,uiserv,visinamingnb,visinamingsb,vaultserv,winfiol,wpserv</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>hostname</name>
+          <description>The hostname or IP address of eccd</description>
+          <defaultValue>10.232.182.135</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>username</name>
+          <description>The username on eccd to use</description>
+          <defaultValue>eccd</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>password</name>
+          <description>The password for eccd if applicable</description>
+          <defaultValue>none</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>InstallCappa</name>
+          <description>Mark True if you want to automate cappa install</description>
+          <defaultValue>false</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>rpms</name>
+          <description>CSV of RPMs to install and their versions with &quot;=&quot; if required</description>
+          <defaultValue>audit,bcc-tools,libelf-devel,python3-bcc,python3-future,bcc-docs,sqlite3,zlib-devel,libstdc++-devel,libLLVM7,libclang7,libbcc0</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>kernel_rpms</name>
+          <description>The Kernel RPMs to install and their versions with &quot;=&quot; if required</description>
+          <defaultValue>kernel-macros,kernel-devel,kernel-default-devel=5.3.18-24.75.3,kernel-source</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>cappa_tgz</name>
+          <description>The helm chart tgz of cappa to install</description>
+          <defaultValue>eric-cbo-cappa-0.5.0-1.tgz</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>cappa_namespace</name>
+          <description>The namespace to deploy cappa to this is not ENM please refer to ADP</description>
+          <defaultValue>test-deployment-namespace</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>cappa_running_time</name>
+          <description>The minimum length of time to run cappa for (passed to python time.sleep())</description>
+          <defaultValue>450</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>use_keyfile</name>
+          <description>Boolean to use either a password or pem file to connect to eccd</description>
+          <defaultValue>false</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>director_node_pem_file</name>
+          <description>Pem File for your cENM environment</description>
+          <defaultValue>ccd-c15a042.director.pem</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>director_node_B64</name>
+          <description>Your Pem File Converted to Base64</description>
+          <defaultValue>asdf</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>cappa_create_kernel_symlinks</name>
+          <description>Create symlink for inconsistent kernel version generally caused by PTF install</description>
+          <defaultValue>false</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>old_kernel_version</name>
+          <description>Old kernel version to remove</description>
+          <defaultValue>5.3.18-24.75.3.22935.1.PTF.1190467-default</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>new_kernel_version</name>
+          <description>new kernel version to install</description>
+          <defaultValue>5.3.18-24.75.3</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>Security_Context_Diff</name>
+          <description>Mark True if you want to run the security context diff</description>
+          <defaultValue>false</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>Security_Context_File</name>
+          <description>Security Context File used to compare against</description>
+          <defaultValue>Null</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>ArchiveEntireDatabase</name>
+          <description>Boolean to save the entire generated cappa database. Note these files can be quite large please dont pollute artifactory unless necessary.</description>
+          <defaultValue>true</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>TriggerRFA250</name>
+          <description>In order to get a good reading of the capabilities for ENM this Boolean will trigger RFA 250</description>
+          <defaultValue>true</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>test_phase</name>
+          <description>The test phase being run</description>
+          <defaultValue>MTE</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>drop</name>
+          <description>Drop for upgrade</description>
+          <defaultValue>21.18</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>product_set_version</name>
+          <description>The Product Set version of vENM to upgrade to</description>
+          <defaultValue>21.18.3</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>cluster_id</name>
+          <description>Deployment name of cENM Cloud Deployment</description>
+          <defaultValue>ieatenmc15a042</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>taf_version</name>
+          <description>Version of the TAF to use</description>
+          <defaultValue>AUTO</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>central_csv_version</name>
+          <description>	Version of the Central CSV to use</description>
+          <defaultValue>AUTO</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>taf_scheduler_version</name>
+          <description>	Version of the TAF Scheduler to use</description>
+          <defaultValue>AUTO</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>send_confidence_level</name>
+          <defaultValue>NO</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>mt_utils_version</name>
+          <defaultValue>RELEASE</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>cenm_product_set_version</name>
+          <defaultValue>21.18.3</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.multibranch.SCMBinder" plugin="workflow-multibranch@711.vdfef37cda_816">
+    <scriptPath>Jenkinsfile</scriptPath>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

@@ -1,0 +1,709 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.39">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.7.0"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.7.0">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>50</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.23.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty/>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>PRODUCT_SET</name>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>INTEGRATION_VALUE_FILE</name>
+          <description>This parameter will work for the automatic BUILD_TYPE and whichever value is chosen that file will be written as production values and further process will continue.</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>eric-enm-integration-extra-large-production-values</string>
+              <string>eric-enm-integration-kaas-core-values</string>
+              <string>eric-enm-integration-openstack-core-values</string>
+              <string>eric-enm-integration-functional-kaas-values</string>
+              <string>eric-enm-integration-functional-test-values</string>
+              <string>eric-enm-integration-production-values</string>
+              <string>eric-enm-single-instance-production-integration-values</string>
+              <string>eric-enm-multi-instance-functional-integration-values</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>SLAVE</name>
+          <description>Please provide slave details
+</description>
+          <defaultValue>CENM_RHEL7_GE_csar_1</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>snapshot_artifacts</name>
+          <description>example: eric-enm-stateless-integration::https://arm.epk.ericsson.se/artifactory/proj-enm-kgb-dev-helm//eric-enm-stateless-integration/eric-enm-stateless-integration-1.19.0-24-h6d746e6.tgz</description>
+          <defaultValue>eric-enm-stateless-integration::https://arm.epk.ericsson.se/artifactory/proj-enm-kgb-dev-helm//eric-enm-stateless-integration/eric-enm-stateless-integration-1.19.0-24-h6d746e6.tgz</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>SPRINT_TAG</name>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit></paramsToUseForLimit>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.80">
+    <script>#!/usr/bin/env groovy
+
+/* IMPORTANT:
+ *
+ * In order to make this pipeline work, the following configuration on Jenkins is required:
+ * - slave with a specific label (see pipeline.agent.label below)
+ * - credentials plugin should be installed and have the secrets with the following names:
+ *   + lciadm100credentials (token to access Artifactory)
+ */
+
+def defaultAMPackageImage = &apos;armdocker.rnd.ericsson.se/proj-am/releases/eric-am-package-manager:2.62.0-1&apos;
+def metadataImage = &apos;armdocker.rnd.ericsson.se/proj-enm/cenm-build-utilities:latest&apos;
+def AMPackage = new AMPackageCommand()
+        .AMPackageImage(defaultAMPackageImage)
+        .needDockerSocket(true)
+        .toString()
+def defaultBobImage = &apos;armdocker.rnd.ericsson.se/sandbox/adp-staging/adp-cicd/bob.2.0:1.5.2-0&apos;
+def bob = new BobCommand()
+        .bobImage(defaultBobImage)
+        .needDockerSocket(true)
+        .toString()
+
+def GIT_COMMITTER_NAME = &apos;lciadm100&apos;
+def GIT_COMMITTER_EMAIL = &apos;lciadm100@ericsson.com&apos;
+def failedStage = &apos;&apos;
+
+def overrideIntegrationValues(){
+    try {
+        filename = &quot;scripts/${integration_values}&quot;
+        values = readYaml file: filename
+
+        bro = &quot;eric-enm-bro-integration&quot;
+        sh &quot;tar -zxf charts/${bro}-${BRO_CHART_VERSION}.tgz&quot;
+        pre_deploy = &quot;eric-enm-pre-deploy-integration&quot;
+        sh &quot;tar -zxf charts/${pre_deploy}-${PRE_DEPLOY_CHART_VERSION}.tgz&quot;
+        infra = &quot;eric-enm-infra-integration&quot;
+        sh &quot;tar -zxf charts/${infra}-${INFRA_CHART_VERSION}.tgz&quot;
+        stateless = &quot;eric-enm-stateless-integration&quot;
+        sh &quot;tar -zxf charts/${stateless}-${STATELESS_CHART_VERSION}.tgz&quot;
+        monitoring = &quot;eric-enm-monitoring-integration&quot;
+        sh &quot;tar -zxf charts/${monitoring}-${MONITORING_CHART_VERSION}.tgz&quot;
+
+        if(values.&quot;eric-enm-version-configmap&quot;.containsKey(&quot;productVersion&quot;))
+            values.&quot;eric-enm-version-configmap&quot;.productVersion = &quot;ENM ${SPRINT_TAG} (CSAR Version: ${VERSION}) ${ENM_RSTATE_NUMBER}&quot;
+
+        if(values.&quot;eric-enm-version-configmap&quot;.containsKey(&quot;packageVersion&quot;))
+            values.&quot;eric-enm-version-configmap&quot;.packageVersion = &quot;CXP 904 1414 ${VERSION} ${RSTATE}&quot;
+
+        if(values.&quot;eric-enm-version-configmap&quot;.containsKey(&quot;productionDate&quot;))
+            values.&quot;eric-enm-version-configmap&quot;.productionDate = &quot;${VNF_RELEASE_DATE_TIME}&quot;
+
+        if(values.&quot;eric-enm-version-configmap&quot;.containsKey(&quot;productSet&quot;))
+            values.&quot;eric-enm-version-configmap&quot;.productSet = &quot;${PRODUCT_SET}&quot;
+
+        eric_log_shipper_values = readYaml file: &quot;${infra}/charts/eric-log-shipper/eric-product-info.yaml&quot;
+        values.&quot;eric-log-shipper&quot;.imageCredentials = [&quot;repoPath&quot;: &quot;proj-enm/${eric_log_shipper_values.images.logShipper.repoPath}&quot;]
+
+        eric_data_search_engine_curator_values = readYaml file: &quot;${infra}/charts/eric-data-search-engine-curator/eric-product-info.yaml&quot;
+        values.&quot;eric-data-search-engine-curator&quot;.imageCredentials = [&quot;repoPath&quot;: &quot;proj-enm/${eric_data_search_engine_curator_values.images.curator.repoPath}&quot;, &quot;logshipper&quot;: [&quot;repoPath&quot;: &quot;proj-enm/${eric_data_search_engine_curator_values.images.logshipper.repoPath}&quot;]]
+
+        eric_data_search_engine_values = readYaml file: &quot;${infra}/charts/eric-data-search-engine/eric-product-info.yaml&quot;
+        values.&quot;eric-data-search-engine&quot;.imageCredentials = [&quot;repoPath&quot;: &quot;proj-enm/${eric_data_search_engine_values.images.searchengine.repoPath}&quot;, &quot;logshipper&quot;: [&quot;repoPath&quot;: &quot;proj-enm/${eric_data_search_engine_values.images.logshipper.repoPath}&quot;]]
+
+        eric_data_eshistory_search_engine_values = readYaml file: &quot;${infra}/charts/eric-data-search-engine/eric-product-info.yaml&quot;
+        values.&quot;eric-data-eshistory-search-engine&quot;.imageCredentials = [&quot;repoPath&quot;: &quot;proj-enm/${eric_data_eshistory_search_engine_values.images.searchengine.repoPath}&quot;, &quot;logshipper&quot;: [&quot;repoPath&quot;: &quot;proj-enm/${eric_data_eshistory_search_engine_values.images.logshipper.repoPath}&quot;]]
+
+        eric_data_graph_database_nj_values = readYaml file: &quot;${infra}/charts/eric-data-graph-database-nj/values.yaml&quot;
+        values.&quot;eric-data-graph-database-nj&quot;.imageCredentials = [&quot;repoPath&quot;: &quot;proj-enm/${eric_data_graph_database_nj_values.imageCredentials.repoPath}&quot;, &quot;logshipper&quot;: [&quot;repoPath&quot;: &quot;proj-enm/proj-adp-log-released&quot;]]
+
+        eric_enm_int_document_database_pg_values = readYaml file: &quot;${infra}/charts/eric-enm-int-document-database-pg/charts/eric-data-document-database-pg/eric-product-info.yaml&quot;
+        values.&quot;eric-enm-int-document-database-pg&quot;.&quot;eric-data-document-database-pg&quot;.imageCredentials = [&quot;repoPath&quot;: &quot;proj-enm/${eric_enm_int_document_database_pg_values.images.pg13.repoPath}&quot;]
+        values.&quot;eric-enm-int-document-database-pg&quot;.&quot;eric-data-document-database-pg&quot;.global = [&quot;imageCredentials&quot;: [&quot;logshipper&quot;: [&quot;repoPath&quot;: &quot;proj-enm/${eric_log_shipper_values.images.logShipper.repoPath}&quot;]]]
+
+        eric_ctrl_bro_values = readYaml file: &quot;${bro}/charts/eric-ctrl-bro/values.yaml&quot;
+        values.&quot;eric-ctrl-bro&quot;.imageCredentials = [&quot;repoPath&quot;: &quot;proj-enm/${eric_ctrl_bro_values.imageCredentials.repoPath}&quot;]
+
+        eric_pm_server_values = readYaml file: &quot;${monitoring}/charts/eric-pm-server/eric-product-info.yaml&quot;
+        values.&quot;eric-pm-server&quot;.imageCredentials = [&quot;repoPath&quot;: &quot;proj-enm/${eric_pm_server_values.images.&apos;eric-pm-server&apos;.repoPath}&quot;]
+        values.&quot;eric-pm-server&quot;.global = [&quot;imageCredentials&quot;: [&quot;logshipper&quot;: [&quot;repoPath&quot;: &quot;proj-enm/${eric_log_shipper_values.images.logShipper.repoPath}&quot;]]]
+
+        eric_pm_alert_manager_values = readYaml file: &quot;${monitoring}/charts/eric-pm-alert-manager/eric-product-info.yaml&quot;
+        values.&quot;eric-pm-alert-manager&quot;.imageCredentials = [&quot;repoPath&quot;: &quot;proj-enm/${eric_pm_alert_manager_values.images.alertmanager.repoPath}&quot;, &quot;logshipper&quot;: [&quot;repoPath&quot;: &quot;proj-enm/${eric_pm_alert_manager_values.images.logshipper.repoPath}&quot;]]
+
+        eric_pm_node_exporter_values = readYaml file: &quot;${monitoring}/charts/eric-pm-node-exporter/values.yaml&quot;
+        values.&quot;eric-pm-node-exporter&quot;.imageCredentials = [&quot;repoPath&quot;: &quot;proj-enm/${eric_pm_node_exporter_values.imageCredentials.repoPath}&quot;]
+
+        eric_enm_int_log_transformer_values = readYaml file: &quot;${infra}/charts/eric-enm-int-log-transformer/charts/eric-log-transformer/eric-product-info.yaml&quot;
+        values.&quot;eric-enm-int-log-transformer&quot;.&quot;eric-log-transformer&quot;.imageCredentials = [&quot;repoPath&quot;: &quot;proj-enm/${eric_enm_int_log_transformer_values.images.logtransformer.repoPath}&quot;]
+        values.&quot;eric-enm-int-log-transformer&quot;.&quot;eric-log-transformer&quot;.global = [&quot;imageCredentials&quot;: [&quot;logshipper&quot;: [&quot;repoPath&quot;: &quot;proj-enm/${eric_log_shipper_values.images.logShipper.repoPath}&quot;]]]
+        
+        eric_net_ingress_l4_values = readYaml file: &quot;${infra}/charts/eric-net-ingress-l4/values.yaml&quot;
+        values.&quot;eric-net-ingress-l4&quot;.global = [&quot;imageCredentials&quot;: [&quot;logshipper&quot;: [&quot;repoPath&quot;: &quot;proj-enm/${eric_net_ingress_l4_values.imageCredentials.logshipper.repoPath}&quot;]]]
+
+        eric_data_key_value_database_rd_values = readYaml file: &quot;${stateless}/charts/eric-enmsg-fmx-integration/charts/eric-data-key-value-database-rd/eric-product-info.yaml&quot;
+        values.&quot;eric-enmsg-fmx-integration&quot;.&quot;eric-data-key-value-database-rd&quot;.imageCredentials = [&quot;kvdbOperator&quot;: [&quot;repoPath&quot;: &quot;proj-enm/${eric_data_key_value_database_rd_values.images.kvdbOperator.repoPath}&quot;], &quot;logshipper&quot;: [&quot;repoPath&quot;: &quot;proj-enm/proj-adp-log-released&quot;]]
+
+        values.&quot;eric-enmsg-fmx-integration&quot;.&quot;eric-data-key-value-database-rd&quot;.&quot;imageCredentials&quot;.&quot;kvdbOperator&quot;.registry = [&quot;url&quot;: &quot;&quot;]
+
+        eric_data_key_value_database_rd_operand_values = readYaml file: &quot;${stateless}/charts/eric-enmsg-fmx-integration/charts/eric-data-key-value-database-rd-operand/values.yaml&quot;
+        values.&quot;eric-enmsg-fmx-integration&quot;.&quot;eric-data-key-value-database-rd-operand&quot;.imageCredentials = [&quot;node&quot;: [&quot;repoPath&quot;: &quot;proj-enm/${eric_data_key_value_database_rd_operand_values.imageCredentials.node.repoPath}&quot;, &quot;registry&quot;: [&quot;url&quot;: &quot;&quot;]], &quot;metricsExporter&quot;: [&quot;repoPath&quot;: &quot;proj-enm/${eric_data_key_value_database_rd_operand_values.imageCredentials.metricsExporter.repoPath}&quot;, &quot;registry&quot;: [&quot;url&quot;: &quot;&quot;]], &quot;logshipper&quot;: [&quot;repoPath&quot;: &quot;proj-enm/proj-adp-log-released&quot;]]
+
+        eric_eo_evnfm_mb_values = readYaml file: &quot;${stateless}/charts/eric-enmsg-fmx-integration/charts/eric-eo-evnfm-mb/eric-product-info.yaml&quot;
+        values.&quot;eric-enmsg-fmx-integration&quot;.&quot;eric-eo-evnfm-mb&quot;.imageCredentials = [&quot;evnfmMB&quot;: [&quot;repoPath&quot;: &quot;proj-enm/${eric_eo_evnfm_mb_values.images.evnfmMB.repoPath}&quot;], &quot;logshipper&quot;: [&quot;repoPath&quot;: &quot;proj-enm/${eric_eo_evnfm_mb_values.images.logshipper.repoPath}&quot;], &quot;volumePermissions&quot;: [&quot;repoPath&quot;: &quot;proj-enm/${eric_eo_evnfm_mb_values.images.volumePermissions.repoPath}&quot;]]
+
+        eric_oss_ingress_controller_nx_values = readYaml file: &quot;${pre_deploy}/charts/eric-oss-ingress-controller-nx/eric-product-info.yaml&quot;
+        values.&quot;eric-oss-ingress-controller-nx&quot;.imageCredentials = [&quot;repoPath&quot;: &quot;proj-enm/${eric_oss_ingress_controller_nx_values.images.ingresscontroller.repoPath}&quot;, &quot;logshipper&quot;: [&quot;repoPath&quot;: &quot;proj-enm/${eric_oss_ingress_controller_nx_values.images.logshipper.repoPath}&quot;]]
+
+        eric_enm_kvstore_hc_values = readYaml file: &quot;${infra}/charts/eric-enm-kvstore-hc/values.yaml&quot;
+        values.&quot;eric-enm-kvstore-hc&quot;.global = [&quot;imageCredentials&quot;: [&quot;logshipper&quot;: [&quot;repoPath&quot;: &quot;proj-enm/${eric_enm_kvstore_hc_values.imageCredentials.logshipper.repoPath}&quot;]]]
+
+        eric_enm_fm_alert_parser_values = readYaml file: &quot;${monitoring}/charts/eric-enm-fm-alert-parser/values.yaml&quot;
+        values.&quot;eric-enm-fm-alert-parser&quot;.imageCredentials = [&quot;logshipper&quot;: [&quot;repoPath&quot;: &quot;proj-enm/${eric_enm_fm_alert_parser_values.imageCredentials.logshipper.repoPath}&quot;]]
+
+
+        eric_cnom_server_values = readYaml file: &quot;${stateless}/charts/eric-cnom-server/eric-product-info.yaml&quot;
+        values.&quot;eric-cnom-server&quot;.imageCredentials = [&quot;repoPath&quot;: &quot;proj-enm/${eric_cnom_server_values.images.server.repoPath}&quot;]
+        values.&quot;eric-cnom-server&quot;.global = [&quot;imageCredentials&quot;: [&quot;logshipper&quot;: [&quot;repoPath&quot;: &quot;proj-enm/${eric_log_shipper_values.images.logShipper.repoPath}&quot;]]]
+
+        values.&quot;eric-cnom-server&quot;.&quot;imageCredentials&quot;.registry = [&quot;url&quot;: &quot;&quot;]
+
+        eric_cnom_document_database_mg_values = readYaml file: &quot;${infra}/charts/eric-cnom-document-database-mg/values.yaml&quot;
+        values.&quot;eric-cnom-document-database-mg&quot;.imageCredentials = [&quot;repoPath&quot;: &quot;proj-enm/${eric_cnom_document_database_mg_values.imageCredentials.repoPath}&quot;]
+
+        values.&quot;eric-cnom-document-database-mg&quot;.&quot;imageCredentials&quot;.registry = [&quot;url&quot;: &quot;&quot;]
+
+        values.&quot;eric-enmsg-opendj&quot;.imageCredentials = [&quot;logshipper&quot;:[&quot;repoPath&quot;: &quot;proj-enm/proj-adp-log-released&quot;]]
+
+        values.&quot;eric-enm-rwxpvc&quot;.imageCredentials = [&quot;logshipper&quot;:[&quot;repoPath&quot;: &quot;proj-enm/proj-adp-log-released&quot;]]
+
+        values.&quot;eric-ctrl-brocli&quot;.imageCredentials = [&quot;logshipper&quot;:[&quot;repoPath&quot;: &quot;proj-enm/proj-adp-log-released&quot;]]
+
+        eric_oss_metrics_stager_values = readYaml file: &quot;${monitoring}/charts/eric-oss-metrics-stager/eric-product-info.yaml&quot;
+        if (!values.containsKey(&quot;eric-oss-metrics-stager&quot;))
+            values[&quot;eric-oss-metrics-stager&quot;] = [:]
+        values.&quot;eric-oss-metrics-stager&quot;.imageCredentials = [
+            &quot;repoPath&quot;: &quot;proj-enm/${eric_oss_metrics_stager_values.images.remotewriter.repoPath}&quot;,
+            &quot;logshipper&quot;: [&quot;repoPath&quot;: &quot;proj-enm/${eric_oss_metrics_stager_values.images.logshipper.repoPath}&quot;]
+        ]
+
+        eric_oss_ddc_values = readYaml file: &quot;${monitoring}/charts/eric-enm-ddc/charts/eric-oss-ddc/eric-product-info.yaml&quot;
+        values.&quot;eric-enm-ddc&quot;.&quot;eric-oss-ddc&quot;.imageCredentials = [
+            &quot;logshipper&quot;: [&quot;repoPath&quot;: &quot;proj-enm/${eric_oss_ddc_values.images.logshipper.repoPath}&quot;]
+        ]
+
+        sh &quot;rm -r ${bro}&quot;
+        sh &quot;rm -r ${pre_deploy}&quot;
+        sh &quot;rm -r ${infra}&quot;
+        sh &quot;rm -r ${stateless}&quot;
+        sh &quot;rm -r ${monitoring}&quot;
+
+        sh &quot;rm -f ${filename}&quot;
+        writeYaml file: filename, data: values
+    } catch( err ) {
+        echo &quot;$err&quot;
+        error &quot;$err&quot;
+    }
+}
+
+pipeline {
+    agent {
+            node
+            {
+            label &apos;TEMP-Cloud-Native&apos;
+            }
+        }
+    environment{
+        repositoryUrl = &quot;https://arm902-eiffel004.athtem.eei.ericsson.se:8443/nexus/content/repositories/releases/&quot;
+        CSAR_PACKAGE_NAME = &quot;enm-installation-package&quot;
+        OPENIDM = &quot;eric-enm-openidm-change-password:latest&quot;
+        PASSKEY =  &quot;eric-enm-securestorage-regen-passkey:latest&quot;
+        OPENIDM_IMAGE_PATH = &quot;armdocker.rnd.ericsson.se/proj-enm&quot;
+        PASSKEY_IMAGE_PATH = &quot;armdocker.rnd.ericsson.se/proj-enm&quot;
+        PACKAGE_TYPE=&quot;csar&quot;
+    }
+    stages {
+        stage (&apos;Clean workspace&apos;) {
+          steps {
+                script {
+                          sh &quot;docker image prune -fa&quot;
+               }
+            deleteDir()
+         }
+        }
+        stage(&apos;Checkout Cloud-Native CSAR Git Repository&apos;) {
+            steps {
+                git branch: &apos;dTrof-Design-snapshot&apos;,
+                        url: &apos;${GERRIT_MIRROR}/OSS/com.ericsson.oss.containerisation/eric-enm-csar-package&apos;
+                sh &apos;&apos;&apos;
+                    git remote set-url origin --push ${GERRIT_CENTRAL}/OSS/com.ericsson.oss.containerisation/eric-enm-csar-package
+                &apos;&apos;&apos;
+            }
+        }
+        stage( &apos;Pre Configurations&apos; ) {
+            steps {
+                 script{
+                        sh &apos;mkdir -p ${PWD}/charts&apos;
+                        sh &apos;cp settings.xml ${HOME}/.m2/&apos;
+                        env.VNF_RELEASE_DATE_TIME = sh(script: &quot;date +&apos;%FT%T%:z&apos;&quot;, returnStdout: true).trim()
+                        echo &quot;${VNF_RELEASE_DATE_TIME}&quot;
+                        env.ENM_RSTATE_NUMBER = sh(script: &apos;wget -q -O - --no-check-certificate &quot;https://ci-portal.seli.wh.rnd.internal.ericsson.com/getAOMRstate/?product=ENM&amp;drop=${SPRINT_TAG}&quot;&apos;, returnStdout: true).trim()
+                        echo &quot;${ENM_RSTATE_NUMBER}&quot;
+                 }
+            }
+        }
+        stage(&apos;Get integration charts&apos;){
+            steps {
+                script {
+                   sh &apos;echo &quot;drop=${SPRINT_TAG}&quot; &apos;
+                   echo &quot;Extracting the jq software&quot;
+                   sh &quot;tar -xvf Software/jq-1.0.1.tar ; chmod +x ./jq&quot;
+                   get_cn_build_version_info()
+                   download_charts_ci_internal()
+                   remove_tgz_with_artifacts()
+                 }
+            }
+        }
+        stage(&apos;Generate new version&apos;) {
+            steps {
+                script {
+				    env.VERSION = &quot;1.18.0-201-h987f80d&quot;
+                    echo &quot;${VERSION}&quot;
+                    env.RSTATE = sh(script: &quot;cat .bob/var.rstate&quot;, returnStdout:true).trim()
+                    echo &quot;${RSTATE}&quot;
+                    env.VNF_PACKAGE_VERSION = sh(script: &quot;echo CXP9041414_$VERSION&quot;, returnStdout:true).trim()
+                    echo &quot;$VNF_PACKAGE_VERSION&quot;					
+                }
+            }
+        }
+        stage(&apos;Packaging of Additional images&apos;) {
+             steps {
+                script {
+                    sh &apos;docker pull ${OPENIDM_IMAGE_PATH}/${OPENIDM}&apos;
+                    sh &apos;docker pull ${PASSKEY_IMAGE_PATH}/${PASSKEY}&apos;
+                    sh &apos;docker tag  ${OPENIDM_IMAGE_PATH}/${OPENIDM} ${OPENIDM}&apos;
+                    sh &apos;docker tag  ${PASSKEY_IMAGE_PATH}/${PASSKEY} ${PASSKEY}&apos;
+                    sh &apos;docker save ${OPENIDM} -o scripts/eric-enm-openidm-change-password-docker.tar&apos;
+                    sh &apos;docker save ${PASSKEY} -o scripts/eric-enm-securestorage-regen-passkey-docker.tar&apos;
+                    sh &apos;gzip scripts/eric-enm-securestorage-regen-passkey-docker.tar&apos;
+                    sh &apos;gzip scripts/eric-enm-openidm-change-password-docker.tar&apos;
+                }
+            }
+            post {
+                always {
+                    sh &apos;docker image remove ${OPENIDM}&apos;
+                    sh &apos;docker image remove ${PASSKEY}&apos;
+                    sh &apos;docker image remove ${OPENIDM_IMAGE_PATH}/${OPENIDM}&apos;
+                    sh &apos;docker image remove ${PASSKEY_IMAGE_PATH}/${PASSKEY}&apos;
+                }
+            }
+        }
+        stage(&apos;Integration value version&apos;){
+            steps{
+                script {
+                     sh &apos;curl -4 https://arm.epk.ericsson.se/artifactory/proj-enm-dev-internal-helm/eric-enm-integration-values/eric-enm-integration-production-values-${INTEGRATION_VALUE_VERSION}.yaml -o scripts/eric-enm-integration-production-values-${INTEGRATION_VALUE_VERSION}.yaml&apos;
+                     sh &apos;curl -4 https://arm.epk.ericsson.se/artifactory/proj-enm-dev-internal-helm/eric-enm-integration-values/eric-enm-integration-extra-large-production-values-${INTEGRATION_VALUE_VERSION}.yaml -o scripts/eric-enm-integration-extra-large-production-values-${INTEGRATION_VALUE_VERSION}.yaml&apos;
+                     remove_yaml_with_artifacts()
+                      }
+                }
+        }
+        stage(&apos;Override integration-values file&apos;) {
+            steps {
+                script {
+                    env.integration_values=sh (script: &quot;ls scripts |grep eric-enm-integration-production-values*&quot;, returnStdout: true ).trim()
+                    overrideIntegrationValues()
+                    check_extra_large_values=sh (script: &quot;ls scripts |grep eric-enm-integration-extra-large-production-values*&quot;, returnStatus: true )
+                    if (check_extra_large_values == 0){
+                        env.integration_values=sh (script: &quot;ls scripts |grep eric-enm-integration-extra-large-production-values*&quot;, returnStdout: true ).trim()
+                        overrideIntegrationValues()
+                    }
+                    sh &quot;sed -i -z &apos;s/tags:/tags: \\&amp;tags_reference/1&apos; scripts/eric-enm-integration-*&quot;
+                    sh &quot;sed -i -z &apos;s/tags:/tags:\\n    *tags_reference/2&apos; scripts/eric-enm-integration-*&quot;
+                    sh &quot;sed -i &apos;20,2000{/value_pack_/d}&apos; scripts/eric-enm-integration-*&quot;
+                }
+            }
+        }
+        stage(&apos;Update manifest details&apos;) {
+            steps {
+                script {
+                    sh &quot;sed -i -e &apos;/^vnf_package_version:/s/.*/vnf_package_version: $VNF_PACKAGE_VERSION/&apos; -e &apos;/^vnf_release_date_time:/s/.*/vnf_release_date_time: $VNF_RELEASE_DATE_TIME/&apos; manifest/enm_descriptor.mf&quot;
+                    sh(&quot;cat manifest/enm_descriptor.mf&quot;)
+                }
+            }
+        }
+        stage(&apos;Update VNFD details&apos;) {
+            steps {
+                script {
+                    sh &quot;mkdir -p vnfd_updated&quot;
+                    sh &quot;cp vnfd/enm_descriptor.yaml vnfd_updated/enm_descriptor.yaml&quot;
+                    sh &quot;sed -i &apos;s/&lt;&lt;VERSION&gt;&gt;/$VERSION/g&apos; vnfd_updated/enm_descriptor.yaml&quot;
+                    sh &quot;sed -i &apos;s/&lt;&lt;DESCRIPTOR_ID&gt;&gt;/${UUID.randomUUID().toString()}/g&apos; vnfd_updated/enm_descriptor.yaml&quot;
+                    sh &quot;sed -i &apos;s/&lt;&lt;PRODUCT_SET&gt;&gt;/${PRODUCT_SET}/g&apos; vnfd_updated/enm_descriptor.yaml&quot;
+                    sh &quot;sed -i &apos;s/&lt;&lt;bro_chart_version&gt;&gt;/${bro_chart_version}/g&apos; vnfd_updated/enm_descriptor.yaml&quot;
+                    sh &quot;sed -i &apos;s/&lt;&lt;pre_deploy_chart_version&gt;&gt;/${pre_deploy_chart_version}/g&apos; vnfd_updated/enm_descriptor.yaml&quot;
+                    if(&quot;${PRODUCT_SET}&quot; &gt; &quot;21.03.57&quot;){
+                    sh &quot;sed -i &apos;s/&lt;&lt;monitoring_chart_version&gt;&gt;/${monitoring_chart_version}/g&apos; vnfd_updated/enm_descriptor.yaml&quot;
+                    }
+                    sh &quot;sed -i &apos;s/&lt;&lt;infra_chart_version&gt;&gt;/${infra_chart_version}/g&apos; vnfd_updated/enm_descriptor.yaml&quot;
+                    sh &quot;sed -i &apos;s/&lt;&lt;stateless_chart_version&gt;&gt;/${stateless_chart_version}/g&apos; vnfd_updated/enm_descriptor.yaml&quot;
+                }
+            }
+        }
+        stage(&apos;Build CSAR Package&apos;) {
+            steps {
+                script {
+                        def AMPackageWithCsar = new AMPackageCommand()
+                                .AMPackageImage(defaultAMPackageImage)
+                                .needDockerSocket(true)
+                                .envVars([&apos;ENM_INSTALLATION_CHART_VERSION&apos;: env.infra_chart_version,
+                                          &apos;INTEGRATION_VALUE_VERSION&apos;: env.INTEGRATION_VALUE_VERSION,
+                                ])
+                                .toString()
+                        sh &quot;${AMPackageWithCsar} generate -hd charts/ --name ${CSAR_PACKAGE_NAME}-${env.VERSION} -sc scripts --set global.restore.state=ongoing -mf manifest/enm_descriptor.mf --history history/ChangeLog.txt --vnfd vnfd_updated/enm_descriptor.yaml --definitions definitions/etsi_nfv_sol001_vnfd_2_5_1_types.yaml --helm3&quot;
+                }
+            }
+        }
+        stage(&apos;Generate CSAR Parameters&apos;) {
+            steps {
+                script {
+                            sh &apos;echo &quot;CSAR_PACKAGE_VERSION=${VERSION}&quot; &gt; artifact.properties&apos;
+                            sh &apos;echo &quot;bro_chart_version=${bro_chart_version}&quot; &gt;&gt; artifact.properties&apos;
+                            sh &apos;echo &quot;PRE_DEPLOY_VERSION=${pre_deploy_chart_version}&quot; &gt;&gt; artifact.properties&apos;
+                            if(&quot;${}&quot; &gt; &quot;21.03.57&quot;){
+                                 sh &apos;echo &quot;monitoring_chart_version=${monitoring_chart_version}&quot; &gt;&gt; artifact.properties&apos;
+                            }
+                            sh &apos;echo &quot;infra_chart_version=${infra_chart_version}&quot; &gt;&gt; artifact.properties&apos;
+                            sh &apos;echo &quot;stateless_chart_version=${stateless_chart_version}&quot; &gt;&gt; artifact.properties&apos;
+                            sh &apos;echo &quot;INTEGRATION_VALUE_VERSION=${INTEGRATION_VALUE_VERSION}&quot; &gt;&gt; artifact.properties&apos;
+                            archiveArtifacts &apos;artifact.properties&apos;
+                }
+            }
+        }
+    }
+    post {
+        success {
+              script {
+                   sh &apos;echo &quot;Testing success&quot;&apos;
+            }
+        }
+    }
+}
+
+def remove_yaml_with_artifacts(){
+     try{
+        snapshot_string=&quot;${SNAPSHOT_ARTIFACTS}&quot;
+    }
+     catch(Exception ex){
+        snapshot_string=&quot;&quot;
+    }
+
+     if(snapshot_string != &quot;&quot;){
+          echo &quot;${snapshot_string}&quot;
+          def snapshot_artifacts_list=snapshot_string.split(&quot;@@&quot;)
+          for (item in snapshot_artifacts_list){
+                 println(item)
+                 def integration_value_file_name=item.split(&quot;::&quot;)[0]
+                 println(integration_value_file_name)
+                 def values_file_URL=item.split(&quot;::&quot;)[1]
+                 println(values_file_URL)
+                 if (&quot;${integration_value_file_name}&quot; == &quot;eric-enm-integration-functional-kaas-values&quot;){
+                 def version=values_file_URL.split(&quot;-values-&quot;)[1].split(&quot;.yaml&quot;)[0]
+                     println(version)
+                     env.integration_value_version=version
+                     sh &quot;rm -rf  scripts/${integration_value_file_name}-*&quot;
+                     sh &quot;curl -4 ${values_file_URL} -o scripts/${integration_value_file_name}-${version}.yaml&quot;
+                }
+                 if (&quot;${integration_value_file_name}&quot; == &quot;eric-enm-integration-functional-test-values&quot;){
+                     def version=values_file_URL.split(&quot;-values-&quot;)[1].split(&quot;.yaml&quot;)[0]
+                     println(version)
+                     env.integration_value_version=version
+                     sh &quot;rm -rf scripts/${integration_value_file_name}-*&quot;
+                     sh &quot;curl -4 ${values_file_URL} -o scripts/${integration_value_file_name}-${version}.yaml&quot;
+                }
+                 if (&quot;${integration_value_file_name}&quot; == &quot;eric-enm-integration-production-values&quot;){
+                     def version=values_file_URL.split(&quot;-values-&quot;)[1].split(&quot;.yaml&quot;)[0]
+                     println(version)
+                     env.integration_value_version=version
+                     sh &quot;rm -rf scripts/${integration_value_file_name}-*&quot;
+                     sh &quot;curl -4 ${values_file_URL} -o scripts/${integration_value_file_name}-${version}.yaml&quot;
+                }
+                 if (&quot;${integration_value_file_name}&quot; == &quot;eric-enm-integration-kaas-core-values&quot;){
+                     def version=values_file_URL.split(&quot;-values-&quot;)[1].split(&quot;.yaml&quot;)[0]
+                     println(version)
+                     env.integration_value_version=version
+                     sh &quot;rm -rf scripts/${integration_value_file_name}-*&quot;
+                     sh &quot;curl -4 ${values_file_URL} -o scripts/${integration_value_file_name}-${version}.yaml&quot;
+                }
+                 if (&quot;${integration_value_file_name}&quot; == &quot;eric-enm-integration-openstack-core-values&quot;){
+                     def version=values_file_URL.split(&quot;-values-&quot;)[1].split(&quot;.yaml&quot;)[0]
+                     println(version)
+                     env.integration_value_version=version
+                     sh &quot;rm -rf scripts/${integration_value_file_name}-*&quot;
+                     sh &quot;curl -4 ${values_file_URL} -o scripts/${integration_value_file_name}-${version}.yaml&quot;
+                }
+                if (&quot;${integration_value_file_name}&quot; == &quot;eric-enm-single-instance-production-integration-values&quot;){
+                     def version=values_file_URL.split(&quot;-values-&quot;)[1].split(&quot;.yaml&quot;)[0]
+                     println(version)
+                     env.integration_value_version=version
+                     sh &quot;rm -rf scripts/${integration_value_file_name}-*&quot;
+                     sh &quot;curl -4 ${values_file_URL} -o scripts/${integration_value_file_name}-${version}.yaml&quot;
+                }
+                if (&quot;${integration_value_file_name}&quot; == &quot;eric-enm-multi-instance-functional-integration-values&quot;){
+                     def version=values_file_URL.split(&quot;-values-&quot;)[1].split(&quot;.yaml&quot;)[0]
+                     println(version)
+                     env.integration_value_version=version
+                     sh &quot;rm -rf scripts/${integration_value_file_name}-*&quot;
+                     sh &quot;curl -4 ${values_file_URL} -o scripts/${integration_value_file_name}-${version}.yaml&quot;
+                }
+                if (&quot;${integration_value_file_name}&quot; == &quot;eric-enm-integration-extra-large-production-values&quot;){
+                     def version=values_file_URL.split(&quot;-values-&quot;)[1].split(&quot;.yaml&quot;)[0]
+                     println(version)
+                     env.integration_value_version=version
+                     sh &quot;rm -rf scripts/${integration_value_file_name}-*&quot;
+                     sh &quot;curl -4 ${values_file_URL} -o scripts/${integration_value_file_name}-${version}.yaml&quot;
+                }
+            }
+    }
+     else{
+        echo &quot;no snapshot string is provided&quot;
+     }
+}
+
+def remove_tgz_with_artifacts(){
+     try{
+        snapshot_string=&quot;${SNAPSHOT_ARTIFACTS}&quot;
+     }
+     catch(Exception ex){
+        snapshot_string=&quot;&quot;
+     }
+
+     if(snapshot_string != &quot;&quot;){
+          echo &quot;${snapshot_string}&quot;
+          def snapshot_artifacts_list=snapshot_string.split(&quot;@@&quot;)
+          for (item in snapshot_artifacts_list){
+                 println(item)
+                 def chart_name=item.split(&quot;::&quot;)[0]
+                 println(chart_name)
+                 def chart_URL=item.split(&quot;::&quot;)[1]
+                 println(chart_URL)
+                 version=chart_URL.split(&quot;-integration-&quot;)[1].split(&quot;.tgz&quot;)[0]
+                 println(version)
+                 if (&quot;${chart_name}&quot; == &quot;eric-enm-bro-integration&quot;){
+                     env.bro_chart_version=version
+                     env.bro_chart_version=version
+                     sh &quot;rm -rf charts/${chart_name}-*&quot;
+                     sh &quot;curl ${chart_URL} -o charts/${chart_name}-${version}.tgz&quot;
+                 }
+                 if (&quot;${chart_name}&quot; == &quot;eric-enm-monitoring-integration&quot;){
+                     env.monitoring_chart_version=version
+                     env.monitoring_chart_version=version
+                     sh &quot;rm -rf charts/${chart_name}-*&quot;
+                     sh &quot;curl ${chart_URL} -o charts/${chart_name}-${version}.tgz&quot;
+                 }
+                 if (&quot;${chart_name}&quot; == &quot;eric-enm-pre-deploy-integration&quot;){
+                     env.pre_deploy_chart_version=version
+                     env.pre_deploy_chart_version=version
+                     sh &quot;rm -rf charts/${chart_name}-*&quot;
+                     sh &quot;curl ${chart_URL} -o charts/${chart_name}-${version}.tgz&quot;
+                 }
+                 if (&quot;${chart_name}&quot; == &quot;eric-enm-infra-integration&quot;){
+                     env.infra_chart_version=version
+                     env.infra_chart_version=version
+                     sh &quot;rm -rf charts/${chart_name}-*&quot;
+                     sh &quot;curl ${chart_URL} -o charts/${chart_name}-${version}.tgz&quot;
+                 }
+                 if (&quot;${chart_name}&quot; == &quot;eric-enm-stateless-integration&quot;){
+                     env.stateless_chart_version=version
+                     env.stateless_chart_version=version
+                     sh &quot;rm -rf charts/${chart_name}-*&quot;
+                     sh &quot;curl ${chart_URL} -o charts/${chart_name}-${version}.tgz&quot;
+                }
+            }
+    }
+     else{
+        echo &quot;no snapshot string is provided&quot;
+     }
+}
+
+def get_cn_build_version_info(){
+       echo &quot;Product Set Version: ${PRODUCT_SET}&quot;
+       sh &quot;curl -4 --location --request GET &apos;https://ci-portal.seli.wh.rnd.internal.ericsson.com/api/cloudnative/getCloudNativeProductSetContent/${SPRINT_TAG}/${PRODUCT_SET}/&apos;&gt;cn_confidence_level_response.json&quot;
+            env.infra_chart_version= sh (script : &quot;./jq &apos;.[1] .integration_charts_data|.[] | select(.chart_name==\&quot;eric-enm-infra-integration\&quot;)|.chart_version&apos; cn_confidence_level_response.json|sed &apos;s/\&quot;//g&apos;&quot;, returnStdout: true).trim()
+            if(env.infra_chart_version==&apos;&apos;){
+               error(&quot;Invalid Infra Integration chart provided. There is no Cloud native content for the given Product Set Version.&quot;)
+            }
+            env.bro_chart_version= sh (script : &quot;./jq &apos;.[1].integration_charts_data|.[]|select(.chart_name==\&quot;eric-enm-bro-integration\&quot;)|.chart_version&apos; cn_confidence_level_response.json|sed &apos;s/\&quot;//g&apos;&quot;, returnStdout: true).trim()
+            if(env.bro_chart_version==&apos;&apos;){
+               error(&quot;Invalid Bro Integration chart provided. There is no Cloud native content for the given Product Set Version.&quot;)
+            }
+            env.pre_deploy_chart_version= sh (script : &quot;./jq &apos;.[1].integration_charts_data|.[]|select(.chart_name==\&quot;eric-enm-pre-deploy-integration\&quot;)|.chart_version&apos; cn_confidence_level_response.json|sed &apos;s/\&quot;//g&apos;&quot;, returnStdout: true).trim()
+            if(env.pre_deploy_chart_version==&apos;&apos;){
+               error(&quot;Invalid Predeploy Integration chart provided. There is no Cloud native content for the given Product Set Version.&quot;)
+            }
+            env.stateless_chart_version= sh (script : &quot;./jq &apos;.[1].integration_charts_data|.[]|select(.chart_name==\&quot;eric-enm-stateless-integration\&quot;)|.chart_version&apos; cn_confidence_level_response.json|sed &apos;s/\&quot;//g&apos;&quot;, returnStdout: true).trim()
+            if(env.stateless_chart_version==&apos;&apos;){
+               error(&quot;Invalid Stateless Integration chart provided. There is no Cloud native content for the given Product Set Version.&quot;)
+            }
+            if (check_version_a_newer_than_version_b(&quot;${PRODUCT_SET}&quot;,&quot;21.03.57&quot;)){
+                env.monitoring_chart_version= sh (script : &quot;./jq &apos;.[1].integration_charts_data|.[]|select(.chart_name==\&quot;eric-enm-monitoring-integration\&quot;)|.chart_version&apos; cn_confidence_level_response.json|sed &apos;s/\&quot;//g&apos;&quot;, returnStdout: true).trim()
+                if(env.monitoring_chart_version==&apos;&apos;){
+                    error(&quot;Invalid Monitoring Integration chart provided. There is no Cloud native content for the given Product Set Version.&quot;)
+                    }
+                  }
+            else {
+                env.monitoring_chart_version = &apos;&apos;
+             }
+            env.integration_value_version= sh (script : &quot;./jq -r &apos;.[2].integration_values_file_data[0].values_file_version&apos; cn_confidence_level_response.json&quot;, returnStdout: true).trim()
+            if(env.integration_value_version==&apos;&apos;){
+               error(&quot;Invalid Integration values provided. There is no Cloud native content for the given Product Set Version.&quot;)
+            }
+            println(&quot;bro integration chart version&quot;:env.bro_chart_version)
+            println(&quot;pre deploy integration chart version&quot;:env.pre_deploy_chart_version)
+            println(&quot;infra integration chart version&quot;:env.infra_chart_version)
+            println(&quot;stateless integration chart version&quot;:env.stateless_chart_version)
+            println(&quot;integration values version&quot;:env.integration_value_version)
+            println (&quot;monitoring integration chart version&quot;:env.monitoring_chart_version)
+            env.INTEGRATION_VALUE_VERSION= integration_value_version
+}
+
+def download_charts_ci_internal(){
+        try{
+          if(env.bro_chart_version != &apos;&apos;){
+               sh &quot;curl -4 https://arm.epk.ericsson.se/artifactory/proj-enm-dev-internal-helm/eric-enm-bro-integration/eric-enm-bro-integration-${bro_chart_version}.tgz -o charts/eric-enm-bro-integration-${bro_chart_version}.tgz&quot;
+          }
+          if (check_version_a_newer_than_version_b(&quot;${PRODUCT_SET}&quot;,&quot;21.03.57&quot;)){
+              if(env.monitoring_chart_version != &apos;&apos;){
+                   sh &quot;curl -4 https://arm.epk.ericsson.se/artifactory/proj-enm-dev-internal-helm/eric-enm-monitoring-integration/eric-enm-monitoring-integration-${monitoring_chart_version}.tgz -o charts/eric-enm-monitoring-integration-${monitoring_chart_version}.tgz&quot;
+              }
+          }
+          if(env.pre_deploy_chart_version != &apos;&apos;){
+               sh &quot;curl -4 https://arm.epk.ericsson.se/artifactory/proj-enm-dev-internal-helm/eric-enm-pre-deploy-integration/eric-enm-pre-deploy-integration-${pre_deploy_chart_version}.tgz -o charts/eric-enm-pre-deploy-integration-${pre_deploy_chart_version}.tgz&quot;
+          }
+          if(env.infra_chart_version != &apos;&apos;){
+               sh &quot;curl -4 https://arm.epk.ericsson.se/artifactory/proj-enm-dev-internal-helm/eric-enm-infra-integration/eric-enm-infra-integration-${infra_chart_version}.tgz -o charts/eric-enm-infra-integration-${infra_chart_version}.tgz&quot;
+          }
+          if(env.stateless_chart_version != &apos;&apos;){
+               sh &quot;curl -4 https://arm.epk.ericsson.se/artifactory/proj-enm-dev-internal-helm/eric-enm-stateless-integration/eric-enm-stateless-integration-${stateless_chart_version}.tgz -o charts/eric-enm-stateless-integration-${stateless_chart_version}.tgz&quot;
+          }
+     }catch( err ) {
+        echo &quot;$err&quot;
+        sh &quot;exit 1&quot;
+      }
+}
+
+// More about @Builder: http://mrhaki.blogspot.com/2014/05/groovy-goodness-use-builder-ast.html
+import groovy.transform.builder.Builder
+import groovy.transform.builder.SimpleStrategy
+
+@Builder(builderStrategy = SimpleStrategy, prefix = &apos;&apos;)
+class AMPackageCommand {
+    def AMPackageImage = &apos;AMPackage.2.0:latest&apos;
+    def envVars = [:]
+    def needDockerSocket = false
+
+    String toString() {
+        def env = envVars
+                .collect({ entry -&gt; &quot;-e ${entry.key}=\&quot;${entry.value}\&quot;&quot; })
+                .join(&apos; &apos;)
+        def cmd = &quot;&quot;&quot;\
+            |docker run
+            |--rm
+            |--workdir \${PWD}
+            |--user \$(id -u):\$(id -g)
+            |-v \${PWD}:\${PWD}
+            |-v /etc/group:/etc/group:ro
+            |-v /etc/passwd:/etc/passwd:ro
+            |-v \${HOME}/.m2:\${HOME}/.m2
+            |-v \${HOME}/.docker:\${HOME}/.docker
+            |${needDockerSocket ? &apos;-v /var/run/docker.sock:/var/run/docker.sock&apos; : &apos;&apos;}
+            |${env}
+            |\$(for group in \$(id -G); do printf &apos; --group-add %s&apos; &quot;\$group&quot;; done)
+            |${AMPackageImage}
+            |&quot;&quot;&quot;
+        return cmd
+                .stripMargin()           // remove indentation
+                .replace(&apos;\n&apos;, &apos; &apos;)      // join lines
+                .replaceAll(/[ ]+/, &apos; &apos;) // replace multiple spaces by one
+    }
+}
+@Builder(builderStrategy = SimpleStrategy, prefix = &apos;&apos;)
+class BobCommand {
+    def bobImage = &apos;bob.2.0:1.5.2-0&apos;
+    def envVars = [:]
+    def needDockerSocket = false
+    String toString() {
+        def env = envVars
+                .collect({ entry -&gt; &quot;-e ${entry.key}=\&quot;${entry.value}\&quot;&quot; })
+                .join(&apos; &apos;)
+        def cmd = &quot;&quot;&quot;\
+            |docker run
+            |--rm
+            |--workdir \${PWD}
+            |--user \$(id -u):\$(id -g)
+            |-v \${PWD}:\${PWD}
+            |-v /etc/group:/etc/group:ro
+            |-v /etc/passwd:/etc/passwd:ro
+            |-v \${HOME}/.m2:\${HOME}/.m2
+            |-v \${HOME}/.docker:\${HOME}/.docker
+            |${needDockerSocket ? &apos;-v /var/run/docker.sock:/var/run/docker.sock&apos; : &apos;&apos;}
+            |${env}
+            |\$(for group in \$(id -G); do printf &apos; --group-add %s&apos; \$group; done)
+            |${bobImage}
+            |&quot;&quot;&quot;
+        return cmd
+                .stripMargin()           // remove indentation
+                .replace(&apos;\n&apos;, &apos; &apos;)      // join lines
+                .replaceAll(/[ ]+/, &apos; &apos;) // replace multiple spaces by one
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

@@ -1,0 +1,148 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>Dont forget to uncomment cp and sed command in execute shell</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>JENKINS_NAME</name>
+          <description>Jenkins name to be given as eg. fem21s11</description>
+          <defaultValue>fem1s11</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>false</canRoam>
+  <disabled>true</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/sh
+# Search for nexus URL in all the jobs in a given jenkins
+
+ARM101_REF_JOBS=`pwd`/jobs_arm101_nexusurl
+
+#cd /proj/eiffel004_config_${JENKINS_NAME}/eiffel_home/jobs/
+PWD=`pwd`
+#ls /proj/eiffel004_config_${JENKINS_NAME}/eiffel_home/jobs/
+#echo ${WORKSPACE}
+ls /proj/eiffel004_config_${JENKINS_NAME}/eiffel_home/jobs/ &gt; job_list_${JENKINS_NAME}
+#cat job_list_${JENKINS_NAME}
+
+#set -x
+for job_name in `cat job_list_${JENKINS_NAME}`
+do
+	#echo &quot;Inside for loop to check further on job&quot;
+	if [ -d /proj/eiffel004_config_${JENKINS_NAME}/eiffel_home/jobs/${job_name} ]; then
+    	echo &quot;Inside for loop to check further on job&quot;
+   		pwd
+        grep -i &quot;arm101-eiffel004.lmera.ericsson.se&quot; /proj/eiffel004_config_${JENKINS_NAME}/eiffel_home/jobs/${job_name}/config.xml
+        if [ $? -eq 0 ]
+        then
+          	echo &quot;URL hardcoded in the job... &quot;
+       		#echo $job_name &gt;&gt; ${ARM101_REF_JOBS}_${JENKINS_NAME}
+            #echo https://${JENKINS_NAME}-eiffel004.eiffel.gic.ericsson.se:8443/jenkins/job/$job_name &gt;&gt;${ARM101_REF_JOBS}_${JENKINS_NAME}
+            echo $job_name &gt;&gt;${ARM101_REF_JOBS}_${JENKINS_NAME} 
+            #cat 
+        else
+        	echo &quot;URL not hardcoded..&quot;
+        fi
+      	cd ../
+     fi
+done
+		if [ -f ${ARM101_REF_JOBS}_${JENKINS_NAME} ];
+        then
+            echo &quot;###################################&quot;
+        	echo &quot;Sort the file with uniq jobs entry&quot;
+    		#ls -lrt ${ARM101_REF_JOBS}_${JENKINS_NAME}
+    		#cat ${ARM101_REF_JOBS}_${JENKINS_NAME}
+    		sort ${ARM101_REF_JOBS}_${JENKINS_NAME} | uniq  &gt; ${WORKSPACE}/only_jobs_${JENKINS_NAME}.tmp
+    		cp ${WORKSPACE}/only_jobs_${JENKINS_NAME}.tmp ${WORKSPACE}/only_jobs_${JENKINS_NAME}
+    		#ls -lrt ${WORKSPACE}/only_jobs_${JENKINS_NAME}
+    		#cat ${WORKSPACE}/only_jobs_${JENKINS_NAME}
+        	#cat ${ARM101_REF_JOBS}_${JENKINS_NAME}
+    		#cp job_list_${JENKINS_NAME} ${WORKSPACE}/job_list_${JENKINS_NAME}
+        else
+        	echo &quot;No arm101 URL reference&quot; &gt;&gt; ${ARM101_REF_JOBS}_${JENKINS_NAME}
+            
+        fi
+#Remove job list file
+if [ -f ${WORKSPACE}/job_list_${JENKINS_NAME} ] ;then
+rm ${WORKSPACE}/job_list_${JENKINS_NAME}
+fi
+        
+#Replace URL in jobs config.xml
+
+if [ -f ${WORKSPACE}/only_jobs_${JENKINS_NAME} ] ;then
+for config_file in `cat ${WORKSPACE}/only_jobs_${JENKINS_NAME}`
+do
+	echo &quot;Backup ${config_file} config file before editing&quot;
+    cp /proj/eiffel004_config_${JENKINS_NAME}/eiffel_home/jobs/${config_file}/config.xml /proj/eiffel004_config_${JENKINS_NAME}/eiffel_home/jobs/${config_file}/config_bkp.xml
+    if [ $? -eq 0 ];
+    then
+    	echo &quot;Updating new ARM URL in ${config_file} job config.xml file&quot;
+        sed -i -e &apos;s/arm101\-eiffel004\.lmera\.ericsson\.se/arm1s11\-eiffel004\.eiffel\.gic\.ericsson\.se/g&apos; /proj/eiffel004_config_${JENKINS_NAME}/eiffel_home/jobs/${config_file}/config.xml
+        if [ $? -eq 0 ]
+        then
+           echo &quot;Successfully updated with new URL...&quot;
+           echo &quot;#####################################&quot;
+        else
+        	echo &quot;Failed to update the URL..&quot;            
+        fi
+    else
+    	echo &quot;Config.xml backup failed&quot;
+    fi
+done
+else
+	echo &quot;No ARM101 reference in ${JENKINS_NAME}&quot;
+fi</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.timestamper.TimestamperBuildWrapper plugin="timestamper@1.17"/>
+    <org.jenkinsci.plugins.buildnamesetter.BuildNameSetter plugin="build-name-setter@2.2.0">
+      <template>#${BUILD_NUMBER}-${JENKINS_NAME}</template>
+      <runAtStart>true</runAtStart>
+      <runAtEnd>true</runAtEnd>
+    </org.jenkinsci.plugins.buildnamesetter.BuildNameSetter>
+  </buildWrappers>
+</project>

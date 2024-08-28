@@ -1,0 +1,196 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@4.10.3">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>ssh://gerritmirror-ha.lmera.ericsson.se:29418/OSS/com.ericsson.oss.containerisation/eric-enm-integration-pipeline-code</url>
+        <credentialsId>34f6017c-d71b-4e72-9f80-26a8576e1beb</credentialsId>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>master</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <gitTool>Git 2.20.0</gitTool>
+    <submoduleCfg class="empty-list"/>
+    <extensions/>
+  </scm>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>rm -rf enm-containerisation-ci-pipeline
+git clone ssh://gerrit.ericsson.se:29418/OSS/com.ericsson.oss.containerisation/enm-containerisation-ci-pipeline</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <javaposse.jobdsl.plugin.ExecuteDslScripts plugin="job-dsl@1.78.3">
+      <targets>Jenkins/JobDSL/e2e_HLC_Build_dsl.groovy</targets>
+      <scriptText>import java.io.File
+
+buildJobNames = generateBuidJobNames()
+def generateBuidJobNames() {
+    def list_of_build_job_names = []
+    String repos = readFileFromWorkspace(&apos;Jenkins/repo-list-for-hlc-version-update&apos;)
+    repos.eachLine { String project_name -&gt;
+        project_name = project_name.split(&quot;/&quot;).last()
+        list_of_build_job_names &lt;&lt; &quot;\&quot;&quot; + project_name +&quot;_update-HLC-version&quot;+ &quot;\&quot;&quot;
+    }
+    return list_of_build_job_names
+}
+
+def createE2EBuildPipeline() {
+String e2e_steps=&quot;&quot;&quot;SG_PROJECT_LIST = ${buildJobNames}
+pipeline {
+    agent { node { label &apos;INT_Cloud_Native&apos; } }
+    environment {
+        PIPELINE_LAST_STAGE_STATUS = &apos;UNKNOWN&apos;
+    }
+    stages {
+        stage (&apos;Get HLC Versions&apos;) {
+            steps {
+                script {
+                    environment_list = [[\$class:&apos;StringParameterValue&apos;, name:&quot;CHART_VERSION&quot;, value:String.valueOf(&quot;\${CHART_VERSION}&quot;)]]
+                    echo &quot;\$environment_list&quot;
+                }
+            }
+        }
+        stage(&apos;Updating HLC version in SG&apos;) {
+            steps{
+                script{
+                    sh &quot;touch hlc_failed_service_group_builds&quot;
+                    for (def service_group_build in SG_PROJECT_LIST) {
+                         try{
+                            stage(&quot;Build \${service_group_build}&quot;){
+                                  retry(3) {
+                                    def build = build(job: &quot;\${service_group_build}&quot;, propagate: false, wait: true, parameters: environment_list)
+                                    def BuildResult = build.getResult()
+                                     if (BuildResult != &quot;SUCCESS&quot;) {
+                                       error &apos;FAIL&apos;
+                                     }
+                                 }
+                              }
+                            }catch (e) {
+                               sh &quot;echo \${service_group_build} &gt;&gt; hlc_failed_service_group_builds&quot;
+                               currentBuild.result = &apos;FAILURE&apos;
+                         }
+                    }
+                }
+            }
+        }
+        stage(&apos;Generate Failed HLC Job File&apos;) {
+            steps {
+                script {
+                  archiveArtifacts &apos;hlc_failed_service_group_builds&apos;
+                  sh &quot;rm -rf hlc_failed_service_group_builds&quot;
+                }
+            }
+        }
+    }
+    post {
+        failure {
+            script {
+                if (PIPELINE_LAST_STAGE_STATUS==&apos;SUCCESS&apos;) {
+                    currentBuild.rawBuild.@result = hudson.model.Result.SUCCESS
+                }
+            }
+        }
+    }
+}
+
+&quot;&quot;&quot;
+    pipelineJob(&apos;eric-enm-e2e_update-HLC-version&apos;) {
+        description (&apos;ENM Cloud Native Build pipeline eric-enm-e2e-hlc-build - autogenerated using JobDSL - all manual changes will be overwritten!&apos;)
+        parameters {
+                 stringParam(&apos;CHART_VERSION&apos;)
+                 blockOn([&apos;eric-enm-e2e-build&apos;]) {
+                     blockLevel(&apos;GLOBAL&apos;)
+                     scanQueueFor(&apos;ALL&apos;)
+             }
+        }
+        definition {
+            cps {
+                sandbox()
+                script(e2e_steps)
+            }
+        }
+    }
+}
+
+createE2EBuildPipeline()
+
+listView(&apos;ENM HLC Version Update Build&apos;) {
+    filterBuildQueue()
+    filterExecutors()
+    jobs {
+        regex(/eric-enm.*_update-HLC-version/)
+    }
+    columns {
+        status()
+        weather()
+        name()
+        lastSuccess()
+        lastFailure()
+        lastDuration()
+        buildButton()
+    }
+}</scriptText>
+      <usingScriptText>false</usingScriptText>
+      <sandbox>false</sandbox>
+      <ignoreExisting>false</ignoreExisting>
+      <ignoreMissingFiles>false</ignoreMissingFiles>
+      <failOnMissingPlugin>false</failOnMissingPlugin>
+      <failOnSeedCollision>false</failOnSeedCollision>
+      <unstableOnDeprecation>false</unstableOnDeprecation>
+      <removedJobAction>DELETE</removedJobAction>
+      <removedViewAction>DELETE</removedViewAction>
+      <removedConfigFilesAction>IGNORE</removedConfigFilesAction>
+      <lookupStrategy>JENKINS_ROOT</lookupStrategy>
+    </javaposse.jobdsl.plugin.ExecuteDslScripts>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

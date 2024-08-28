@@ -1,0 +1,126 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@2.25">
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@69.0.3">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.19.2">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@69.0.3">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <EnvInjectJobProperty plugin="envinject@2.1.5">
+      <info>
+        <propertiesContent>REPO = eric-enm-sles-base
+Chart = eric-enm-auto-sg</propertiesContent>
+        <secureGroovyScript plugin="script-security@1.75">
+          <script/>
+          <sandbox>false</sandbox>
+        </secureGroovyScript>
+        <loadFilesFromMaster>false</loadFilesFromMaster>
+      </info>
+      <on>true</on>
+      <keepJenkinsSystemVariables>true</keepJenkinsSystemVariables>
+      <keepBuildVariables>true</keepBuildVariables>
+      <overrideBuildParameters>false</overrideBuildParameters>
+    </EnvInjectJobProperty>
+    
+    <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+      <triggers>
+        <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger plugin="gerrit-trigger@2.30.5">
+          <spec/>
+          <gerritProjects>
+            <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject>
+              <compareType>PLAIN</compareType>
+              <pattern/>
+              <branches>
+                <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch>
+                  <compareType>PLAIN</compareType>
+                  <pattern/>
+                </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.Branch>
+              </branches>
+              <disableStrictForbiddenFileVerification>false</disableStrictForbiddenFileVerification>
+            </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritProject>
+          </gerritProjects>
+          <dynamicGerritProjects class="empty-list"/>
+          <skipVote>
+            <onSuccessful>false</onSuccessful>
+            <onFailed>false</onFailed>
+            <onUnstable>false</onUnstable>
+            <onNotBuilt>false</onNotBuilt>
+          </skipVote>
+          <silentMode>false</silentMode>
+          <notificationLevel/>
+          <silentStartMode>false</silentStartMode>
+          <escapeQuotes>true</escapeQuotes>
+          <nameAndEmailParameterMode>PLAIN</nameAndEmailParameterMode>
+          <dependencyJobsNames/>
+          <commitMessageParameterMode>BASE64</commitMessageParameterMode>
+          <changeSubjectParameterMode>PLAIN</changeSubjectParameterMode>
+          <commentTextParameterMode>BASE64</commentTextParameterMode>
+          <buildStartMessage/>
+          <buildFailureMessage/>
+          <buildSuccessfulMessage/>
+          <buildUnstableMessage/>
+          <buildNotBuiltMessage/>
+          <buildUnsuccessfulFilepath/>
+          <customUrl/>
+          <serverName>__ANY__</serverName>
+          <triggerOnEvents class="linked-list">
+            <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent>
+              <excludeDrafts>false</excludeDrafts>
+              <excludeTrivialRebase>false</excludeTrivialRebase>
+              <excludeNoCodeChange>false</excludeNoCodeChange>
+              <excludePrivateState>false</excludePrivateState>
+              <excludeWipState>false</excludeWipState>
+            </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginPatchsetCreatedEvent>
+            <com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.events.PluginDraftPublishedEvent/>
+          </triggerOnEvents>
+          <dynamicTriggerConfiguration>false</dynamicTriggerConfiguration>
+          <triggerConfigURL/>
+          <triggerInformationAction/>
+        </com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger>
+      </triggers>
+    </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.57.2">
+    <script>pipeline {
+    agent {
+        label 'Cloud-Native-Pointfix'
+    }
+    stages {
+        stage('testing') {
+            when {
+                anyOf {
+                    allOf {
+                        not { expression { env.REPO == "eric-enm-sles-base" } }
+                        expression { env.Chart == "eric-enm-auto-sg" }
+                    }
+                    expression { env.REPO == "eric-enm-amos" }
+                }
+            }
+            steps {
+                echo "${REPO}"
+                echo "${Chart}"
+            }
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

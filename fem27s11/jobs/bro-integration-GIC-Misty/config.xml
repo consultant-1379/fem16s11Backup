@@ -1,0 +1,364 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.39">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.7.0"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.7.0">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.23.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>JENKINS_URL</name>
+          <defaultValue>https://fem16s11-eiffel004.eiffel.gic.ericsson.se:8443</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>ISO_VERSION</name>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>PRODUCT_SET</name>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>SPRINT_TAG</name>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit></paramsToUseForLimit>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.80">
+    <script>/* IMPORTANT:
+ *
+ * In order to make this pipeline work, the following configuration on Jenkins is required:
+ * - slave with a specific label (see pipeline.agent.label below)
+ * - credentials plugin should be installed and have the secrets with the following names:
+ *   + lciadm100credentials (token to access Artifactory)
+ */
+
+def defaultBobImage = &apos;armdocker.rnd.ericsson.se/sandbox/adp-staging/adp-cicd/bob.2.0:1.5.0-1&apos;
+def bob = new BobCommand()
+        .bobImage(defaultBobImage)
+        .needDockerSocket(true)
+        .toString()
+
+def bobInCA = new BobCommand()
+        .bobImage(defaultBobImage)
+        .needDockerSocket(true)
+        .envVars([
+                ARM_API_TOKEN     : &apos;${ARM_CREDENTIALS_PSW}&apos;,
+                CHART_PATH        : &apos;${CHART_PATH}&apos;,
+                GIT_REPO_URL      : &apos;${GIT_REPO_URL}&apos;,
+                HELM_INTERNAL_REPO: &apos;${HELM_INTERNAL_REPO}&apos;,
+                HELM_DROP_REPO    : &apos;${HELM_DROP_REPO}&apos;,
+                HELM_RELEASED_REPO: &apos;${HELM_RELEASED_REPO}&apos;,
+                GERRIT_USERNAME   : &apos;${GERRIT_CREDENTIALS_USR}&apos;,
+                GERRIT_PASSWORD   : &apos;${GERRIT_CREDENTIALS_PSW}&apos;,
+                CHART_NAME        : &apos;${CHART_NAME}&apos;,
+                CHART_VERSION     : &apos;${CHART_VERSION}&apos;,
+                ALLOW_DOWNGRADE   : &apos;${ALLOW_DOWNGRADE}&apos;,
+		HELM_REPO_CREDENTIALS : &apos;${HELM_REPO_CREDENTIALS}&apos;
+        ])
+        .toString()
+
+def GIT_COMMITTER_NAME = &apos;enmadm100&apos;
+def GIT_COMMITTER_EMAIL = &apos;enmadm100@ericsson.com&apos;
+def failedStage = &apos;&apos;
+
+pipeline {
+    agent {
+        label &apos;TEMP-Cloud-Native&apos;
+    }
+    environment {
+        GERRIT_CREDENTIALS = credentials(&apos;cenmbuild_gerrit_api_token&apos;)
+        ARM_CREDENTIALS = credentials(&apos;cenmbuild_ARM_token&apos;)
+        CHART_PATH = &quot;chart/eric-enm-bro-integration&quot;
+        REPO = &quot;OSS/com.ericsson.oss.containerisation/eric-enm-bro-integration&quot;
+        GIT_REPO_URL = &quot;${GERRIT_CENTRAL_HTTP_UAT}/a/${REPO}&quot;
+        HELM_INTERNAL_REPO = &quot;https://arm.epk.ericsson.se/artifactory/proj-enm-dev-internal-helm/&quot;
+        HELM_DROP_REPO = &quot;https://arm.epk.ericsson.se/artifactory/proj-enm-dev-internal-helm/&quot;
+        HELM_RELEASED_REPO = &quot;https://arm.epk.ericsson.se/artifactory/proj-enm-dev-internal-helm/&quot;
+    }
+    stages {
+        stage(&apos;Clean workspace&apos;) {
+            steps {
+                deleteDir()
+            }
+        }
+        stage(&apos;Inject Credential Files&apos;) {
+            steps {
+                withCredentials([file(credentialsId: &apos;lciadm100-docker-auth&apos;, variable: &apos;dockerConfig&apos;)]) {
+                    sh &quot;install -m 600 ${dockerConfig} ${HOME}/.docker/config.json&quot;
+                }
+            }
+        }
+        stage(&apos;Checkout Cloud-Native eric-enm-bro-integration Git Repository&apos;) {
+            steps {
+                git branch: &apos;dTrof-GIC-Misty&apos;,
+                        url: &apos;${GERRIT_MIRROR_UAT}/OSS/com.ericsson.oss.containerisation/eric-enm-bro-integration&apos;
+                sh &apos;&apos;&apos;
+                    git remote set-url origin --push ${GERRIT_CENTRAL_UAT}/${REPO}
+                    git --version
+                &apos;&apos;&apos;
+            }
+        }
+        stage(&apos;Init&apos;) {
+            steps {
+                script {
+                    hasSingleChartUpdate = false
+                    buildFromMaster = false
+                    if ((env.CHART_NAME || env.CHART_VERSION) &amp;&amp; !(env.CHART_NAME &amp;&amp; env.CHART_VERSION)) {
+                        currentBuild.result = &quot;ABORTED&quot;
+                        error(&quot;Invalid entry: Chart must have Version and Name&quot;)
+                    }
+                    if (env.CHART_NAME &amp;&amp; env.CHART_VERSION) {
+                        def messageString = &quot;Independent Service Update: &quot; + env.CHART_NAME + &quot;:&quot; + env.CHART_VERSION
+                        manager.addShortText(messageString, &quot;black&quot;, &quot;LightSeaGreen&quot;, &quot;1px&quot;, &quot;green&quot;)
+                        hasSingleChartUpdate = true
+                    } else if (env.GERRIT_PATCHSET_REVISION) {
+                        manager.addShortText(&quot;Triggered From Code Merge&quot;, &quot;black&quot;, &quot;SteelBlue&quot;, &quot;1px&quot;, &quot;green&quot;)
+                        buildFromMaster = true
+                    } else {
+                        manager.addShortText(&quot;Manual Build&quot;, &quot;black&quot;, &quot;SteelBlue&quot;, &quot;1px&quot;, &quot;green&quot;)
+                        buildFromMaster = true
+                    }
+                }
+            }
+        }
+        stage(&apos;Getting sprint tag&apos;) {
+            steps {
+                script {
+                    env.SPRINT_TAG = sh(script: &apos;wget -q -O - --no-check-certificate https://ci-portal.seli.wh.rnd.internal.ericsson.com//api/product/ENM/latestdrop/|cut -d\&apos;:\&apos; -f2|sed \&apos;s/[},&quot;]//g\&apos;&apos;, returnStdout: true).trim()
+                }
+            }
+        }
+        stage(&apos;Update Chart.yaml with chart version&apos;) {
+            when {
+                expression { buildFromMaster == true }
+            }
+            steps {
+                sh &apos;&apos;&apos;
+                    if git status | grep &apos;chart/eric-enm-bro-integration/Chart.yaml&apos; &gt; /dev/null; then
+                      git add chart/eric-enm-bro-integration/Chart.yaml
+                      git commit -m &quot;Updating Chart.yaml with latest version&quot;
+                      git push origin HEAD:dTrof-GIC-Misty
+                    else
+                      echo `date` &gt; timestamp
+                      git add timestamp
+                      git commit -m &quot;NO JIRA - Time Stamp &quot;
+                      git push origin HEAD:dTrof-GIC-Misty
+                    fi
+              &apos;&apos;&apos;
+            }
+        }
+        stage(&apos;Lint Helm&apos;) {
+            steps {
+                sh &quot;${bob} lint-only-helm&quot;
+            }
+        }
+        stage(&apos;ADP Helm Design Rule Check&apos;) {
+            steps {
+                sh &quot;${bob} test-helm || true&quot;
+                archiveArtifacts &apos;design-rule-check-report.*&apos;
+            }
+        }
+        stage(&apos;Generate New Version&apos;) {
+            when {
+                expression { buildFromMaster == true }
+            }
+            steps {
+                sh &quot;${bob} generate-new-version&quot;
+            }
+
+        }
+        stage(&apos;Build Chart&apos;) {
+            steps {
+                script {
+                    if (hasSingleChartUpdate) {
+                        withCredentials([file(credentialsId: &apos;cenm_repo_credentials&apos;, variable: &apos;HELM_REPO_CREDENTIALS&apos;)]) {
+			    sh &quot;${bobInCA} publish&quot;
+			}    
+                    } else {
+                        withCredentials([
+                                usernamePassword(credentialsId: &apos;cenmbuild&apos;, usernameVariable: &apos;HELM_USER&apos;, passwordVariable: &apos;HELM_TOKEN&apos;)]) {
+                            def bobwithbuild = new BobCommand()
+                                    .bobImage(defaultBobImage)
+                                    .needDockerSocket(true)
+                                    .envVars([&apos;HELM_USER&apos; : env.HELM_USER,
+                                              &apos;HELM_TOKEN&apos;: env.HELM_TOKEN,
+                                              &apos;SPRINT_TAG&apos;: env.SPRINT_TAG,
+                                    ])
+                                    .toString()
+                            sh &quot;${bobwithbuild} build-helm&quot;
+                        }
+                    }
+                }
+            }
+        }
+        /*
+        stage(&apos;Publish Helm Chart&apos;) {
+            when {
+                expression { buildFromMaster == true }
+            }
+            steps {
+                script {
+                    def bobWithHelmToken = new BobCommand()
+                            .bobImage(defaultBobImage)
+                            .needDockerSocket(true)
+                            .envVars([&apos;HELM_REPO_TOKEN&apos;: env.HELM_REPO_TOKEN])
+                            .toString()
+                    sh &quot;${bobWithHelmToken} helm-push&quot;
+                }
+            }
+        }
+        */
+        stage(&apos;Generate INT Parameters&apos;) {
+            when {
+                expression { buildFromMaster == true }
+            }
+            steps {
+                sh &quot;${bob} generate-output-parameters&quot;
+                archiveArtifacts &apos;artifact.properties&apos;
+                archiveArtifacts &apos;.bob/var.commit-hash&apos;
+            }
+        }
+        stage(&apos;Tag Cloud-Native eric-enm-bro-integration Repository&apos;) {
+            steps {
+
+                wrap([$class: &apos;BuildUser&apos;]) {
+                    script {
+                        def bobWithCommitterInfo = new BobCommand()
+                                .bobImage(defaultBobImage)
+                                .needDockerSocket(true)
+                                .envVars([
+                                        &apos;AUTHOR_NAME&apos;        : &quot;${GIT_COMMITTER_NAME}&quot;,
+                                        &apos;AUTHOR_EMAIL&apos;       : &quot;${GIT_COMMITTER_EMAIL}&quot;,
+                                        &apos;GIT_COMMITTER_NAME&apos; : &quot;${GIT_COMMITTER_NAME}&quot;,
+                                        &apos;GIT_COMMITTER_EMAIL&apos;: &quot;${GIT_COMMITTER_EMAIL}&quot;
+                                ])
+                                .toString()
+                        sh &quot;${bobWithCommitterInfo} create-git-tag&quot;
+                        sh &quot;&quot;&quot;
+                            tag_id=\$(cat .bob/var.version)
+                            git push origin \${tag_id}
+                        &quot;&quot;&quot;
+                    }
+                }
+            }
+            post {
+                always {
+                    script {
+                        sh &quot;${bob} remove-git-tag&quot;
+                    }
+                }
+            }
+        }
+        stage(&apos;CLEAN&apos;) {
+            steps {
+                sh &quot;${bob} clean&quot;
+            }
+        }
+    }
+    post {
+        success {
+            script {
+                sh &apos;&apos;&apos;
+                    set +x
+                    git tag --annotate --message &quot;Tagging latest in sprint&quot; --force $SPRINT_TAG HEAD
+                    git push --force origin $SPRINT_TAG
+                &apos;&apos;&apos;
+            }
+        }
+        failure {
+
+            mail to: &apos;rakesh.thummala1-external@tcs.com&apos;,
+                    subject: &quot;Failed Pipeline: ${currentBuild.fullDisplayName}&quot;,
+                    body: &quot;Failure on ${env.BUILD_URL}&quot;
+        }
+        cleanup {
+            deleteDir()
+        }
+    }
+}
+
+// More about @Builder: http://mrhaki.blogspot.com/2014/05/groovy-goodness-use-builder-ast.html
+import groovy.transform.builder.Builder
+import groovy.transform.builder.SimpleStrategy
+
+@Builder(builderStrategy = SimpleStrategy, prefix = &apos;&apos;)
+class BobCommand {
+    def bobImage = &apos;bob.2.0:latest&apos;
+    def envVars = [:]
+    def needDockerSocket = false
+
+    String toString() {
+        def env = envVars
+                .collect({ entry -&gt; &quot;-e ${entry.key}=\&quot;${entry.value}\&quot;&quot; })
+                .join(&apos; &apos;)
+
+        def cmd = &quot;&quot;&quot;\
+            |docker run
+            |--init
+            |--rm
+            |--workdir \${PWD}
+            |--user \$(id -u):\$(id -g)
+            |-v \${PWD}:\${PWD}
+            |-v /etc/group:/etc/group:ro
+            |-v /etc/passwd:/etc/passwd:ro
+            |-v \${HOME}/.m2:\${HOME}/.m2
+            |-v \${HOME}/.docker:\${HOME}/.docker
+            |\$(if [ -n &quot;\$HELM_REPO_CREDENTIALS&quot; ]; then echo -v \$HELM_REPO_CREDENTIALS:\$HELM_REPO_CREDENTIALS;fi)
+	        |${needDockerSocket ? &apos;-v /var/run/docker.sock:/var/run/docker.sock&apos; : &apos;&apos;}
+            |${env}
+            |\$(for group in \$(id -G); do printf &apos; --group-add %s&apos; &quot;\$group&quot;; done)
+            |--group-add \$(stat -c &apos;%g&apos; /var/run/docker.sock)
+            |${bobImage}
+            |&quot;&quot;&quot;
+        return cmd
+                .stripMargin()           // remove indentation
+                .replace(&apos;\n&apos;, &apos; &apos;)      // join lines
+                .replaceAll(/[ ]+/, &apos; &apos;) // replace multiple spaces by one
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

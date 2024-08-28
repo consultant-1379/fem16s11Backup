@@ -1,0 +1,195 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>JenkinsFile audit for repositories listed in&lt;br&gt;&#xd;
+&lt;b&gt;projects_service_group&lt;/b&gt;.</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>FILE</name>
+          <description></description>
+          <defaultValue>Jenkinsfile</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>RHEL6.10_GE_1</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.plugins.groovy.Groovy plugin="groovy@2.4">
+      <scriptSource class="hudson.plugins.groovy.StringScriptSource">
+        <command>import java.io.File
+import groovy.json.JsonSlurper
+
+def String ci_pipeline_jenkins_config_project = &apos;OSS/com.ericsson.oss.containerisation/enm-containerisation-ci-pipeline&apos; // Pipeline official repository.
+cmd1 = &apos;git archive --remote=ssh://gerrit.ericsson.se:29418/&apos; + ci_pipeline_jenkins_config_project + &apos; HEAD jenkins/projects_service_group&apos;
+
+def cmd3=&apos;tar --extract --to-stdout&apos;
+def proc1 = cmd1.execute() | cmd3.execute()
+
+def std_out1 = new StringBuffer()
+proc1.consumeProcessErrorStream(std_out1)
+def config_file = proc1.text
+
+config_file.eachLine {
+    String repository -&gt;
+        project_name = repository.tokenize(&apos;/&apos;).last()
+        
+        // clone repository
+        git_clone_cmd = &apos;git clone ssh://gerritmirror-ha.lmera.ericsson.se:29418/&apos; + repository
+        def git_clone_proc = git_clone_cmd.execute()
+
+        def std_out_clone = new StringBuffer()
+        git_clone_proc.consumeProcessErrorStream(std_out_clone)        
+}</command>
+      </scriptSource>
+      <groovyName>(Default)</groovyName>
+      <parameters></parameters>
+      <scriptParameters></scriptParameters>
+      <properties></properties>
+      <javaOpts></javaOpts>
+      <classPath></classPath>
+    </hudson.plugins.groovy.Groovy>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+
+PAIRS=()
+declare -a exception_array=(&quot;mail to&quot; &quot;archiveArtifacts&quot;)
+
+for base_dir in */ ; do
+	for nest_dir in */ ; do
+
+        if [[ ${base_dir} != ${nest_dir} ]] &amp;&amp; [[ ! &quot; ${PAIRS[@]} &quot; =~ &quot; ${base_dir},${nest_dir} &quot; ]] &amp;&amp; [[ ! &quot; ${PAIRS[@]} &quot; =~ &quot; ${nest_dir},${base_dir} &quot; ]]; then
+			diff -w -B ${base_dir}/${FILE} ${nest_dir}/${FILE} &gt; test.cfg
+            
+            while read line; do
+                if [[ ${line} == \&lt;* ]] || [[ ${line} == \&gt;* ]]; then
+                	if [[ ${line} == *&quot;${base_dir//\/}&quot;* ]] || [[ ${line} == *&quot;${nest_dir//\/}&quot;* ]]; then
+                    	:
+                    else
+                        count=0
+                    	for exc in &quot;${exception_array[@]}&quot;; do
+                        	if [[ ${line} == *&quot;${exc}&quot;* ]]; then
+                            	count=$((count+1))
+                            fi
+                        done
+                        
+                        if [[ &quot;${count}&quot; -eq &quot;0&quot; ]]; then
+                        	echo &quot;$line&quot; &gt;&gt; ${base_dir//\/}_${nest_dir//\/}.txt
+                        fi
+                    fi
+                fi                
+            done &lt; test.cfg
+
+            PAIRS+=(&quot;${base_dir},${nest_dir}&quot;)
+            PAIRS+=(&quot;${nest_dir},${base_dir}&quot;)
+        fi
+    done
+    
+
+    main_diff_array=()
+    null_diff=()
+    not_null_diff=()
+    
+    for main_diff_file in *.txt;  do    	
+        main_diff_array+=(&quot;$main_diff_file&quot;)        
+    done
+
+	counter=0
+    
+    echo ${base_dir}
+    
+    for i in &quot;${main_diff_array[@]}&quot;;  do
+		counter=$((counter+1))
+    	for j in &quot;${main_diff_array[@]:${counter}}&quot;;  do
+        
+			#echo &quot;************* DIFF ${i} ${j} *************&quot;
+            
+            diff_result=$(diff -w -B ${i} ${j})
+            
+            IFS=&apos;_&apos; read -ra ARR1 &lt;&lt;&lt; &quot;${i}&quot;
+            IFS=&apos;_&apos; read -ra ARR2 &lt;&lt;&lt; &quot;${j}&quot;
+            
+            
+            if [ -z &quot;${diff_result}&quot; ]
+            then
+            	  if [[ ! &quot; ${null_diff[@]} &quot; =~ &quot; ${ARR1[1]} &quot; ]] &amp;&amp; [[ ! &quot; ${not_null_diff[@]} &quot; =~ &quot; ${ARR1[1]} &quot; ]]; then
+                  	null_diff+=(&quot;${ARR1[1]}&quot;)
+                  fi
+
+            	  if [[ ! &quot; ${null_diff[@]} &quot; =~ &quot; ${ARR2[1]} &quot; ]] &amp;&amp; [[ ! &quot; ${not_null_diff[@]} &quot; =~ &quot; ${ARR2[1]} &quot; ]]; then
+                  	null_diff+=(&quot;${ARR2[1]}&quot;)
+                  fi                   
+            else            
+            	  if [[ ! &quot; ${not_null_diff[@]} &quot; =~ &quot; ${ARR1[1]} &quot; ]] &amp;&amp; [[ ! &quot; ${null_diff[@]} &quot; =~ &quot; ${ARR1[1]} &quot; ]]; then
+                  	not_null_diff+=(&quot;${ARR1[1]}&quot;)
+                  fi
+
+            	  if [[ ! &quot; ${not_null_diff[@]} &quot; =~ &quot; ${ARR2[1]} &quot; ]] &amp;&amp; [[ ! &quot; ${null_diff[@]} &quot; =~ &quot; ${ARR2[1]} &quot; ]]; then
+                  	not_null_diff+=(&quot;${ARR2[1]}&quot;)
+                  fi
+            fi
+            
+        	
+            #echo &quot;********************** END DIFF ************************&quot;
+        	#echo -e
+        done            
+    done
+    
+    echo ${null_diff[@]}
+    echo -e
+    echo ${not_null_diff[@]}
+    exit 0 # eric-enm-dps-schemamgt ONLY (template)
+done</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.40">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+  </buildWrappers>
+</project>

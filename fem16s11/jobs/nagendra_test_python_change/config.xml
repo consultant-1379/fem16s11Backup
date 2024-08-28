@@ -1,0 +1,102 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>POC-Cloud-Native</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.plugins.python.Python plugin="python@1.3">
+      <command>from platform import python_version
+
+
+print(&quot;Current Python Version-&quot;, python_version())
+
+
+#name_sg = [&apos;ERIC_SG1&apos;,&apos;ENM_SG2&apos;,&apos;ENR_SG3&apos;,&apos;ENM_sg4&apos;]
+
+#for sg in name_sg:
+#    if sg.startswith(&apos;ERIC_&apos;) or sg.starstwith(&apos;ENM_&apos;):
+#        print sg
+
+#dict = {&apos;ERIC_sg1&apos;:&apos;geeks&apos;, &apos;ENM_sg2&apos;:&apos;for&apos;} 
+#print(&quot;Current Dict is: &quot;, dict) 
+  
+# adding dict1 (key3, key4 and key5) to dict 
+#dict1 = {&apos;ERIC_sg3&apos;:&apos;geeks&apos;, &apos;ENM-sg4&apos;:&apos;is&apos;, &apos;key5&apos;:&apos;fabulous&apos;} 
+#dict.update(dict1) 
+  
+# by assigning 
+#dict.update(newkey1 =&apos;portal&apos;) 
+#print(dict) 
+
+#for key in dict:
+#  if key.startswith(&quot;ERIC_&quot;) or key.startswith(&quot;ENM_&quot;):
+#    	print (key,&apos;:&apos;,dict[key])</command>
+      <configuredLocalRules/>
+    </hudson.plugins.python.Python>
+    <hudson.plugins.groovy.Groovy plugin="groovy@2.4">
+      <scriptSource class="hudson.plugins.groovy.StringScriptSource">
+        <command>def environment_set_up() {
+    sh &apos;pwd&apos;
+    sh &apos;export PYTHON_HOME=/proj/ciexadm100/tools/python-3.5.1&apos;
+    sh &apos;echo $PYTHON_HOME&apos;
+    sh &apos;export PATH=$PYTHON_HOME/bin:$ENM_PY/usr/bin:$PATH&apos;
+    sh &apos;alias python=python3&apos;
+    sh &apos;python3 --version&apos;
+    sh &apos;which python3&apos;
+    sh &apos;whereis python3&apos;
+}
+environment_set_up()</command>
+      </scriptSource>
+      <groovyName>(Default)</groovyName>
+      <parameters></parameters>
+      <scriptParameters></scriptParameters>
+      <properties></properties>
+      <javaOpts></javaOpts>
+      <classPath></classPath>
+    </hudson.plugins.groovy.Groovy>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

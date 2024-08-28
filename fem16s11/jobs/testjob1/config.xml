@@ -1,0 +1,104 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders/>
+  <publishers>
+    <org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher plugin="flexible-publish@0.16.1">
+      <publishers>
+        <org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
+          <condition class="org.jenkins_ci.plugins.run_condition.core.StatusCondition" plugin="run-condition@1.5">
+            <worstResult>
+              <name>SUCCESS</name>
+              <ordinal>0</ordinal>
+              <color>BLUE</color>
+              <completeBuild>true</completeBuild>
+            </worstResult>
+            <bestResult>
+              <name>SUCCESS</name>
+              <ordinal>0</ordinal>
+              <color>BLUE</color>
+              <completeBuild>true</completeBuild>
+            </bestResult>
+          </condition>
+          <publisherList>
+            <com.myyearbook.hudson.plugins.confluence.ConfluencePublisher plugin="confluence-publisher@2.0.6">
+              <siteName>confluence-oss.seli.wh.rnd.internal.ericsson.com</siteName>
+              <spaceName>ENMT</spaceName>
+              <pageName>cENM DQ sprint 21.07</pageName>
+              <attachArchivedArtifacts>false</attachArchivedArtifacts>
+              <buildIfUnstable>false</buildIfUnstable>
+              <replaceAttachments>false</replaceAttachments>
+              <parentId>0</parentId>
+              <editors>
+                <com.myyearbook.hudson.plugins.confluence.wiki.editors.BeforeTokenEditor>
+                  <generator class="com.myyearbook.hudson.plugins.confluence.wiki.generators.PlainTextGenerator">
+                    <text>    &lt;tr&gt;
+&lt;td colspan=&quot;1&quot;&gt;n&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;test&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;Review&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;test&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;Chakras&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;NA&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;Passed&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;test&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+    &lt;/tr&gt;</text>
+                  </generator>
+                  <markerToken>&lt;/tbody&gt;&lt;/table&gt;</markerToken>
+                </com.myyearbook.hudson.plugins.confluence.wiki.editors.BeforeTokenEditor>
+              </editors>
+            </com.myyearbook.hudson.plugins.confluence.ConfluencePublisher>
+          </publisherList>
+          <runner class="org.jenkins_ci.plugins.run_condition.BuildStepRunner$Fail" plugin="run-condition@1.5"/>
+          <executionStrategy class="org.jenkins_ci.plugins.flexible_publish.strategy.FailAtEndExecutionStrategy"/>
+        </org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
+      </publishers>
+    </org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher>
+  </publishers>
+  <buildWrappers/>
+</project>

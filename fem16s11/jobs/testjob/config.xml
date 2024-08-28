@@ -1,0 +1,159 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>SLAVE</name>
+          <description></description>
+          <defaultValue>Cloud-Native</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@4.10.3">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>ssh://gerritmirror-ha.lmera.ericsson.se:29418/OSS/com.ericsson.oss.containerisation/enm-containerisation-ci-pipeline</url>
+        <credentialsId>lciadm100_private_key</credentialsId>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>dTORF-340829</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <submoduleCfg class="list"/>
+    <extensions/>
+  </scm>
+  <assignedNode>Cloud-Native</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <javaposse.jobdsl.plugin.ExecuteDslScripts plugin="job-dsl@1.78.3">
+      <scriptText>def listfile = [&apos;test-enable&apos;,&apos;test-disbale&apos;]
+listfile.each { 
+  item -&gt; createPipelineE2EBuildJob(item)
+}
+
+def createPipelineE2EBuildJob(item) {
+  
+String e2e_steps = &quot;&quot;&quot;
+pipeline {
+    agent { node { label &apos;Cloud-Native&apos; } }
+    options {
+        timestamps()
+    }
+    parameters {
+        string(name: &apos;product_set_version&apos;, description: &apos;Enter the product set version (e.g. 20.11.52).\
+                      Please ensure to give latest product set version compared to last built product set.&apos;, defaultValue: &quot;&quot;)
+    }
+    stages {
+      stage(&apos;test&apos;) {
+         steps {
+            sh &apos;&apos;&apos;
+                if(env.REPO == &apos;test-disable&apos;)
+                   echo &quot;do something&quot;
+                else
+                   return &quot;not required&quot;
+             &apos;&apos;&apos;
+         }
+      }
+      stage (&apos;Initialization of ENM Versions&apos;) {
+            steps {
+                script {
+                    def productSet = &quot;&quot;
+
+                    // For nightly build this parameter would be empty
+                    if (params.product_set_version) {
+                        productSet = params.product_set_version.trim()
+                    }
+                    // Check if product set version is given
+                    if (productSet != &quot;&quot;) {
+                        env.PRODUCT_SET = productSet
+                        echo &quot;Triggered manually with the PRODUCT_SET: \${productSet}&quot;
+                        currentBuild.description = &quot;Triggered Mode: &lt;b&gt;Manual&lt;/b&gt;&lt;br/&gt;&quot;
+                    } else {
+                        echo &quot;Triggered automatically.&quot;
+                        currentBuild.description = &quot;Triggered Mode: &lt;b&gt;Auto&lt;/b&gt;&lt;br/&gt;&quot;
+                    }
+                }
+             }
+        } 
+     }
+}
+&quot;&quot;&quot;
+    pipelineJob(item) {
+        description (&apos;ENM Cloud Native Build pipeline eric-enm-e2e-build - autogenerated using JobDSL - all manual changes will be overwritten!&apos;)
+        concurrentBuild(allowConcurrentBuild = false)
+        parameters {
+           stringParam(&quot;product_set_version&quot;, &quot;&quot;, &quot;Enter the product set version (e.g. 20.11.52).Please ensure to give latest product set version compared to last built product set.&quot;)
+        }
+      environmentVariables {
+            env(&apos;REPO&apos;, item)
+        }
+        definition {
+            cps {
+                sandbox()
+                script(e2e_steps)
+       
+            }
+        }
+    }
+}</scriptText>
+      <usingScriptText>true</usingScriptText>
+      <sandbox>false</sandbox>
+      <ignoreExisting>false</ignoreExisting>
+      <ignoreMissingFiles>false</ignoreMissingFiles>
+      <failOnMissingPlugin>false</failOnMissingPlugin>
+      <failOnSeedCollision>false</failOnSeedCollision>
+      <unstableOnDeprecation>false</unstableOnDeprecation>
+      <removedJobAction>IGNORE</removedJobAction>
+      <removedViewAction>IGNORE</removedViewAction>
+      <removedConfigFilesAction>IGNORE</removedConfigFilesAction>
+      <lookupStrategy>JENKINS_ROOT</lookupStrategy>
+    </javaposse.jobdsl.plugin.ExecuteDslScripts>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

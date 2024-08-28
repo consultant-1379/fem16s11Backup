@@ -1,0 +1,212 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties>
+        <string>org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty</string>
+      </jobProperties>
+      <triggers/>
+      <parameters>
+        <string>CHART_NAME</string>
+        <string>INT_ENM_CHART</string>
+        <string>GERRIT_REFSPEC</string>
+        <string>CHART_REPO</string>
+        <string>CHART_VERSION</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>CHART_NAME</name>
+          <description>Chart name e.g.: eric-log-shipper</description>
+          <defaultValue>eric-log-shipper</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>CHART_REPO</name>
+          <description>Chart repo e.g.: https://arm.sero.gic.ericsson.se/artifactory/proj-adp-gs-all-helm/</description>
+          <defaultValue>https://arm.sero.gic.ericsson.se/artifactory/proj-adp-gs-all-helm/</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>CHART_VERSION</name>
+          <description>Chart version e.g.: 4.1.0-22</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>INT_ENM_CHART</name>
+          <description>eric-enm-int-log-shipper</description>
+          <defaultValue>eric-enm-int-log-shipper</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>GERRIT_REFSPEC</name>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <org.jvnet.jenkins.plugins.nodelabelparameter.LabelParameterDefinition plugin="nodelabelparameter@1.10.3">
+          <name>SLAVE</name>
+          <defaultValue></defaultValue>
+          <allNodesMatchingLabel>false</allNodesMatchingLabel>
+          <triggerIfResult>allCases</triggerIfResult>
+          <nodeEligibility class="org.jvnet.jenkins.plugins.nodelabelparameter.node.AllNodeEligibility"/>
+        </org.jvnet.jenkins.plugins.nodelabelparameter.LabelParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.jobConfigHistory.JobLocalConfiguration plugin="jobConfigHistory@2.26">
+      <changeReasonComment></changeReasonComment>
+    </hudson.plugins.jobConfigHistory.JobLocalConfiguration>
+    <org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty>
+      <abortPrevious>false</abortPrevious>
+    </org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>#!/usr/bin/env groovy
+
+def defaultBobImage = &apos;armdocker.rnd.ericsson.se/sandbox/adp-staging/adp-cicd/bob.2.0:1.7.0-83&apos;
+
+def bob = new BobCommand()
+        .bobImage(defaultBobImage)
+        .needDockerSocket(true)
+        .toString()
+
+pipeline {
+    options {
+        disableConcurrentBuilds()
+    }
+    agent {
+            node
+            {
+               label SLAVE
+            }
+        }
+    parameters {
+        string(name: &apos;CHART_NAME&apos;, defaultValue: &apos;eric-log-shipper&apos;, description: &apos;Chart name e.g.: eric-log-shipper&apos;)
+        string(name: &apos;CHART_REPO&apos;, defaultValue: &apos;https://arm.sero.gic.ericsson.se/artifactory/proj-adp-gs-all-helm/&apos;, description: &apos;Chart repo e.g.: https://arm.sero.gic.ericsson.se/artifactory/proj-adp-gs-all-helm/&apos;)
+        string(name: &apos;CHART_VERSION&apos;, defaultValue: &apos;&apos;, description: &apos;Chart version e.g.: 4.1.0-22&apos;)
+        string(name: &apos;INT_ENM_CHART&apos;, defaultValue: &apos;eric-enm-int-log-shipper&apos;, description: &apos;eric-enm-int-log-shipper&apos;)
+        string(name: &apos;GERRIT_REFSPEC&apos;, defaultValue: &apos;&apos;)
+    }
+    stages {
+        stage(&apos;Clean&apos;) {
+            steps {
+                 sh &quot;${bob} clean-prepare&quot;
+            }
+        }
+
+    stage(&apos;Inject Credential Files&apos;) {
+        steps {
+            withCredentials([file(credentialsId: &apos;lciadm100-docker-auth&apos;, variable: &apos;dockerConfig&apos;)]) {
+                sh &quot;install -m 600 ${dockerConfig} ${HOME}/.docker/config.json&quot;
+            }
+        }
+    }
+    stage(&apos;Apply Permissions To WorkSpace&apos;) {
+            steps{
+                 script {
+                     sh &apos;&apos;&apos;
+                       echo ${WORKSPACE}
+                       chmod -R 777 ${WORKSPACE}
+                       chmod -R 777 ${WORKSPACE}@tmp/secretFiles
+                    &apos;&apos;&apos;
+                }
+            }
+        }
+        stage(&apos;Prepare Helm Chart&apos;) {
+            steps {
+               script{
+                      withCredentials([usernamePassword(credentialsId: &apos;cenmbuild_gerrit_api_token&apos;, usernameVariable: &apos;GERRIT_USERNAME&apos;, passwordVariable: &apos;GERRIT_PASSWORD&apos;), string(credentialsId: &apos;lciadm100&apos;, variable: &apos;ARM_API_TOKEN&apos;), file(credentialsId: &apos;cenm_repo_credentials&apos;, variable: &apos;HELM_REPO_CREDENTIALS&apos;)]) 
+		      {
+                      def bobwithprepare = new BobCommand()
+                         .bobImage(defaultBobImage)
+                         .needDockerSocket(true)
+                         .envVars([&apos;CHART_NAME&apos;: env.CHART_NAME,
+                                   &apos;CHART_REPO&apos;: env.CHART_REPO,
+                                   &apos;CHART_VERSION&apos;: env.CHART_VERSION,
+                                   &apos;INT_ENM_CHART&apos;: env.INT_ENM_CHART,
+                                   &apos;ARM_API_TOKEN&apos;: env.ARM_API_TOKEN,
+                                   &apos;GERRIT_USERNAME&apos;: env.GERRIT_USERNAME,
+                                   &apos;GERRIT_PASSWORD&apos;: env.GERRIT_PASSWORD,
+                                   &apos;GERRIT_REFSPEC&apos; : env.GERRIT_REFSPEC,
+				   &apos;HELM_REPO_CREDENTIALS&apos;: env.HELM_REPO_CREDENTIALS,
+				   &apos;HELM_INTERNAL_REPO&apos;: env.HELM_INTERNAL_REPO,
+				   &apos;HELM_DROP_REPO&apos;: env.HELM_DROP_REPO,
+				   &apos;HELM_RELEASED_REPO&apos;: env.HELM_RELEASED_REPO
+                         ])
+                         .toString()
+                    sh &quot;${bobwithprepare}  prepare&quot;
+                   			}	
+             			}
+            		}
+            	}
+	    }
+	}
+// More about @Builder: http://mrhaki.blogspot.com/2014/05/groovy-goodness-use-builder-ast.html
+import groovy.transform.builder.Builder
+import groovy.transform.builder.SimpleStrategy
+@Builder(builderStrategy = SimpleStrategy, prefix = &apos;&apos;)
+class BobCommand {
+    def bobImage = &apos;bob.2.0:latest&apos;
+    def envVars = [:]
+    def needDockerSocket = false
+
+    String toString() {
+        def env = envVars
+                .collect({ entry -&gt; &quot;-e ${entry.key}=\&quot;${entry.value}\&quot;&quot; })
+                .join(&apos; &apos;)
+
+        def cmd = &quot;&quot;&quot;\
+            |docker run
+            |--init
+            |--rm
+            |--workdir \${PWD}
+            |--user \$(id -u):\$(id -g)
+            |-v \${PWD}:\${PWD}
+            |-v /home/enmadm100/doc_push/group:/etc/group:ro
+            |-v /home/enmadm100/doc_push/passwd:/etc/passwd:ro
+            |-v \${HOME}/.m2:\${HOME}/.m2
+            |-v \${HOME}/.docker:\${HOME}/.docker
+            |\$(if [ -n &quot;\$HELM_REPO_CREDENTIALS&quot; ]; then echo -v \$HELM_REPO_CREDENTIALS:\$HELM_REPO_CREDENTIALS;fi)
+            |${needDockerSocket ? &apos;-v /var/run/docker.sock:/var/run/docker.sock&apos; : &apos;&apos;}
+            |${env}
+            |\$(for group in \$(id -G); do printf &apos; --group-add %s&apos; &quot;\$group&quot;; done)
+            |--group-add \$(stat -c &apos;%g&apos; /var/run/docker.sock)
+            |${bobImage}
+            |&quot;&quot;&quot;
+        return cmd
+                .stripMargin()           // remove indentation
+                .replace(&apos;\n&apos;, &apos; &apos;)      // join lines
+                .replaceAll(/[ ]+/, &apos; &apos;) // replace multiple spaces by one
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

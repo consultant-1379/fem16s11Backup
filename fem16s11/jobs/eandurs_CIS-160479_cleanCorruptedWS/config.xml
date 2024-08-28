@@ -1,0 +1,110 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>By specifying the related slave entry, this jobs cleans up all the &quot;bases&quot; folders created with root permissions by designers for eric-oss-metric-stager_precommit  jobs&#xd;
+</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <org.jvnet.jenkins.plugins.nodelabelparameter.LabelParameterDefinition plugin="nodelabelparameter@1.10.3">
+          <name>Cloud-Native</name>
+          <defaultValue>Cloud-Native</defaultValue>
+          <allNodesMatchingLabel>true</allNodesMatchingLabel>
+          <triggerIfResult>allCases</triggerIfResult>
+          <nodeEligibility class="org.jvnet.jenkins.plugins.nodelabelparameter.node.IgnoreOfflineNodeEligibility"/>
+        </org.jvnet.jenkins.plugins.nodelabelparameter.LabelParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>Cloud-Native</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>set +e
+#
+cd  /home/lciadm100/jenkins/workspace/eric-oss-metric-stager_precommit
+ls -la  /home/lciadm100/jenkins/workspace/eric-oss-metric-stager_precommit
+
+
+#
+#
+cd  /home/lciadm100/jenkins/workspace/eric-oss-metric-stager_precommit
+sudo rm -rf build
+ls -la  /home/lciadm100/jenkins/workspace/eric-oss-metric-stager_precommit
+
+
+#cd /home/lciadm100/jenkins/workspace/eric-oss-ingress-controller-nx_precommit
+#sudo rm -rf .coverage
+#sudo rm -rf ingress-nginx/.modcache
+
+#sudo rm -rf .pytest_cache
+#sudo rm -rf rcd_code_coverage_result
+#sudo rm -rf test
+#cd /home/lciadm100/jenkins/workspace/eric-enm-resource-configuration-data_precommit
+
+# if [ $? -eq 0 ]; then sudo rm -rf .pytest_cache
+# fi
+ 
+# cd /home/lciadm100/jenkins/workspace/eric-enm-resource-configuration-data/ 
+#  if [ $? -eq 0 ]; then sudo rm -rf rcd_code_coverage_result
+#  fi 
+
+# cd /home/lciadm100/jenkins/workspace/eric-enm-resource-configuration-data/ 
+#  if [ $? -eq 0 ]; then sudo rm -rf test
+#  fi 
+  
+
+#ls -la /home/lciadm100/jenkins/workspace/eric-oss-ingress-controller-nx_precommit
+
+#ls -la /home/lciadm100/jenkins/workspace/eric-net-ingress-l4/config/crd
+#ls -la /home/lciadm100/jenkins/workspace/eric-net-ingress-l4_release/config/crd
+#ls -la /home/lciadm100/jenkins/workspace/eric-net-ingress-l4_precommit/config/crd
+#
+
+
+</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

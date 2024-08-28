@@ -1,0 +1,392 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><project>
+  <actions/>
+  <description>&lt;b&gt;This Job collects the logs accordding to Data collectin guidelines https://confluence-nam.lmera.ericsson.se/display/CPIB/ENM+Data+Collection+Guideline&#13;
+&lt;br&gt;&#13;
+  &lt;br&gt;&#13;
+User needs to select proper cluster id and functionality name while triggering the build with parameters. &#13;
+&lt;br&gt;&#13;
+  &lt;br&gt;&#13;
+  It will upload collected logs to log server (141.137.208.102) path /proj/ENMLoggingServer/logs/239/${vAppGatewayName}/${uploaddate}&#13;
+&lt;br&gt;&#13;
+  Note: Download logs from logging server using http://141.137.208.102/ENMlogs/ and click on respective cluster_id then upload date&#13;
+&lt;/b&gt;</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@69.0.3">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>20</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.24.1">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@69.0.3">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@69.0.3">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@69.0.3">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty plugin="leastload@1.0.3">
+      <leastLoadDisabled>false</leastLoadDisabled>
+    </org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <org.jvnet.jenkins.plugins.nodelabelparameter.NodeParameterDefinition plugin="nodelabelparameter@1.7.2">
+          <name>VappSlaveName</name>
+          <description/>
+          <allowedSlaves/>
+          <defaultSlaves/>
+          <triggerIfResult>multiSelectionDisallowed</triggerIfResult>
+          <allowMultiNodeSelection>false</allowMultiNodeSelection>
+          <triggerConcurrentBuilds>false</triggerConcurrentBuilds>
+          <ignoreOfflineNodes>false</ignoreOfflineNodes>
+          <nodeEligibility class="org.jvnet.jenkins.plugins.nodelabelparameter.node.AllNodeEligibility"/>
+        </org.jvnet.jenkins.plugins.nodelabelparameter.NodeParameterDefinition>
+        <org.biouno.unochoice.ChoiceParameter plugin="uno-choice@2.2.1">
+          <name>type_of_log</name>
+          <description/>
+          <randomName>choice-parameter-28485904403399969</randomName>
+          <visibleItemCount>1</visibleItemCount>
+          <script class="org.biouno.unochoice.model.GroovyScript">
+            <secureScript plugin="script-security@1.73">
+              <script>return ["jboss_logs", "non_jboss_logs", "faulted_vm_log"]</script>
+              <sandbox>false</sandbox>
+            </secureScript>
+            <secureFallbackScript plugin="script-security@1.73">
+              <script/>
+              <sandbox>false</sandbox>
+            </secureFallbackScript>
+          </script>
+          <projectName>CollectLogs_From_vApp_ENM_Server</projectName>
+          <projectFullName>CollectLogs_From_vApp_ENM_Server</projectFullName>
+          <choiceType>PT_SINGLE_SELECT</choiceType>
+          <filterable>false</filterable>
+          <filterLength>1</filterLength>
+        </org.biouno.unochoice.ChoiceParameter>
+        <org.biouno.unochoice.ChoiceParameter plugin="uno-choice@2.2.1">
+          <name>functionality_name</name>
+          <description>&lt;b&gt;Please Use CTRL button + Select the functionality Name to Select multiple items&lt;/b&gt;</description>
+          <randomName>choice-parameter-28485904407330339</randomName>
+          <visibleItemCount>1</visibleItemCount>
+          <script class="org.biouno.unochoice.model.GroovyScript">
+            <secureScript plugin="script-security@1.73">
+              <script>def metadata
+def list =[]
+list.add("ALL")
+def url="https://staging-gerrit.sero.gic.ericsson.se/gitweb?p=OSS/com.ericsson.ci.test/onboardingfour.git;a=blob_plain;f=maintrack_troubleshooting_tool/log_collection/DCG.xml;hb=HEAD"
+metadata = new XmlSlurper().parse(url)
+metadata.functionality.each {
+list.add(it.@name.toString())
+}
+return list</script>
+              <sandbox>false</sandbox>
+            </secureScript>
+            <secureFallbackScript plugin="script-security@1.73">
+              <script/>
+              <sandbox>false</sandbox>
+            </secureFallbackScript>
+          </script>
+          <projectName>CollectLogs_From_vApp_ENM_Server</projectName>
+          <projectFullName>CollectLogs_From_vApp_ENM_Server</projectFullName>
+          <choiceType>PT_SINGLE_SELECT</choiceType>
+          <filterable>false</filterable>
+          <filterLength>1</filterLength>
+        </org.biouno.unochoice.ChoiceParameter>
+        <org.biouno.unochoice.CascadeChoiceParameter plugin="uno-choice@2.2.1">
+          <name>blade_name</name>
+          <description>&lt;b&gt;Select the blade name, on which Vm is faulted from Allure report
+EX : SVC-1 etc. Job will not support multiple blades at a time separated by coma(,)&lt;b&gt;</description>
+          <randomName>choice-parameter-28485904411259409</randomName>
+          <visibleItemCount>1</visibleItemCount>
+          <script class="org.biouno.unochoice.model.GroovyScript">
+            <secureScript plugin="script-security@1.73">
+              <script>if(type_of_log.contains("faulted_vm_log")) {
+return ["SELECT","svc-1",
+"svc-2",
+"svc-3",
+"svc-4",
+"svc-5",
+ "svc-6"]
+}
+return [""]</script>
+              <sandbox>false</sandbox>
+            </secureScript>
+            <secureFallbackScript plugin="script-security@1.73">
+              <script/>
+              <sandbox>false</sandbox>
+            </secureFallbackScript>
+          </script>
+          <projectName>CollectLogs_From_vApp_ENM_Server</projectName>
+          <projectFullName>CollectLogs_From_vApp_ENM_Server</projectFullName>
+          <parameters class="linked-hash-map"/>
+          <referencedParameters>type_of_log</referencedParameters>
+          <choiceType>PT_SINGLE_SELECT</choiceType>
+          <filterable>false</filterable>
+          <filterLength>1</filterLength>
+        </org.biouno.unochoice.CascadeChoiceParameter>
+        <org.biouno.unochoice.CascadeChoiceParameter plugin="uno-choice@2.2.1">
+          <name>vm_name</name>
+          <description/>
+          <randomName>choice-parameter-28485904414827149</randomName>
+          <visibleItemCount>1</visibleItemCount>
+          <script class="org.biouno.unochoice.model.GroovyScript">
+            <secureScript plugin="script-security@1.73">
+              <script>if(type_of_log.contains("faulted_vm_log")) {
+return ["SELECT","access_control","amos","apeps1","apserv","bnsiserv","cmevents","cmserv","comecimpolicy","dchistory","dfwd1","dlms","ebstopology","elementmanager","eventbasedclient","eventslvsrouter","flsserv","fmalarmprocessing","fmhistory","fmserv","fmx","httpd","impexpserv","ipsmserv","itservices","kafka1","kpiserv","lcmserv","lvsrouter","medrouter","medcore","msap","mscm","mscmce","mscmip","msfm","msnetlog","mspm","mspmip","mssnmpcm","mssnmpfm","msstr1","nbalarmirp","netex","nodecli","openidm","pkiraserv","pmrouterpolicy","pmserv","reg1","said","scripting","scriptinglvsrouter","secserv","shmcoreserv","shmserv","sps","sso","security","streaminglvsrouter","vaultserv","supervc","uiserv","wpserv","zoo1","ncmagent"]
+}</script>
+              <sandbox>false</sandbox>
+            </secureScript>
+            <secureFallbackScript plugin="script-security@1.73">
+              <script/>
+              <sandbox>false</sandbox>
+            </secureFallbackScript>
+          </script>
+          <projectName>CollectLogs_From_vApp_ENM_Server</projectName>
+          <projectFullName>CollectLogs_From_vApp_ENM_Server</projectFullName>
+          <parameters class="linked-hash-map"/>
+          <referencedParameters>type_of_log</referencedParameters>
+          <choiceType>PT_SINGLE_SELECT</choiceType>
+          <filterable>true</filterable>
+          <filterLength>1</filterLength>
+        </org.biouno.unochoice.CascadeChoiceParameter>
+        <hudson.model.StringParameterDefinition>
+          <name>ftp_server_ip</name>
+          <description/>
+          <defaultValue>141.137.208.102</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>ftp_upload_base_path</name>
+          <description/>
+          <defaultValue>/proj/ENMLoggingServer/logs/</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>mt_troubleshooting_tool_version</name>
+          <description/>
+          <defaultValue>RELEASE</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <org.biouno.unochoice.DynamicReferenceParameter plugin="uno-choice@2.2.1">
+          <name>list_of_jboss_log_vms:</name>
+          <description/>
+          <randomName>choice-parameter-28485904420258716</randomName>
+          <visibleItemCount>1</visibleItemCount>
+          <script class="org.biouno.unochoice.model.GroovyScript">
+            <secureScript plugin="script-security@1.73">
+              <script>def metadata
+def list =[]
+if((type_of_log.equals("jboss_logs"))||(type_of_log.contains("jboss_logs,non_jboss_logs"))) {
+def url="https://staging-gerrit.sero.gic.ericsson.se/gitweb?p=OSS/com.ericsson.ci.test/onboardingfour.git;a=blob_plain;f=maintrack_troubleshooting_tool/log_collection/DCG.xml;hb=HEAD"
+metadata = new XmlSlurper().parse(url)
+metadata.functionality.each {
+if (functionality_name.contains(it.@name.toString()) || functionality_name.contains("ALL")) {
+it.jbosslogs.toString().split(",").each {
+  list.add(it)
+}
+}
+}
+}
+return list</script>
+              <sandbox>false</sandbox>
+            </secureScript>
+            <secureFallbackScript plugin="script-security@1.73">
+              <script>return ["none"]</script>
+              <sandbox>false</sandbox>
+            </secureFallbackScript>
+          </script>
+          <projectName>CollectLogs_From_vApp_ENM_Server</projectName>
+          <projectFullName>CollectLogs_From_vApp_ENM_Server</projectFullName>
+          <parameters class="linked-hash-map"/>
+          <referencedParameters>functionality_name,type_of_log</referencedParameters>
+          <choiceType>ET_UNORDERED_LIST</choiceType>
+          <omitValueField>false</omitValueField>
+        </org.biouno.unochoice.DynamicReferenceParameter>
+        <org.biouno.unochoice.DynamicReferenceParameter plugin="uno-choice@2.2.1">
+          <name>list_of_non_jboss_logs:</name>
+          <description/>
+          <randomName>choice-parameter-28485904424488932</randomName>
+          <visibleItemCount>1</visibleItemCount>
+          <script class="org.biouno.unochoice.model.GroovyScript">
+            <secureScript plugin="script-security@1.73">
+              <script>def metadata
+def list =[]
+if(type_of_log.contains("non_jboss_logs")) {
+def url="https://staging-gerrit.sero.gic.ericsson.se/gitweb?p=OSS/com.ericsson.ci.test/onboardingfour.git;a=blob_plain;f=maintrack_troubleshooting_tool/log_collection/DCG.xml;hb=HEAD"
+metadata = new XmlSlurper().parse(url)
+metadata.functionality.each {
+if (functionality_name.contains(it.@name.toString()) || functionality_name.contains("ALL")) {
+it.otherlogs.toString().split(",").each {
+  list.add(it)
+}
+}
+}
+}
+return list</script>
+              <sandbox>false</sandbox>
+            </secureScript>
+            <secureFallbackScript plugin="script-security@1.73">
+              <script>return ["none"]</script>
+              <sandbox>false</sandbox>
+            </secureFallbackScript>
+          </script>
+          <projectName>CollectLogs_From_vApp_ENM_Server</projectName>
+          <projectFullName>CollectLogs_From_vApp_ENM_Server</projectFullName>
+          <parameters class="linked-hash-map"/>
+          <referencedParameters>functionality_name,type_of_log</referencedParameters>
+          <choiceType>ET_UNORDERED_LIST</choiceType>
+          <omitValueField>false</omitValueField>
+        </org.biouno.unochoice.DynamicReferenceParameter>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit/>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@69.0.3">
+      <enabled>false</enabled>
+      <userDomainSuffix/>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    <de.pellepelster.jenkins.walldisplay.WallDisplayJobProperty plugin="jenkinswalldisplay@0.6.30"/>
+    
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>true</concurrentBuild>
+  <builders>
+    <org.jenkinsci.plugins.exportparams.ExportParametersBuilder plugin="export-params@1.9">
+      <filePath>log_collection</filePath>
+      <fileFormat>properties</fileFormat>
+      <keyPattern/>
+      <useRegexp>false</useRegexp>
+    </org.jenkinsci.plugins.exportparams.ExportParametersBuilder>
+    <hudson.tasks.Shell>
+      <command>#!/bin/sh
+
+##### Download Repos #####
+mt_utils_version="RELEASE"
+troubleshooting_repo_version="RELEASE"
+
+echo "Retrieving Scripts from Nexus"
+utils_tar_file_name="utils_${mt_utils_version}.tar.gz"
+troubleshooting_tar_file_name="mt_troubleshooting_tool_${troubleshooting_repo_version}.tar.gz"
+
+echo "Downloading file ${utils_tar_file_name} - to the workspace"
+curl -s --noproxy \* -L "https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/service/local/artifact/maven/redirect?r=releases&amp;g=com.ericsson.mtg&amp;a=utils&amp;p=tar.gz&amp;v=${mt_utils_version}" -o ${utils_tar_file_name}
+
+echo "Downloading file ${troubleshooting_tar_file_name} - to the workspace"
+curl -s --noproxy \* -L "https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/service/local/artifact/maven/redirect?r=releases&amp;g=com.ericsson.mtg&amp;a=maintrack-troubleshooting-tool&amp;p=tar.gz&amp;v=${troubleshooting_repo_version}" -o ${troubleshooting_tar_file_name}
+
+tar -zxf ${utils_tar_file_name}
+tar -zxf ${troubleshooting_tar_file_name}
+
+ms_ip="ms-1"
+
+vappHostName=$(hostname | /bin/awk '{ print $1 }')
+
+##### Add parameters #####
+echo "cluster_id=${vappHostName}"&gt;&gt; "${WORKSPACE}/log_collection.properties"
+echo "ftp_server_root_password=shroot" &gt;&gt; "${WORKSPACE}/log_collection.properties"
+cat $WORKSPACE/log_collection.properties
+
+##### Copy Repos #####
+sh MTELoopScripts/etc/copy_repo_to_server.sh --server_ips "${ms_ip}" --repo_to_copy "utils"
+sh MTELoopScripts/etc/copy_repo_to_server.sh --server_ips "${ms_ip}" --repo_to_copy "maintrack_troubleshooting_tool"
+
+
+##### Collect Logs #####
+
+#!/bin/bash
+#
+#This script is used to install the expect interpreter software on the blade
+#
+
+if [[ ${type_of_log} == "faulted_vm_log" ]]
+
+then
+default_su_root_password="12shroot"
+echo "INFO :  Installing expect interpreter on the blade"
+expect &lt;&lt; EOF
+set force_conservative 1
+
+if {\$force_conservative} {
+        set send_slow {1 .1}
+        proc send {ignore arg} {
+                sleep .1
+                exp_send -s -- \$arg
+        }
+}
+set timeout 20
+spawn \$env(SHELL)
+match_max 100000
+send -- "ssh -o 'StrictHostKeyChecking no' litp-admin@${blade_name}\r"
+expect "litp-admin@${blade_name}'s password: "
+send -- "$default_su_root_password\r"
+send -- "su -\r"
+expect "Password: "
+send -- "${default_su_root_password}\r"
+expect "#"
+send -- "yum -y install expect\r"
+expect "#"
+EOF
+
+fi
+
+scp -P 22 -o "StrictHostKeyChecking no" "${WORKSPACE}/log_collection.properties" root@${ms_ip}:/var/tmp/
+
+ssh -o UserKnownHostsFile=/dev/null -o CheckHostIP=no -o StrictHostKeyChecking=no root@${ms_ip} "bash /var/tmp/MT/maintrack_troubleshooting_tool/log_collection/collect_enm_logs.sh /var/tmp/log_collection.properties"</command>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <hudson.plugins.descriptionsetter.DescriptionSetterPublisher plugin="description-setter@1.10">
+      <regexp>.*Download logs from ([^\s]*)</regexp>
+      <regexpForFailed/>
+      <description>&lt;b&gt;Download logs from &lt;a href=\1&gt;\1&lt;/a&gt;&lt;/b&gt;</description>
+      <setForMatrix>false</setForMatrix>
+    </hudson.plugins.descriptionsetter.DescriptionSetterPublisher>
+  </publishers>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.37">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter/>
+      <externalDelete/>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+    <org.jenkinsci.plugins.buildnamesetter.BuildNameSetter plugin="build-name-setter@1.6.9">
+      <template>${ENV,var="functionality_name"} ${ENV,var="type_of_log"}  on ${ENV,var="VappSlaveName"} </template>
+      <runAtStart>true</runAtStart>
+      <runAtEnd>true</runAtEnd>
+    </org.jenkinsci.plugins.buildnamesetter.BuildNameSetter>
+  </buildWrappers>
+</project>

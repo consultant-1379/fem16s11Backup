@@ -1,0 +1,411 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.security.AuthorizationMatrixProperty>
+      <inheritanceStrategy class="org.jenkinsci.plugins.matrixauth.inheritance.InheritParentStrategy"/>
+      <permission>USER:hudson.model.Item.Build:emarkie</permission>
+      <permission>USER:hudson.model.Item.Cancel:emarkie</permission>
+      <permission>USER:hudson.model.Item.Configure:emarkie</permission>
+      <permission>USER:hudson.model.Item.Discover:emarkie</permission>
+      <permission>USER:hudson.model.Item.Read:emarkie</permission>
+      <permission>USER:hudson.model.Item.Workspace:emarkie</permission>
+      <permission>USER:hudson.model.Run.Delete:emarkie</permission>
+      <permission>USER:hudson.model.Run.Update:emarkie</permission>
+      <permission>USER:hudson.scm.SCM.Tag:emarkie</permission>
+    </hudson.security.AuthorizationMatrixProperty>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <jp.ikedam.jenkins.plugins.extensible__choice__parameter.ExtensibleChoiceParameterDefinition plugin="extensible-choice-parameter@1.8.0">
+          <name>KGB_PRODUCT_SET</name>
+          <description>Select base product set from list</description>
+          <editable>false</editable>
+          <editableType>NoFilter</editableType>
+          <choiceListProvider class="jp.ikedam.jenkins.plugins.extensible_choice_parameter.SystemGroovyChoiceListProvider">
+            <groovyScript plugin="script-security@1138.v8e727069a_025">
+              <script>import groovy.json.JsonSlurper
+
+ def list = []
+    list.add("--NONE--")
+    list.add("--USER DEFINED--")
+    def jsonSlurper = new JsonSlurper()
+    def latestUrl = "https://ci-portal.seli.wh.rnd.internal.ericsson.com/api/cloudNative/getConfidenceLevelVersion/"          
+    def latestObjectRaw = ["curl", "-s", "-H", "accept: application/json", "-k", "--url", "${latestUrl}"].execute().text 
+    def latestJsonObject = jsonSlurper.parseText(latestObjectRaw)
+    
+    list.add(latestJsonObject.'cENM-Deploy-UG-Charts'+"--[Latest Upgrade]")
+    list.add(latestJsonObject.'cENM-Deploy-II-Charts'+"--[Latest Initial Install]")
+
+    def dropUrl = "https://ci-portal.seli.wh.rnd.internal.ericsson.com/api/product/ENM/latestdrop/"          
+    def dropObjectRaw = ["curl", "-s", "-H", "accept: application/json", "-k", "--url", "${dropUrl}"].execute().text 
+    def dropJsonObject = jsonSlurper.parseText(dropObjectRaw)
+def drop = dropJsonObject.'drop'
+
+def allUrl = "https://ci-portal.seli.wh.rnd.internal.ericsson.com//api/cloudNative/getOverallWorkingBaseline/drop/"+drop +"/"
+
+  def allObjectRaw = ["curl", "-s", "-H", "accept: application/json", "-k", "--url", "${allUrl}"].execute().text 
+   def allJsonObject = jsonSlurper.parseText(allObjectRaw)    
+def dataArray = allJsonObject .data
+    for(item in allJsonObject ){
+        status = item.'status'.toUpperCase()
+if (item.'status' == 'passed'){
+        //list.add(item.'version' +"--"+[status ])
+       list.add(item.'version')
+}
+
+    } 
+return list</script>
+              <sandbox>false</sandbox>
+            </groovyScript>
+            <usePredefinedVariables>false</usePredefinedVariables>
+          </choiceListProvider>
+        </jp.ikedam.jenkins.plugins.extensible__choice__parameter.ExtensibleChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>GERRIT_REVIEW</name>
+          <description>Format: GERRIT_CHANGE_NUMBER;GERRIT_PATCHSET_NUMBER e.g. 10082943;1</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>RPMs</name>
+          <description>RPMs to test in KGB+N
+use format Artifact::Version</description>
+          <defaultValue>ERICmodeldeploymenttool_CXP9030616::?</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>#!/usr/bin/env groovy
+
+import groovy.json.JsonSlurper
+/* IMPORTANT
+ *
+ * In order to make this pipeline work, the following configuration on Jenkins is required:
+ * - slave with a specific label (see pipeline.agent.label below)
+ * - credentials plugin should be installed and have the secrets with the following names:
+ *   + lciadm100credentials (token to access Artifactory)
+ */
+
+def defaultBobImage = 'armdocker.rnd.ericsson.se/sandbox/adp-staging/adp-cicd/bob.2.0:1.5.2-0'
+def bob = new BobCommand()
+        .bobImage(defaultBobImage)
+        .envVars([ISO_VERSION: '${ISO_VERSION}', ADD_ARTIFACTS: '${ADD_ARTIFACTS}'])
+        .needDockerSocket(true)
+        .toString()
+        
+def bobInCA = new BobCommand()
+        .bobImage(defaultBobImage)
+        .needDockerSocket(true)
+        .envVars([
+                ARM_API_TOKEN: '${ARM_CREDENTIALS_PSW}',
+                CHART_PATH: '${CHART_PATH}',
+                GIT_REPO_URL: '${GIT_REPO_URL}',
+                HELM_INTERNAL_REPO: '${HELM_INTERNAL_REPO}',
+                HELM_DROP_REPO: '${HELM_DROP_REPO}',
+                HELM_RELEASED_REPO: '${HELM_RELEASED_REPO}',
+                GERRIT_USERNAME: '${GERRIT_CREDENTIALS_USR}',
+                GERRIT_PASSWORD: '${GERRIT_CREDENTIALS_PSW}',
+                REQUIREMENTS_FILE: 'requirements.yaml',
+                GIT_BRANCH   : '${KGB_TAG}',
+        ])
+        .toString()        
+        
+def failedStage = ''
+pipeline {
+    agent {
+        label 'Cloud-Native'
+    }
+    
+    environment {
+       
+        ISO_VERSION = "1.108.28"
+
+        HELM_INTERNAL_REPO="https://arm.epk.ericsson.se/artifactory/proj-enm-kgb-dev-helm/"
+        HELM_DROP_REPO="https://arm.epk.ericsson.se/artifactory/proj-enm-kgb-dev-helm/"
+        HELM_RELEASED_REPO="https://arm.epk.ericsson.se/artifactory/proj-enm-kgb-dev-helm/"
+        CHART_PATH="chart/eric-enm-infra-integration"
+        GIT_REPO_URL="https://gerrit.ericsson.se/a/OSS/com.ericsson.oss.containerisation/eric-enm-infra-integration"
+        INTEGRATION_ID="eric-enm-infra-integration"
+        GERRIT_CREDENTIALS = credentials('cenmbuild_gerrit_api_token')
+        ARM_CREDENTIALS = credentials('cenmbuild_ARM_token')
+		GERRIT_REPO = "OSS/com.ericsson.oss.itpf.modeling/eric-enm-modeldeployservice"
+    }
+
+    stages {
+        stage('Init') {
+            steps {
+                //deleteDir()
+                withCredentials([file(credentialsId: 'lciadm100-docker-auth', variable: 'dockerConfig')]) {
+                    sh "install -m 600 ${dockerConfig} ${HOME}/.docker/config.json"
+                }
+				script {
+			    env.ADD_ARTIFACTS = RPMs
+			    
+				ENM_PRODUCT_SET= KGB_PRODUCT_SET.split('-')[0]
+				DROP= ENM_PRODUCT_SET.substring(0, ENM_PRODUCT_SET.lastIndexOf("."))
+
+				println(ENM_PRODUCT_SET)
+				println(DROP)
+				def list = []
+				def jsonSlurper = new JsonSlurper()
+				def productSetUrl = "https://ci-portal.seli.wh.rnd.internal.ericsson.com/getProductSetVersionContents/?productSet=ENM&amp;version="+ENM_PRODUCT_SET+"&amp;pretty=true"          
+				def productSetObjectRaw = ["curl", "-s", "-H", "accept: application/json", "-k", "--url", "${productSetUrl}"].execute().text
+				def  productSetJsonObject = jsonSlurper.parseText(productSetObjectRaw)
+				def array1 = productSetJsonObject[0].contents
+				String ENM_ISO = ""
+
+				for(def member : array1) {
+					println("here1")
+				   println(member.artifactName)
+					  if(member.artifactName.toString() == 'ERICenm_CXP9027091') {
+						  println("here")
+					  ENM_ISO = member.version
+					  break
+					  }
+				}
+
+				println(ENM_ISO)
+				env.KGB_TAG=DROP+"_iso_"+ENM_ISO
+				println("git tag:"+KGB_TAG)
+				}
+            }
+        }
+        stage('Checkout Cloud-Native SG Git Repository') {
+            steps {
+                script {
+                    if (GERRIT_REVIEW) {                        
+                        GERRIT_CHANGE_NUMBER = GERRIT_REVIEW.split(';')[0]
+                        GERRIT_PATCHSET_NUMBER = GERRIT_REVIEW.split(';').last()
+                        GERRIT_CHANGE_NUMBER_LAST_TWO_DIGITS = GERRIT_CHANGE_NUMBER[-2..-1]
+                        
+                        GERRIT_REFSPEC = "refs/changes/" + GERRIT_CHANGE_NUMBER_LAST_TWO_DIGITS + "/" + GERRIT_CHANGE_NUMBER + "/" + GERRIT_PATCHSET_NUMBER
+                        currentBuild.description = "&lt;a href=https://gerrit.ericsson.se/#/c/${GERRIT_CHANGE_NUMBER}/&gt;${GERRIT_REFSPEC}&lt;/a&gt;"
+                        
+                        checkout changelog: true, \
+                        scm: [$class: 'GitSCM', \
+                        branches: [[name: "$GERRIT_REFSPEC"]], \
+                        doGenerateSubmoduleConfigurations: false, \
+                        extensions: [[$class: 'BuildChooserSetting', buildChooser: [$class: 'GerritTriggerBuildChooser']]], \
+                        submoduleCfg: [], \
+                        userRemoteConfigs: [[refspec: "${GERRIT_REFSPEC}", \
+                        url: "${GERRIT_MIRROR}/OSS/com.ericsson.oss.itpf.modeling/eric-enm-modeldeployservice"]]]
+                    } else if (KGB_TAG) {
+                        git changelog: true, poll: false, url: '${GERRIT_MIRROR}/OSS/com.ericsson.oss.itpf.modeling/eric-enm-modeldeployservice'
+                        sh "git checkout tags/${KGB_TAG}"
+                    } else {
+                        println "No GERRIT_REVIEW, No KGB_TAG. Cloning Master..."
+                        git changelog: true, poll: false, url: '${GERRIT_MIRROR}/OSS/com.ericsson.oss.itpf.modeling/eric-enm-modeldeployservice'
+                    }
+                }
+            }
+        }
+        stage('Checkout Cloud-Native eric-enm-infra-integration Git Repository'){
+            steps {
+                    dir(INTEGRATION_ID) {
+                        git branch: 'master',
+                        url: '${GERRIT_MIRROR}/OSS/com.ericsson.oss.containerisation/eric-enm-infra-integration'
+                        echo 'Inject ruleset file'
+                        configFileProvider([configFile(fileId: "infra_kgb_ruleset", targetLocation: "${env.WORKSPACE}/${INTEGRATION_ID}/")]) {}
+            
+                }
+            }
+        }
+		
+	
+
+
+  
+        stage('TMP RULESET') {
+            steps {
+			//	sh 'exit 1'
+                echo 'Inject ruleset file'
+                configFileProvider([configFile(fileId: "kgb_ruleset_mdt", targetLocation: "${env.WORKSPACE}/")]) {}
+            }
+        }
+        stage('Helm Dep Up ') {
+            steps {
+                echo "tmp rem"
+                //sh "${bob} helm-dep-up"
+            }
+        }
+        // stage('Merge values files') {
+        //     steps{
+        //          script {
+        //              appconfig_values = sh (script: "ls ${WORKSPACE}/chart/eric-enmsg-modeldeployservice/appconfig/ | grep values.yaml", returnStatus: true)
+        //              if (appconfig_values == 0) {
+        //                   sh("${bob} merge-values-files-with-appconfig")
+        //              } else {
+        //                   sh("${bob} merge-values-files")
+        //              }
+        //         }
+        //     }
+        // }
+        stage('Create Yum Repo') {
+            steps {
+               
+               sh "${bob} create-kgb-enm-repo"
+            }
+        }
+        stage('Update yum repo') {
+            steps {  
+                sh "${bob} update-yum-repo-kgb"
+               
+            }
+        }
+        stage('Build Image and Chart') {
+            steps {
+                // sh "${bob} generate-new-version build-image-with-all-tags-internal"
+                sh "${bob} generate-new-version-kgb build-helm build-image-kgb"
+                sh '''
+                    ls -al .bob                 
+                '''
+            }
+            post {
+                failure {
+                    script {
+                        failedStage = env.STAGE_NAME
+                        sh "${bob} remove-image-kgb"
+                    }
+                }
+            }
+        }
+        stage('Publish Images to Artifactory') {
+            steps {
+                sh "${bob} push-image-kgb"
+            }
+            post {
+
+                always {
+                    sh "${bob} remove-image-kgb"
+                }
+            }
+        }
+        stage('Publish Helm Chart') {
+            steps {
+                script {
+                        //NOTE should be credentialsId: 'lciadm100 for production
+                        withCredentials([string(credentialsId: 'lciadm100', variable: 'HELM_REPO_TOKEN')]) {
+                        def bobWithHelmToken = new BobCommand()
+                            .bobImage(defaultBobImage)
+                            .needDockerSocket(true)
+                            .envVars(['HELM_REPO_TOKEN': env.HELM_REPO_TOKEN])
+                            .toString()
+                        sh "${bobWithHelmToken} push-helm-kgb"
+                    }
+                }
+            }
+        }
+        stage('Generate ADP Parameters') {
+            steps {
+                sh "${bob} generate-output-parameters-kgb"
+                sh "cp artifact.properties artifact_sg.properties"
+                archiveArtifacts 'artifact_sg.properties'
+            }
+
+        }
+        stage('Generate requirements file') {
+            steps {
+               sh '''
+                   . ./artifact.properties
+                   echo "dependencies:" &gt;requirements.yaml
+                   echo "- name: ${CHART_NAME}"&gt;&gt;requirements.yaml
+                   echo "  repository: https://arm.epk.ericsson.se/artifactory/proj-enm-kgb-dev-helm/"&gt;&gt;requirements.yaml
+                   echo "  version: ${CHART_VERSION}"&gt;&gt;requirements.yaml
+               '''
+               archiveArtifacts 'requirements.yaml'
+            }
+
+        }
+        stage('Inca prepare') {
+            steps{
+                 script {
+                    sh "cd ${INTEGRATION_ID} &amp;&amp; cp ../requirements.yaml . &amp;&amp; ${bobInCA} preparewithreq"
+                    archiveArtifacts "${INTEGRATION_ID}/artifact.properties"
+                }
+            }
+
+        }        
+    }
+    post {
+        always {        
+            sh "${bob} delete-kgb-enm-repo"
+        }
+    }
+}
+
+// More about @Builder: http://mrhaki.blogspot.com/2014/05/groovy-goodness-use-builder-ast.html
+
+import groovy.transform.builder.Builder
+import groovy.transform.builder.SimpleStrategy
+
+@Builder(builderStrategy = SimpleStrategy, prefix = '')
+class BobCommand {
+
+    def bobImage = 'bob.2.0:latest'
+    def envVars = [:]
+    def needDockerSocket = false
+
+    String toString() {
+        def env = envVars
+                .collect({ entry -&gt; "-e ${entry.key}=\"${entry.value}\"" })
+                .join(' ')
+
+        def cmd = """\
+            |docker run
+            |--init	
+            |--rm
+            |--workdir \${PWD}
+            |--user \$(id -u):\$(id -g)
+            |-v \${PWD}:\${PWD}
+            |-v /etc/group:/etc/group:ro
+            |-v /etc/passwd:/etc/passwd:ro
+            |-v \${HOME}/.m2:\${HOME}/.m2
+            |-v \${HOME}/.docker:\${HOME}/.docker
+            |${needDockerSocket ? '-v /var/run/docker.sock:/var/run/docker.sock' : ''}
+            |${env}
+            |\$(for group in \$(id -G); do printf ' --group-add %s' "\$group"; done)
+            |${bobImage}
+            |"""
+        return cmd
+                .stripMargin()           // remove indentation
+                .replace('\n', ' ')      // join lines
+                .replaceAll(/[ ]+/, ' ') // replace multiple spaces by one
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

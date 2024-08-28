@@ -1,0 +1,171 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><project>
+  <actions/>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>30</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix/>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>master</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers>
+    <hudson.triggers.TimerTrigger>
+      <spec>H * * * *</spec>
+    </hudson.triggers.TimerTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+
+cd /proj/eiffel004_config_arm1s11/eiffel_home
+
+#used alternative awk -epiepol: problem in parsing
+
+ARM2s11_space_usage=$(df -h /proj/eiffel004_config_arm2s11/ | awk '{print $5}' | grep -o '[[:digit:]]*')
+ARM2s11=$(df -hv /proj/eiffel004_config_arm2s11/ | tail -1 | awk '{print $(NF-1)}')
+ARM2s11_free_space_usage=$(df -hv /proj/eiffel004_config_arm2s11/ | tail -1 | awk '{print $(NF-2)}')
+ARM2s11_total_space=$(df -hv /proj/eiffel004_config_arm2s11/ | tail -1 | awk '{print $(NF-4)}')
+
+let "ARM2s11_CSAR=$(ls -latr /proj/eiffel004_config_arm2s11/eiffel_home/storage/cloud-native-enm-sdk/buildmanager/buildmanager-csar/cloud-native-enm-sdk | wc -l)-3" 
+
+ARM902=$(ssh eiffeloss@arm902-eiffel004.athtem.eei.ericsson.se "df -h /proj/eiffel004_artifacts/arm902/eiffel_home/storage/" | awk '{print $4}' | grep [0-9])
+ARM902_space_usage=$(ssh eiffeloss@arm902-eiffel004.athtem.eei.ericsson.se "df -h /proj/eiffel004_artifacts/arm902/eiffel_home/storage/" | awk '{print $4}' | grep -o '[[:digit:]]*')
+ARM902_free_space_usage=$(ssh eiffeloss@arm902-eiffel004.athtem.eei.ericsson.se "df -hv //proj/eiffel004_artifacts/arm902/eiffel_home/storage/" | awk '{print $3}' | grep [0-9])
+ARM902_total_space=$(ssh eiffeloss@arm902-eiffel004.athtem.eei.ericsson.se "df -hv /proj/eiffel004_artifacts/arm902/eiffel_home/storage/" | awk '{print $1}' | grep [0-9])
+
+let "ARM902_CSAR=$(ssh eiffeloss@arm902-eiffel004.athtem.eei.ericsson.se "ls -latr /proj/eiffel004_artifacts/arm902/eiffel_home/storage/releases/cENM/csar/enm-installation-package" | grep -v 'BOM' | wc -l)-3"
+
+#Pecentage disk usage threshold
+UsageThreshold=85
+
+echo ""
+
+echo "UsageThreshold: " $UsageThreshold
+echo "Arm2s11 available free space : " $ARM2s11_free_space_usage
+echo "Arm902  available free space : " $ARM902_free_space_usage
+echo ""
+echo ""
+echo "Arm2s11      TOTAL    space : " $ARM2s11_total_space
+echo "Arm902       TOTAL    space : " $ARM902_total_space
+echo ""
+
+
+
+echo ""
+echo "Arm2s11 current used space in % : " $ARM2s11
+echo "Arm902 current used space in % : " $ARM902
+echo ""
+echo "ARM2s11-used ${ARM2s11}-#ISO ${ARM2s11_CSAR} &amp; ARM902-used ${ARM902}-#ISO ${ARM902_CSAR}"
+echo ""
+
+
+#echo " Number ISO ARM2s11  : " $ARM2s11_CSAR
+#echo " Number ISO ARM902   : " $ARM902_CSAR
+
+
+
+echo $ARM2s11 &gt; /proj/eiffel004_config_fem7s11/slaves/ENM-SLAVE-GE-7/workspace/PEO-ci-flow-test_NexusFreeSpace/Arm2s11#
+
+echo $ARM902 &gt; /proj/eiffel004_config_fem7s11/slaves/ENM-SLAVE-GE-7/workspace/PEO-ci-flow-test_NexusFreeSpace/Arm902
+
+echo $ARM2s11_free_space_usage &gt; /proj/eiffel004_config_fem7s11/slaves/ENM-SLAVE-GE-7/workspace/PEO-ci-flow-test_NexusFreeSpace/Arm2s11SU
+
+echo $ARM902_free_space_usage &gt; /proj/eiffel004_config_fem7s11/slaves/ENM-SLAVE-GE-7/workspace/PEO-ci-flow-test_NexusFreeSpace/Arm902SU
+
+echo $ARM2s11_CSAR &gt; /proj/eiffel004_config_fem7s11/slaves/ENM-SLAVE-GE-7/workspace/PEO-ci-flow-test_NexusFreeSpace/Arm2s11CSAR
+
+echo $ARM902_CSAR &gt; /proj/eiffel004_config_fem7s11/slaves/ENM-SLAVE-GE-7/workspace/PEO-ci-flow-test_NexusFreeSpace/Arm902CSAR
+
+#echo $ARM2s11_CSAR &gt; /proj/eiffel004_config_fem7s11/slaves/ENM-SLAVE-GE-7/workspace/PEO-ci-flow-test_NexusFreeSpace/Arm2s11ISO
+
+#echo $ARM902_CSAR &gt; /proj/eiffel004_config_fem7s11/slaves/ENM-SLAVE-GE-7/workspace/PEO-ci-flow-test_NexusFreeSpace/Arm902ISO
+
+
+if [ "$ARM2s11_space_usage" -gt "$UsageThreshold" ]||  [ "$ARM902_space_usage" -gt "$UsageThreshold" ]; then 
+   echo "$ARM2s11_space_usage"
+   echo "$ARM902_space_usage"
+   echo "$UsageThreshold"
+   echo "Either of ARM902 or ARM2s11 or space usage became higher than $UsageThreshold ,  preventive action needs to be taken"
+   exit 1
+fi
+</command>
+      <configuredLocalRules/>
+      <unstableReturn>1</unstableReturn>
+    </hudson.tasks.Shell>
+    <hudson.plugins.groovy.SystemGroovy plugin="groovy@2.4">
+      <source class="hudson.plugins.groovy.StringSystemScriptSource">
+        <script plugin="script-security@1138.v8e727069a_025">
+          <script>String Arm2s11 = new File('/proj/eiffel004_config_fem7s11/slaves/ENM-SLAVE-GE-7/workspace/PEO-ci-flow-test_NexusFreeSpace/Arm2s11').text
+String Arm902 = new File('/proj/eiffel004_config_fem7s11/slaves/ENM-SLAVE-GE-7/workspace/PEO-ci-flow-test_NexusFreeSpace/Arm902').text
+String Arm2s11su = new File('/proj/eiffel004_config_fem7s11/slaves/ENM-SLAVE-GE-7/workspace/PEO-ci-flow-test_NexusFreeSpace/Arm2s11SU').text
+String Arm902su = new File('/proj/eiffel004_config_fem7s11/slaves/ENM-SLAVE-GE-7/workspace/PEO-ci-flow-test_NexusFreeSpace/Arm902SU').text
+String ISOArm2s11 = new File('/proj/eiffel004_config_fem7s11/slaves/ENM-SLAVE-GE-7/workspace/PEO-ci-flow-test_NexusFreeSpace/Arm2s11CSAR').text
+String ISOArm902 = new File('/proj/eiffel004_config_fem7s11/slaves/ENM-SLAVE-GE-7/workspace/PEO-ci-flow-test_NexusFreeSpace/Arm902CSAR').text
+
+build.setDescription("&lt;center&gt; &lt;table BORDER &gt;&lt;caption&gt;&lt;/caption&gt;&lt;tr&gt; &lt;/tr&gt;&lt;tr&gt; &lt;td&gt;&lt;tr&gt;&lt;td&gt;Arm902 &lt;/td&gt; &lt;td&gt;"+Arm902+"&lt;/td&gt; &lt;td&gt;"+Arm902su+"&lt;/td&gt;&lt;td&gt;"+ISOArm902+" &lt;tr&gt;&lt;td&gt;Arm2s11  &lt;/td&gt; &lt;td&gt;"+Arm2s11+"&lt;/td&gt; &lt;td&gt;"+Arm2s11su+"&lt;/td&gt;&lt;td&gt;"+ISOArm2s11+"&lt;tr&gt;&lt;tr&gt; &lt;th&gt;Arm&lt;/th&gt; &lt;th&gt;Usage&lt;/th&gt; &lt;th&gt;Avail(GB/T)&lt;/th&gt; &lt;th&gt;CSAR #&lt;/th&gt;&lt;/tr&gt; &lt;/tr&gt;&lt;/table&gt;");</script>
+          <sandbox>false</sandbox>
+        </script>
+      </source>
+    </hudson.plugins.groovy.SystemGroovy>
+  </builders>
+  <publishers>
+    <hudson.tasks.Mailer plugin="mailer@408.vd726a_1130320">
+      <recipients>PDLCHAKRAS@pdl.internal.ericsson.com</recipients>
+      <dontNotifyEveryUnstableBuild>false</dontNotifyEveryUnstableBuild>
+      <sendToIndividuals>false</sendToIndividuals>
+    </hudson.tasks.Mailer>
+  </publishers>
+  <buildWrappers>
+    <hudson.plugins.timestamper.TimestamperBuildWrapper plugin="timestamper@1.17"/>
+    <org.jenkinsci.plugins.buildnamesetter.BuildNameSetter plugin="build-name-setter@2.2.0">
+      <template># ${BUILD_LOG_REGEX,regex="ARM.*", showTruncatedLines=false}</template>
+      <descriptionTemplate/>
+      <runAtStart>false</runAtStart>
+      <runAtEnd>true</runAtEnd>
+    </org.jenkinsci.plugins.buildnamesetter.BuildNameSetter>
+  </buildWrappers>
+</project>

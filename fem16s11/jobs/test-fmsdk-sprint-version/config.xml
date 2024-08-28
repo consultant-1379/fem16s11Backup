@@ -1,0 +1,275 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>SLAVE</name>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>CURRENT_SPRINT</name>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>CHECKOUT_TAG</name>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>EMAIL</name>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    
+    <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+      <triggers>
+        <org.jenkinsci.plugins.pipeline.maven.trigger.WorkflowJobDependencyTrigger plugin="pipeline-maven@3.10.0">
+          <spec/>
+        </org.jenkinsci.plugins.pipeline.maven.trigger.WorkflowJobDependencyTrigger>
+      </triggers>
+    </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>def fmsdk = 'OSS/ENM-Parent/SQ-Gate/com.ericsson.oss.mediation.sdk/eric-enm-fmsdk'
+def csar = 'OSS/ENM-Parent/SQ-Gate/com.ericsson.oss.mediation.sdk/sdk-csar-buildmanager'
+def templates = 'OSS/ENM-Parent/SQ-Gate/com.ericsson.oss.mediation.sdk/fm-sdk-templates'
+
+parameters {
+    string(name: 'SLAVE', defaultValue: "Docker-POC-e2e")
+    string(name: 'EMAIL', defaultValue: "")
+    booleanParam(name: 'PUSH_COMMIT', defaultValue: true)
+}
+pipeline {
+    agent { label SLAVE }
+    stages {
+        stage('Init') {
+            steps {
+                script {
+                    sh '''
+                        #Remove running containers
+                        running=$(docker ps -a -q| wc -l)
+                        if [ "$running" -gt "0" ];then
+                            echo "Killing containers"
+                            docker rm -f $(docker ps -a -q)
+                        fi
+                    '''
+                    createCsv()
+                    //double x = Double.parseDouble(getLatestSprintNumber())-1
+                    env.BRANCH_NAME="point_fix_${getLatestSprintNumber()}"
+                    echo "${BRANCH_NAME}"
+                }
+                
+
+            }
+        }
+        
+        
+        
+    //     stage('Update FMSDK Versions') {
+    //      steps {
+    //             script {
+    //             }
+    //         }
+    //     }
+
+    //     stage('Update CSAR Versions') {
+    //      steps {
+    //             script {
+    //             }
+    //         }
+    //     }
+
+    //     stage('Update FMSDK Templates Versions') {
+    //      steps {
+    //             script {
+    //                 callCreatePointFixBranchfunction('eric-cenm-create-pointfix-branch', templates, 'FMSDK Templates')
+    //             }
+    //         }
+    //     }
+  
+    // }
+    // post {
+    //     always {
+    //         archiveArtifacts artifacts: 'report.csv', allowEmptyArchive: true
+    //         emailext attachmentsPattern: 'report.csv', body: 'cENM Sprint Version Update Completed, See attached file for detailed results.', subject: 'cENM Sprint Version Update Completed', to: EMAIL
+    //         sh '''
+    //             #clean workspace
+    //             echo Workspace ${WORKSPACE}
+    //             rm -rf ${WORKSPACE}/*
+    //         '''
+    //     }
+        
+    }
+}
+
+def createCsv() {
+    outString = 'Repository,Repo Type,Old Version,New Version,Pointfix Branch Version,Updated,Status\r\n'
+    writeFile file: 'report.csv', text: outString
+}
+
+def callCreatePointFixBranchfunction(pointfixjob, repo, repoType) {
+    jobStatusSuccess = true
+    status = "ERROR"
+    updated = "FALSE"
+    oldVersion = ""
+    newVersion = ""
+    def b = build(job: "${pointfixjob}", parameters: [[$class:'StringParameterValue', name:'REPO', value:String.valueOf("${repo}")],[$class:'StringParameterValue', name:'CURRENT_SPRINT', value:String.valueOf("${params.CURRENT_SPRINT}")],[$class:'StringParameterValue', name:'CHECKOUT_TAG', value:String.valueOf("${params.CHECKOUT_TAG}")],[$class:'StringParameterValue', name:'EMAIL', value:String.valueOf("${params.EMAIL}")],[$class:'BooleanParameterValue', name:'PUSH_COMMIT', value: "${params.PUSH_COMMIT}"]], propagate: false, wait: true)
+
+        currentBuild.description = "Sprint Version Update Branch: $b.buildVariables.BRANCH_NAME&lt;BR&gt;"
+        currentBuild.description += "Branch based on tag/branch: CHECKOUT_TAG"
+        echo "Repo = ${repo}, Result = $b.result"
+
+        if("$b.result" == 'SUCCESS') {
+            status = "OK"
+            jobStatusSuccess = jobStatusSuccess &amp;&amp; true
+        } else {
+            status = "ERROR"
+            jobStatusSuccess = jobStatusSuccess &amp;&amp; false
+        }
+
+        readContent = readFile 'report.csv'
+        outString = readContent + "${repo},$repoType,$b.buildVariables.oldMinorVersion,$b.buildVariables.newMinorVersion,$b.buildVariables.newVersion,$b.buildVariables.updated,$status\r\n"
+        writeFile file: 'report.csv', text: outString
+        if(!jobStatusSuccess) {
+            currentBuild.result = "UNSTABLE"
+            //unstable("Stage unstable")
+            //     error("Error while updating the versions for the repo type: $repoType")
+        }
+}
+
+def getLatestSprintNumber() {
+    def versionText  = sh (returnStdout: true, script: 'wget -q -O - --no-check-certificate "https://ci-portal.seli.wh.rnd.internal.ericsson.com//api/product/ENM/latestdrop/"' )
+    def props = readJSON text: versionText
+    Double x = Double.parseDouble(props.drop)
+
+    return String.valueOf(x)
+}
+
+def checkIfVersionPrefixChanged(){
+    def status = sh (returnStatus: true, script: 'git diff --name-only  origin/master | grep VERSION_PREFIX')
+    return status == 0
+}
+
+def check_branch(repo_check, branch_check){
+    return_value= false
+    branch_exists = sh(returnStatus: true, script: """git ls-remote --exit-code --heads $env.GERRIT_MIRROR/$repo_check $branch_check""")
+
+    if(branch_exists == 0){
+        return_value= true
+    }
+    return return_value
+}
+
+
+def functionToCreatePointfixBranch(repo_check, branch_check) {
+    println("Remote branch $branch_check doesn't exist. Calling function to create branch, bump patch version and push the changes to the remote repo...")
+    sh(returnStatus: true, script: "git checkout -b $branch_check")
+    println("*******************************************************************************************************************************************************")
+    bumpPatchVersion("$repo_check", "$branch_check")
+    println("Pointfix Branch ${env.BRANCH_NAME} created for the repo: ${params.REPO}")
+    println("*******************************************************************************************************************************************************")
+    sh(returnStatus: true, script: "git checkout master")
+    sh(returnStatus: true, script: "git branch -D $branch_check")
+}
+
+def bumpPatchVersion(repo_check, branch_check) {
+
+    env.oldVersion = readFile "VERSION_PREFIX"
+    env.oldVersion = env.oldVersion.trim()
+
+    sh 'docker run --rm -v $PWD/VERSION_PREFIX:/app/VERSION -w /app armdocker.rnd.ericsson.se/proj-enm/bump patch'
+
+    env.newVersion = readFile "VERSION_PREFIX"
+    env.newVersion = env.newVersion.trim()
+    env.IMAGE_VERSION = env.newVersion
+
+    if (env.PUSH_COMMIT == "true") {
+        sh """
+            git add VERSION_PREFIX
+            git commit -m "[ci-skip] Automatic new patch version bumping: $IMAGE_VERSION"
+            git push $env.GERRIT_CENTRAL/$repo_check $branch_check
+        """
+        status = "OK"
+        env.updated = "TRUE"
+        currentBuild.description = "Pointfix Branch Version: " + env.newVersion + "&lt;BR&gt;"
+    } else {
+        status = "OK"
+        currentBuild.description = "Pointfix Branch Version: " + env.newVersion + "&lt;BR&gt;"
+        currentBuild.description += "PUSH_COMMIT set to false, no commit was made."
+        env.updated = "FALSE"
+        echo "PUSH_COMMIT set to false, no commit was made."
+        sh(returnStatus: true, script: "git reset --hard origin/master &gt; /dev/null")
+    }
+}
+
+def bumpMinorVersion(repo_check, branch_check) {
+
+    env.oldMinorVersion = readFile "VERSION_PREFIX"
+    env.oldMinorVersion = env.oldMinorVersion.trim()
+
+    sh 'docker run --rm -v $PWD/VERSION_PREFIX:/app/VERSION -w /app armdocker.rnd.ericsson.se/proj-enm/bump minor'
+    env.newMinorVersion = readFile "VERSION_PREFIX"
+    env.newMinorVersion = env.newMinorVersion.trim()
+
+    env.IMAGE_VERSION = env.newMinorVersion
+
+    if (env.PUSH_COMMIT == "true") {
+        sh """
+            git add VERSION_PREFIX
+            git commit -m "[ci-skip] Automatic new minor version bumping: $IMAGE_VERSION"
+            #git push $env.GERRIT_CENTRAL/$repo_check $branch_check
+            git push origin $branch_check
+        """
+        status = "OK"
+        env.updated = "TRUE"
+        currentBuild.description += "Master Branch Version: " + env.newMinorVersion
+    } else {
+        status = "OK"
+        currentBuild.description += "Master Branch Version: " + env.newMinorVersion
+        env.updated = "FALSE"
+        echo "PUSH_COMMIT set to false, no commit was made."
+        sh(returnStatus: true, script: "git reset --hard origin/master &gt; /dev/null")
+    }
+}
+
+
+
+
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

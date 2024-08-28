@@ -1,0 +1,341 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>100</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>Artifact_type</name>
+          <description>This parameter acts as the flow controller to select the deployment mechanism either csar or csar-lite.</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>csar_lite</string>
+              <string>csar</string>
+              <string>snapshot_csar_lite</string>
+              <string>charts</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>use_case</name>
+          <description>Select the appropriate operation to be done.</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>Install</string>
+              <string>Upgrade</string>
+              <string>Backup</string>
+              <string>Rollback</string>
+              <string>Restore</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>product_set_version</name>
+          <description>Provide clould native product set version</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>deployment_size</name>
+          <description>Select the type of integration values type to be used.</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>small-production</string>
+              <string>extra-large-production</string>
+              <string>single-instance</string>
+              <string>multi-instance</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>orchestration_type</name>
+          <description>Provide the orchestration type with which deployment should be happen</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>helm</string>
+              <string>EVNFM</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>container_registry_type</name>
+          <description>Select docker registry which is to be used while the deployment time, when orchestration_type is EVNFM is selected. By default other docker registry will be used.</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>other</string>
+              <string>EVNFM</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>snapshot_csar_lite_location</name>
+          <description>Provide the location of the snapshot_csar_lite_location</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>snapshot_integration_key_value_pairs</name>
+          <description>Provide the snapshot integration key value pairs to override</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>backup_name</name>
+          <description>Provide the backup name only when use_case is selected as Backup/Rollback/Restore</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>scope</name>
+          <description>This parameter needs to be passed when use_csae is selected as Backup</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>ROLLBACK</string>
+              <string>DEFAULT</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>environment_name</name>
+          <description>The cluster in which the deployment needs to be done</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <org.jvnet.jenkins.plugins.nodelabelparameter.LabelParameterDefinition plugin="nodelabelparameter@1.10.3">
+          <name>slave</name>
+          <description>Provide the slave on which the jenkins job should run</description>
+          <defaultValue>Jenkins_CSAR_Slave_4Node_Thunderbird_6</defaultValue>
+          <allNodesMatchingLabel>false</allNodesMatchingLabel>
+          <triggerIfResult>allCases</triggerIfResult>
+          <nodeEligibility class="org.jvnet.jenkins.plugins.nodelabelparameter.node.AllNodeEligibility"/>
+        </org.jvnet.jenkins.plugins.nodelabelparameter.LabelParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>pipeline{
+    agent {
+            node
+            {
+               label slave
+            }
+        }
+    options {
+        timeout(time: 11, unit: &apos;HOURS&apos;)
+    }
+     environment {
+        Client_HOME =&quot;/home/cenmbuild&quot;
+        HOME_LCIADM100=&quot;/home/lciadm100&quot;
+        PRE_POST_DOCKER_IMAGE_NAME = &quot;cenm-pre-post-deployment-utility&quot;
+        DEPLOYMENT_DOCKER_IMAGE_NAME = &quot;cenm-deployment-utility&quot;
+    }
+    stages{
+        stage(&apos;Clean Up WorkSpace&apos;){
+            steps{
+                echo &quot;cleaning&quot;
+                deleteDir()
+            }
+        }
+        stage(&apos;Checkout Integration Pipeline Git Repository&apos;) {
+            steps {
+                git branch: &apos;dnodeexporter&apos;,
+                        url: &apos;${GERRIT_MIRROR}/OSS/com.ericsson.oss.containerisation/eric-enm-integration-pipeline-code&apos;
+                sh &apos;&apos;&apos;
+                    git remote set-url origin --push ${GERRIT_CENTRAL}/OSS/com.ericsson.oss.containerisation/eric-enm-integration-pipeline-code
+                &apos;&apos;&apos;
+            }
+        }
+        stage(&apos;Delete, download, extract and load the utility images&apos;){
+            steps{
+                script{
+                    echo &quot;deleting and downloading the utility images&quot;
+                    sh &quot;tar -xvf Software/jq-1.0.1.tar ; chmod +x ./jq&quot;
+                    // sh &quot;curl -4 --location --request GET &apos;https://ci-portal.seli.wh.rnd.internal.ericsson.com/api/cloudnative/getCloudNativeProductSetContent/22.07/${product_set_version}/&apos;&gt;cn_confidence_level_response.json&quot;
+                    // env.pre_post_version = sh (script : &quot;./jq &apos;.[4].deployment_utilities_detail_data|.[]|select(.name==\&quot;cenm-pre-post-deployment-utility\&quot;)|.version&apos; cn_confidence_level_response.json|sed &apos;s/\&quot;//g&apos;&quot;, returnStdout: true).trim()
+                    // env.deployment_version = sh (script : &quot;./jq &apos;.[4].deployment_utilities_detail_data|.[]|select(.name==\&quot;cenm-deployment-utility\&quot;)|.version&apos; cn_confidence_level_response.json|sed &apos;s/\&quot;//g&apos;&quot;, returnStdout: true).trim()
+                    // env.pre_post_dev_url = sh (script : &quot;./jq &apos;.[4].deployment_utilities_detail_data|.[]|select(.name==\&quot;cenm-pre-post-deployment-utility\&quot;)|.dev_url&apos; cn_confidence_level_response.json|sed &apos;s/\&quot;//g&apos;&quot;, returnStdout: true).trim()
+                    // env.deployment_dev_url = sh (script : &quot;./jq &apos;.[4].deployment_utilities_detail_data|.[]|select(.name==\&quot;cenm-deployment-utility\&quot;)|.dev_url&apos; cn_confidence_level_response.json|sed &apos;s/\&quot;//g&apos;&quot;, returnStdout: true).trim()
+                    // sh &quot;echo ${pre_post_version}&quot;
+                    // sh &quot;echo ${pre_post_dev_url}&quot;
+                    // sh &quot;echo ${deployment_version}&quot;
+                    // sh &quot;echo ${deployment_dev_url}&quot;
+                    // sh &quot;mkdir -p utilities&quot;
+                    // sh &quot;curl -4 ${pre_post_dev_url} -o utilities/cenm-pre-post-deployment-utility-${pre_post_version}.tgz&quot;
+                    // sh &quot;curl -4 ${deployment_dev_url} -o utilities/cenm-deployment-utility-${deployment_version}.tgz&quot;
+                    // sh &apos;&apos;&apos; for i in $(docker images | grep -E &apos;pre-post|cenm-deployment&apos; | awk &apos;{print $3}&apos;);do docker rmi -f $i;done &apos;&apos;&apos;
+                    env.pre_post_version = &quot;1.2.0-5&quot;
+                    env.deployment_version = &quot;1.0.5-1&quot;
+                    // sh &quot;docker load -i utilities/cenm-pre-post-deployment-utility-${pre_post_version}.tgz&quot;
+                    // sh &quot;docker load -i utilities/cenm-deployment-utility-${deployment_version}.tgz&quot;
+                    env.PRE_POST_DOCKER_IMAGE=&quot;armdocker.rnd.ericsson.se/proj-enm/${PRE_POST_DOCKER_IMAGE_NAME}:${pre_post_version}&quot;
+                    env.DEPLOYMENT_DOCKER_IMAGE= &quot;armdocker.rnd.ericsson.se/proj-enm/${DEPLOYMENT_DOCKER_IMAGE_NAME}:${deployment_version}&quot;
+                    env.CENM_PRE_POST_UTILITY=&quot;docker run --rm -v /var/run/docker.sock:/var/run/docker.sock -v ${HOME_LCIADM100}/.ssh:${HOME_LCIADM100}/.ssh -v ${HOME_LCIADM100}/.kube/:${HOME_LCIADM100}/.kube -v ${WORKSPACE}:${WORKSPACE} --workdir ${WORKSPACE} ${PRE_POST_DOCKER_IMAGE}&quot;
+                    env.CENM_DEPLOYMENT_UTILITY=&quot;docker run --rm -v ${HOME_LCIADM100}/.ssh:${HOME_LCIADM100}/.ssh -v ${HOME_LCIADM100}/.kube/:${HOME_LCIADM100}/.kube -v ${WORKSPACE}:${WORKSPACE} -v ${WORKSPACE}/keyvalues:${HOME_LCIADM100}/cenm/playbooks/keyvalues ${DEPLOYMENT_DOCKER_IMAGE} python3&quot;
+                }
+            }
+        }
+        /*stage(&apos;Updating DIT documents&apos;){
+            steps{
+                script{
+                    echo &quot;updating DIT documents&quot;
+                    sh &apos;&apos;&apos;curl -O &quot;https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/repositories/nss/com/ericsson/nss/scripts/jq/1.0.1/jq-1.0.1.tar&quot;; tar -xvf jq-1.0.1.tar ; chmod +x ./jq&apos;&apos;&apos;
+                    sh &quot;${CENM_PRE_POST_UTILITY} UpdatingDITDocuments --DEPLOYMENT ${environment_name} --PRODUCTSET ${product_set_version}&quot;
+                }
+            }
+        }*/
+        stage(&apos;Fetching Documents&apos;){
+            steps{
+                script{
+                    echo &quot;Fetching Documents&quot;
+                    sh &quot;${CENM_PRE_POST_UTILITY} FetchingDITData --DEPLOYMENT ${environment_name}&quot;
+                }
+            }
+        }
+        stage(&apos;Validation checks&apos;){
+            steps{
+                script{
+                    echo &quot;checking Validations&quot;
+                    sh &quot;${CENM_PRE_POST_UTILITY} validation_checks --environment_name ${environment_name} --product_set_version ${product_set_version} --artifact_type ${Artifact_type} --orchestration_type ${orchestration_type} --container_registry_type ${container_registry_type} --use_case ${use_case}&quot;
+                }
+            }
+        } 
+        stage(&apos;Download Artifacts&apos;){
+            when {
+                 expression{env.use_case != &quot;Backup&quot;}
+            }
+            steps{
+                script{
+                    echo &quot;Downloading Artifacts&quot;
+                    sh &quot;${CENM_PRE_POST_UTILITY} download --product_set_version ${product_set_version} --artifact_type ${Artifact_type} --snapshot_artifact_location ${snapshot_csar_lite_location} --deployment_size ${deployment_size}&quot;
+                    sh &quot;sleep 210s&quot;    
+                }
+            }
+        }
+        stage(&apos;Populate site values file&apos;){
+            when {
+                 expression{env.use_case != &quot;Backup&quot;}
+            }
+            steps{
+                script{
+                    echo &quot;populating site values file&quot;
+                    sh &quot;${CENM_PRE_POST_UTILITY} populate --environment_name ${environment_name} --deployment_size ${deployment_size} --artifact_type ${Artifact_type} --snapshot_integration_key_value_pairs ${snapshot_integration_key_value_pairs}&quot;
+                }
+            }
+        }
+        stage(&apos;Use Case&apos;){
+            steps{
+                script{
+                    stage(&quot;${use_case} with ${orchestration_type}&quot;){
+                        echo &quot;${use_case} with ${orchestration_type}&quot;
+                        sh &quot;${CENM_DEPLOYMENT_UTILITY} select_use_case.py --artifact_type ${Artifact_type} --orchestration_type ${orchestration_type} --scope ${scope} --use_case ${use_case} --deployment_size ${deployment_size} --workspace ${WORKSPACE} --backup_name ${backup_name} --container_registry_type ${container_registry_type}&quot;
+                    }
+                }
+            }
+         } 
+        stage(&apos;Post deployment checks&apos;){
+            when {
+                 expression{env.use_case != &quot;Backup&quot;}
+            }
+            steps{
+                script{
+                    echo &quot;post deployment checks&quot;
+                    sh &quot;${CENM_PRE_POST_UTILITY} post&quot;
+                }
+            }
+        }
+        stage(&apos;Archive artifacts&apos;){
+            when {
+                 expression{env.use_case != &quot;Backup&quot;}
+            }
+            steps{
+                script{
+                    echo &quot;Archiving the artifacts&quot;
+                    def version = readFile &quot;${WORKSPACE}/keyvalues/config.py&quot;
+                    def version_list = version.split(&quot;\n&quot;)
+                    for (item in version_list){
+                        def key_val_pair = item.split(&quot;=&quot;)
+                        if (key_val_pair[0] == &quot;integrationvaluesfilepath&quot;){
+                            def filename = key_val_pair[1]
+                            filename = filename[1..-2]
+                            echo &quot;${filename}&quot;
+                            archiveArtifacts filename
+                        }
+                    }
+                }
+            }
+        }
+    }
+    post{
+        failure {
+            script{
+                   echo &quot;Failure&quot;
+            }
+        }
+        aborted{
+            script{
+                echo &quot;Aborted&quot;
+            }
+        }
+        success{
+            script{
+                  echo &quot;Success&quot;
+            }
+        }
+        always {
+            script{
+                currentBuild.displayName = &quot;${use_case} with ${orchestration_type} on: ${environment_name}&quot;
+                echo &quot;Archiving the artifacts&quot;
+                    def version = readFile &quot;${WORKSPACE}/keyvalues/config.py&quot;
+                    def version_list = version.split(&quot;\n&quot;)
+                    for (item in version_list){
+                        def key_val_pair = item.split(&quot;=&quot;)
+                        if (key_val_pair[0] == &quot;integrationvaluesfilepath&quot;){
+                            def filename = key_val_pair[1]
+                            filename = filename[1..-2]
+                            echo &quot;${filename}&quot;
+                            archiveArtifacts filename
+                        }
+                    }
+            }
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

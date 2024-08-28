@@ -1,0 +1,305 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.1.0"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.23.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty plugin="leastload@1.0.3">
+      <leastLoadDisabled>false</leastLoadDisabled>
+    </org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit></paramsToUseForLimit>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    <de.pellepelster.jenkins.walldisplay.WallDisplayJobProperty plugin="jenkinswalldisplay@0.6.30"/>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>master</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.plugins.groovy.SystemGroovy plugin="groovy@2.4">
+      <source class="hudson.plugins.groovy.StringSystemScriptSource">
+        <script plugin="script-security@1.78">
+          <script>import hudson.model.Item
+import hudson.model.User
+import hudson.security.Permission
+import hudson.security.PermissionGroup
+import hudson.security.ACL
+import hudson.tasks.Mailer
+import jenkins.model.Jenkins
+import org.acegisecurity.Authentication
+import org.acegisecurity.userdetails.UsernameNotFoundException
+
+if(!binding.hasVariable(&apos;writeToFile&apos;)) {
+    writeToFile = false
+}
+if(!binding.hasVariable(&apos;includeCoreAccounts&apos;)) {
+    includeCoreAccounts = true
+}
+if(writeToFile in String) {
+    writeToFile = (&apos;true&apos; == writeToFile.toLowerCase())
+}
+if(includeCoreAccounts in String) {
+    includeCoreAccounts = (&apos;true&apos; == includeCoreAccounts.toLowerCase())
+}
+if(!(writeToFile instanceof Boolean)) {
+    throw new Exception(&apos;ERROR: writeToFile must be a boolean.&apos;)
+}
+if(!(includeCoreAccounts instanceof Boolean)) {
+    throw new Exception(&apos;ERROR: includeCoreAccounts must be a boolean.&apos;)
+}
+
+/**
+  This class simplifies getting details about a user and their access in a CSV
+  format.  Not only will it get permissions but it will smartly populate notes
+  about a user based on known facts and issues.
+ */
+class UserCSV {
+    private String id
+    private String email
+    private String fullName
+    private Authentication impersonate
+    private boolean coreAccount = false
+    private boolean builtinAccount = false
+    private static ACL acl = Jenkins.instance.authorizationStrategy.rootACL
+    private static List&lt;Permission&gt; permissions = PermissionGroup.all*.permissions.flatten().findAll { Permission p -&gt;
+        !(this.displayPermission(p) in [&apos;Overall:ConfigureUpdateCenter&apos;, &apos;Overall:RunScripts&apos;, &apos;Overall:UploadPlugins&apos;]) &amp;&amp;
+        !this.displayPermission(p).startsWith(&apos;N/A&apos;)
+    }
+    private static Permission admin = permissions.find { it.name == &apos;Administer&apos; }
+    private List&lt;String&gt; notes = []
+    private List&lt;String&gt; authorities = []
+    private String global_permissions = &apos;No permissions&apos;
+    private String item_permissions = &apos;No permissions&apos;
+    /**
+      A new instance determines a user&apos;s access to Jenkins.
+     */
+    def UserCSV(User u) {
+        this.id = u.id ?: &apos;&apos;
+        this.email = this.getEmail(u)
+        this.fullName = u.fullName ?: &apos;&apos;
+        this.authorities = u.authorities
+        switch(id) {
+            case &apos;admin&apos;:
+                this.notes &lt;&lt; &apos;This built-in account is the first account created in the Jenkins 2.0 setup wizard when you set up Jenkins the first time.&apos;
+                this.notes &lt;&lt; &apos;This account should be deleted because it is a default Jenkins account.&apos;
+                break
+            case &apos;anonymous&apos;:
+                this.notes &lt;&lt; &apos;This core pseudo account is for users who are not authenticated with Jenkins a.k.a. all anonymous users.&apos;
+                break
+            case &apos;authenticated&apos;:
+                this.notes &lt;&lt; &apos;This core pseudo account is for any user who has authenticated with Jenkins a.k.a. all logged in users.&apos;
+                break
+        }
+        this.coreAccount = (id in [&apos;anonymous&apos;, &apos;authenticated&apos;]) as Boolean
+        if(coreAccount) {
+            this.notes &lt;&lt; &apos;This account cannot be deleted.&apos;
+        } else {
+            try {
+                //for performance reasons, only try to impersonate a user once when this object is first instantiated
+                this.impersonate = u.impersonate()
+            } catch(UsernameNotFoundException e) {
+                if(this.id != &apos;admin&apos;) {
+                    this.notes &lt;&lt; &apos;This user does not exist in the security realm.&apos;
+                    this.notes &lt;&lt; &apos;It is an automatically created account from Jenkins tracking source code manager (SCM) authors.&apos;
+                    this.notes &lt;&lt; &apos;This is normal Jenkins behavior and can be ignored.&apos;
+                    this.notes &lt;&lt; &apos;It is safe to delete this account, but it will be recreated when the user shows up as an SCM author again.&apos;
+                }
+                builtinAccount = true
+            }
+        }
+        this.global_permissions = this.getGlobalPermissions()
+        if(supportsItemPermissions()) {
+            this.item_permissions = getItemPermissions()
+        }
+        if(this.global_permissions == &apos;No permissions&apos; &amp;&amp; this.item_permissions == &apos;No permissions&apos; &amp;&amp; !builtinAccount &amp;&amp; !coreAccount) {
+            this.notes &lt;&lt; &apos;This user exists in the security realm and their account was created upon first login; however, they were not granted any permissions.&apos;
+            this.notes &lt;&lt; &apos;This account should be deleted.&apos;
+        }
+        if((this.global_permissions + this.item_permissions).contains(&apos;Job:Configure&apos;)) {
+            this.notes &lt;&lt; &apos;This user can elevate permissions of other users within jobs they can configure.&apos;
+            if(Jenkins.instance.numExecutors &gt; 0) {
+                this.notes &lt;&lt; &quot;This user can trivially elevate themselves to ${this.displayPermission(admin)} because jobs can be configured to run on the master.&quot;
+            }
+        }
+    }
+    private static Boolean supportsItemPermissions() {
+        Jenkins.instance.authorizationStrategy.class.simpleName == &apos;ProjectMatrixAuthorizationStrategy&apos;
+    }
+    private static String displayPermission(Permission p) {
+        &quot;${p.group.title}:${p.name}&quot;.toString()
+    }
+    private String getEmail(User u) {
+        if(u.getProperty(Mailer.UserProperty)) {
+            (u.getProperty(Mailer.UserProperty).address ?: &apos;&apos;).toString()
+        } else {
+            &apos;&apos;
+        }
+    }
+    private String getItemPermissions() {
+        if(coreAccount || builtinAccount || this.global_permissions == &apos;Overall:Administer&apos;) {
+            this.item_permissions
+        } else {
+            Set discovered_permissions = []
+            //find additional permissions granted in items e.g. folders, jobs, etc
+            Jenkins.instance.getAllItems(Item.class).findAll {
+                it.properties.find { it.class.simpleName == &apos;AuthorizationMatrixProperty&apos; }
+            }.each { Item item -&gt;
+                item.properties.find {
+                    it.class.simpleName == &apos;AuthorizationMatrixProperty&apos;
+                }.with { item_auth -&gt;
+                    item_auth.getGrantedPermissions().keySet().findAll { Permission p -&gt;
+                        !(displayPermission(p) in discovered_permissions)
+                    }.each { Permission p -&gt;
+                        if(item_auth.acl.hasPermission(this.impersonate, p)) {
+                            discovered_permissions &lt;&lt; displayPermission(p)
+                        }
+                    }
+                }
+            }
+            discovered_permissions.sort().join(&apos;,&apos;) ?: this.item_permissions
+        }
+    }
+    private String getGlobalPermissions() {
+        if(coreAccount) {
+            this.notes &lt;&lt; &apos;Permissions cannot be determined on core accounts because they cannot be used as a normal user.&apos;
+            &apos;No permissions&apos;
+        } else if(builtinAccount) {
+            &apos;No permissions&apos;
+        } else if(this.acl.hasPermission(this.impersonate, admin)) {
+            this.notes &lt;&lt; &apos;Admins can affect any infrastructure Jenkins integrates with including decrypting configured credentials.&apos;
+            displayPermission(admin)
+        } else {
+            permissions.findAll { Permission p -&gt;
+                p != admin &amp;&amp; this.acl.hasPermission(this.impersonate, p)
+            }.collect {
+                displayPermission(it)
+            }.join(&apos;,&apos;) ?: this.global_permissions
+        }
+    }
+    public static String getCSVHeader() {
+        List&lt;String&gt; csvList = [
+            &apos;User&apos;,
+            &apos;&quot;Full Name&quot;&apos;,
+            &apos;Email&apos;,
+            &apos;&quot;Notes&quot;&apos;,
+            &apos;&quot;Global Permissions&quot;&apos;,
+            &apos;&quot;Authorities/Groups&quot;&apos;
+        ]
+        if(supportsItemPermissions()) {
+            csvList &lt;&lt; &apos;&quot;Additional permissions granted within folders or jobs&quot;&apos;
+        }
+        csvList.join(&apos;, &apos;)
+    }
+    public String getCSV() {
+        List&lt;String&gt; csvList = [
+            this.id,
+            &quot;\&quot;${this.fullName}\&quot;&quot;,
+            this.email,
+            &quot;\&quot;${this.notes.join(&apos;  &apos;)}\&quot;&quot;,
+            &quot;\&quot;${this.global_permissions}\&quot;&quot;,
+            &quot;\&quot;${this.authorities.join(&apos; &apos;)}\&quot;&quot;
+        ]
+        if(supportsItemPermissions()) {
+            csvList &lt;&lt; &quot;\&quot;${this.item_permissions}\&quot;&quot;
+        }
+        csvList.join(&apos;, &apos;)
+    }
+}
+
+/**
+  Print out the result to the script console or log a line to the job console
+  output.  It also optionally writes the line to a writer (used in other
+  functions to write to a file).
+ */
+void writeLine(Writer writer = null, String line) {
+    if(writer) {
+        writer.write line + &apos;\n&apos;
+    }
+    if(binding.hasVariable(&apos;out&apos;)) {
+        out.println line
+    } else {
+        println line
+    }
+}
+
+/**
+  optionalWriter is a Groovy binding which provides flexibility in executing a
+  closure while writing output to a file, script console output, or the output
+  to a Jenkins job.
+ */
+optionalWriter = { String file = null, Closure c -&gt;
+    if(file) {
+        new File(file).withWriter(&apos;UTF-8&apos;) { writer -&gt;
+            c(writer)
+        }
+    } else {
+        c(null as Writer)
+    }
+}
+
+String separator = &apos;-&apos; * 80
+writeLine &apos;Start of CSV&apos;
+writeLine separator
+String outputFile
+if(binding.hasVariable(&apos;out&apos;) &amp;&amp; binding.hasVariable(&apos;build&apos;) &amp;&amp; writeToFile) {
+    outputFile = &quot;${build.workspace}/audit-user-permissions.csv&quot;
+}
+optionalWriter(outputFile) { writer -&gt;
+    writeLine(writer, UserCSV.getCSVHeader())
+    User.all.each { User u -&gt;
+        if(includeCoreAccounts || !(u.id in [&apos;anonymous&apos;, &apos;authenticated&apos;])) {
+            writeLine(writer, new UserCSV(u).getCSV())
+        }
+    }
+}
+writeLine separator</script>
+          <sandbox>false</sandbox>
+        </script>
+      </source>
+    </hudson.plugins.groovy.SystemGroovy>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

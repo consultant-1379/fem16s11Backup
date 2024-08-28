@@ -1,0 +1,129 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>&lt;br&gt;&#13;
+&lt;h4 style="border:3px solid red;"&gt;This job used to check disk usage for agents - if RED pipeline have issue, if Unstable all agent with disk issue will be prompted&lt;/h4&gt;&#13;
+&#13;
+More info :&#13;
+&lt;a href="https://fem16s11-eiffel004.eiffel.gic.ericsson.se:8443/jenkins/label/Cloud-Native/"&gt;Cloud-Native&lt;/a&gt;&lt;br&gt;&#13;
+&#13;
+</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>true</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs>eric-enm-e2e-build/
+eric-enm-e2e-build-pointfix/</blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>10</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    
+    <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+      <triggers>
+        <hudson.triggers.TimerTrigger>
+          <spec>H 00 * * *</spec>
+        </hudson.triggers.TimerTrigger>
+      </triggers>
+    </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>#!/usr/bin/env groovy
+def nodes = [:]
+//for MT e2e, label should be replaced with Cloud-Native
+//String cloudNativeLabel = "TEMP-Cloud-Native-Pointfix" // temp string excluding faulty slave
+//How to skip undesired agents
+String cloudNativeLabel = "!master&amp;&amp;!CENM_RHEL7_GE_2&amp;&amp;!CENM_RHEL7_GE_pf_19&amp;&amp;!CENM_RHEL7_GE_pf_20"
+
+//String cloudNativeLabel = "!master" //&amp; #&amp;&amp;!Jenkins_Upgrade_CSAR_Slave_4Node_MISTY_9&amp;&amp;!CENM_RHEL7_GE_2&amp;&amp;!CENM_RHEL7_GE_pf_19&amp;&amp;!CENM_RHEL7_GE_pf_20"
+
+
+nodesByLabel("${cloudNativeLabel}").each {
+  nodes[it] = { -&gt;
+    node(it) {
+      stage("CheckTools@${it}") {
+          // Timeout counter starts AFTER agent is allocated
+            timeout(time: 4, unit: 'MINUTES') {
+            cleanWs()
+        sh  '''
+            set +xe #reduce console verbosity
+            YellowThreshold=50 #test thr
+            RedThreshold=60  #test thr
+        #    YellowThreshold=90  # warning thr
+        #    RedThreshold=95     # alert  thr
+            
+            #adding "-0" to convert to cast % as an integer
+            DiskUsage=`df -P / | awk '/%/ {print $5 - 0}'`
+            
+            echo "DiskUsage: $DiskUsage%"
+            if [ $DiskUsage -ge $RedThreshold ]; 
+            then
+                #touch ErrorFile
+                echo "$DiskUsage" &gt; ErrorFile
+            elif [ $DiskUsage -ge $YellowThreshold ]; 
+            then 
+                #touch WarningFile
+                echo "$DiskUsage" &gt; WarningFile
+            fi
+             
+            '''
+            }
+            
+        if (fileExists("ErrorFile")) {
+            def DU = readFile( file:'ErrorFile')
+            println DU
+            unstable 'ERROR';
+            addShortText (text: "${NODE_NAME} ** ${DU}%", background: "yellow", border: "5", borderColor: "red", color: "black"); 
+            addErrorBadge(text: 'ERR');
+            addShortText (text: "\n", background: "white", border: "0", borderColor: "white", color: "white"); 
+
+        }
+        else if (fileExists("WarningFile")) {
+            def DU = readFile( file:'WarningFile')
+            unstable 'WARNING';
+            addShortText (text: "${NODE_NAME} ** ${DU}%", background: "azure", border: "5", borderColor: "blue", color: "black"); 
+            addWarningBadge(text: 'WARNING');
+            addShortText (text: "\n", background: "white", border: "0", borderColor: "white", color: "white"); 
+
+
+        } 
+    }
+  }
+}
+}
+parallel nodes
+</script>
+    <sandbox>false</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>true</disabled>
+</flow-definition>

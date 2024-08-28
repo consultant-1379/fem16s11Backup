@@ -1,0 +1,199 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>REPO</name>
+          <description></description>
+          <defaultValue>example</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>TYPE</name>
+          <description></description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>Service_Group</string>
+              <string>BAse_Image</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>val</name>
+          <description></description>
+          <defaultValue>false</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>val1</name>
+          <description></description>
+          <defaultValue>true</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>val2</name>
+          <description></description>
+          <defaultValue>true</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>val3</name>
+          <description></description>
+          <defaultValue>false</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>val4</name>
+          <description></description>
+          <defaultValue>false</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>val7</name>
+          <description></description>
+          <defaultValue>false</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>val8</name>
+          <description></description>
+          <defaultValue>true</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>val9</name>
+          <description></description>
+          <defaultValue>true</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>Additionalstage</name>
+          <description></description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>aa</name>
+          <description></description>
+          <defaultValue>false</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@4.10.3">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>ssh://lciadm100@gerritmirror-ha.lmera.ericsson.se:29418/OSS/com.ericsson.oss.containerisation/enm-containerisation-ci-pipeline</url>
+        <credentialsId>lciadm100_private_key</credentialsId>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>dTORF-401748</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <submoduleCfg class="list"/>
+    <extensions/>
+  </scm>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+
+CI_REPO=&quot;OSS/com.ericsson.oss.containerisation/enm-containerisation-ci-pipeline&quot;
+PROJECT_NAME=${CI_REPO##*/}
+GERRIT_MIRROR_HOST=$(echo ${GERRIT_MIRROR} | sed -e &apos;s/ssh:\/\/\(.*\):29418/\1/&apos;)
+rm -rf ${PROJECT_NAME}
+git clone ${GERRIT_MIRROR}/${CI_REPO} &amp;&amp; scp -p -P 29418 ${GERRIT_MIRROR_HOST}:hooks/commit-msg ${PROJECT_NAME}/.git/hooks/
+cd ${PROJECT_NAME}
+git checkout dTORF-401748
+if [[ &quot;${TYPE}&quot; == &quot;Service_Group&quot; ]]; then
+    val5=&quot;jenkins/jobDSL/common_jenkinsfile_serviceGroup&quot;
+    val6=&quot;jenkins/jobDSL/common_jenkinsfile_serviceGroup_precommit&quot;
+else
+  val5=&quot;jenkins/jobDSL/common_jenkinsfile_baseImages&quot;
+  val6=&quot;jenkins/jobDSL/common_jenkinsfile_baseImages_precommit&quot;
+fi
+sed -i &apos;$d&apos; jenkins/projectfile.json
+sed -i &apos;$d&apos; jenkins/projectfile.json
+echo &quot;     },&quot; &gt;&gt; jenkins/projectfile.json
+echo &quot;     {&quot; &gt;&gt; jenkins/projectfile.json
+echo &quot;       \&quot;repo\&quot;:\&quot;$REPO\&quot;,&quot; &gt;&gt; jenkins/projectfile.json
+echo &quot;       \&quot;project_type\&quot;:\&quot;$TYPE\&quot;,&quot; &gt;&gt; jenkins/projectfile.json
+echo &quot;       \&quot;helm_dep_up\&quot;:\&quot;$val\&quot;,&quot; &gt;&gt; jenkins/projectfile.json
+echo &quot;       \&quot;merge_values\&quot;:\&quot;$val1\&quot;,&quot; &gt;&gt; jenkins/projectfile.json
+echo &quot;       \&quot;sg_rpm_repo\&quot;:\&quot;$val2\&quot;,&quot; &gt;&gt; jenkins/projectfile.json
+echo &quot;       \&quot;lint_br_agent\&quot;:\&quot;$val3\&quot;,&quot; &gt;&gt; jenkins/projectfile.json
+echo &quot;       \&quot;python_unit_test\&quot;:\&quot;$val4\&quot;,&quot; &gt;&gt; jenkins/projectfile.json
+echo &quot;       \&quot;jenkinsfile_release\&quot;:\&quot;$val5\&quot;,&quot; &gt;&gt; jenkins/projectfile.json
+echo &quot;       \&quot;jenkinsfile_pcr\&quot;:\&quot;$val6\&quot;,&quot; &gt;&gt; jenkins/projectfile.json
+echo &quot;       \&quot;yum_swap\&quot;:\&quot;$val7\&quot;,&quot; &gt;&gt; jenkins/projectfile.json
+echo &quot;       \&quot;skip_PCR_DSL\&quot;:\&quot;$val8\&quot;,&quot; &gt;&gt; jenkins/projectfile.json
+if [[ &quot;${aa}&quot; == &quot;true&quot; ]]; then
+   echo &quot;       \&quot;skip_Release_DSL\&quot;:\&quot;$val9\&quot;,&quot; &gt;&gt; jenkins/projectfile.json
+   echo &quot;       \&quot;Additionalstage\&quot;:\&quot;$aa\&quot;,&quot; &gt;&gt; jenkins/projectfile.json
+else
+    echo &quot;       \&quot;skip_Release_DSL\&quot;:\&quot;$val9\&quot;&quot; &gt;&gt; jenkins/projectfile.json
+fi
+echo &quot;     }&quot; &gt;&gt; jenkins/projectfile.json
+echo &quot;]&quot; &gt;&gt; jenkins/projectfile.json
+
+COMMIT_MESSAGE=&quot;testing&quot;
+git add --all
+git commit -m &quot;${COMMIT_MESSAGE}&quot;
+git remote set-url origin --push ${GERRIT_CENTRAL}/${CI_REPO}
+git push origin HEAD:refs/for/dTORF-401748 &gt; review_message.txt 2&gt;&amp;1
+cat review_message.txt
+
+REVIEW_DETAILS=$(grep -F &quot;${COMMIT_MESSAGE}&quot; review_message.txt | tr -s &quot; &quot;)
+REVIEW_LINK=$(cut -d&apos; &apos; -f2 &lt;&lt;&lt;&quot;${REVIEW_DETAILS}&quot;)
+
+echo REVIEW_DATE=$(date &quot;+%d-%m-%Y&quot;) &gt;&gt; ${WORKSPACE}/env.properties
+echo REVIEW_LINK=${REVIEW_LINK} &gt;&gt; ${WORKSPACE}/env.properties</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.40">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+  </buildWrappers>
+</project>

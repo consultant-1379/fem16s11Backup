@@ -1,0 +1,109 @@
+<flow-definition plugin="workflow-job@2.25">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.3.2"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.3.2">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options>
+        <string>skipDefaultCheckout</string>
+      </options>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>The Pipeline job is run after a change to master.&lt;br&gt;&#13;
+Triggers the &lt;a href="https://fem16s11-eiffel004.lmera.ericsson.se:8443/jenkins/job/eric-enm-common-helmchart-library/"&gt;eric-enm-common-helmchart-library&lt;/a&gt; job.&#13;
+</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>RELEASE_JOB_NAME</name>
+          <description/>
+          <defaultValue>test-12345</defaultValue>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@65.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>30</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.19.2">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@65.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.57.2">
+    <script>pipeline {
+    agent {
+        label 'CSAR'
+    }
+    options {
+        skipDefaultCheckout true
+        timestamps()
+        timeout(time: 5, unit: 'MINUTES')
+    }
+    stages {
+        stage('Check Recent Code Merge'){
+            steps {
+                script {
+                    
+                        git url: "ssh://gerrit.ericsson.se:29418/OSS/com.ericsson.oss.containerisation/eric-enm-common-helmchart-library.git"
+
+                        sh "(git log -1 &amp;&amp; git log --name-only --oneline -1)&gt; latest-commit.log"
+                        archiveArtifacts allowEmptyArchive: true, artifacts: 'latest-commit.log'
+
+                        user_result = sh (script: "git log -1 | egrep 'LCI Admin User|lciadm100|ENM_CI_Admin'", returnStatus: true)
+                        def latest_commit_id = sh (script: "git log -1 | grep commit | cut -d ' ' -f2", returnStdout: true)
+                        env.latest_commit_id = "${latest_commit_id}"
+                        echo "${latest_commit_id}"
+                        if (user_result != 0) {
+                                  echo "${latest_commit_id}"
+                                  chart_files_change_result=sh (script: "git diff-tree --no-commit-id --name-only -r \${latest_commit_id} | grep chart/", returnStatus: true)
+                                  echo "chart_files_change_result:${chart_files_change_result}"
+                                  if (chart_files_change_result == 0 ) {
+                                      
+                                      currentBuild.description = "&lt;a href=${JENKINS_URL}job/${RELEASE_JOB_NAME}&gt;${RELEASE_JOB_NAME}&lt;/a&gt; job triggered."
+                                  }   else {
+                                      echo "${RELEASE_JOB_NAME} not triggered due to no latest code merge in chart directory"
+                                      currentBuild.description = "&lt;a href=${JENKINS_URL}job/${RELEASE_JOB_NAME}&gt;${RELEASEJOB_NAME}&lt;/a&gt; job NOT triggered."
+                                  }
+                        }   else {
+                            echo "${RELEASE_JOB_NAME} not triggered due to latest code merge by Excluded/Invalid user"
+                             currentBuild.description = "&lt;a href=${JENKINS_URL}job/${RELEASE_JOB_NAME}&gt;${RELEASE_JOB_NAME}&lt;/a&gt; job NOT triggered."
+                        }
+
+                        sh "printenv &gt; printenv.log"
+                        archiveArtifacts allowEmptyArchive: true, artifacts: 'printenv.log'
+                   }
+                }
+            }
+        }
+    }
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <quietPeriod>10</quietPeriod>
+  <disabled>true</disabled>
+</flow-definition>

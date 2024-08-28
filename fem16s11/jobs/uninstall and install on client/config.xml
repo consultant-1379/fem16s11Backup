@@ -1,0 +1,114 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.25">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.3.2"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.3.2">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>test job</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <org.jvnet.jenkins.plugins.nodelabelparameter.LabelParameterDefinition plugin="nodelabelparameter@1.7.2">
+          <name>slave</name>
+          <description></description>
+          <defaultValue></defaultValue>
+          <allNodesMatchingLabel>false</allNodesMatchingLabel>
+          <triggerIfResult>allCases</triggerIfResult>
+          <nodeEligibility class="org.jvnet.jenkins.plugins.nodelabelparameter.node.AllNodeEligibility"/>
+        </org.jvnet.jenkins.plugins.nodelabelparameter.LabelParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@69.0.3">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>30</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.19.2">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@69.0.3">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.plugins.jobConfigHistory.JobLocalConfiguration plugin="jobConfigHistory@2.26">
+      <changeReasonComment></changeReasonComment>
+    </hudson.plugins.jobConfigHistory.JobLocalConfiguration>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.57.2">
+    <script>pipeline{
+    agent {
+            node
+            {
+               label slave
+            }
+        }
+    options {
+        timeout(time: 9, unit: &apos;HOURS&apos;)
+    }
+    environment {
+        HOME_DIR = &quot;${WORKSPACE}&quot;
+        https_proxy = &quot;http://www-proxy.lmera.ericsson.se:8080/&quot;
+        cenm_utilities_docker_image = &quot;armdocker.rnd.ericsson.se/proj-enm/cenm-build-utilities:latest&quot;
+        nexus_repositoryUrl = &quot;https://arm902-eiffel004.athtem.eei.ericsson.se:8443/nexus/content/repositories/releases/&quot;
+        helm_repository_release = &quot;https://arm.seli.gic.ericsson.se/artifactory/proj-enm-helm/&quot;
+        helm_repository_ci_internal = &quot;https://arm.seli.gic.ericsson.se/artifactory/proj-enm-dev-internal-helm/&quot;
+        csar_package_name = &quot;enm-installation-package&quot;
+    }
+    stages{
+        stage(&apos;Clean Up WorkSpace&apos;){
+                steps{
+                        deleteDir()
+                     }
+        }
+        stage(&apos;cENM Install&apos;){
+             stages {
+                   stage(&apos;Install cENM Infra chart&apos;){
+                     steps{
+                       script{
+					   sh &apos;&apos;&apos;
+					   ssh -o &apos;LogLevel=error&apos; -o &apos;StrictHostKeyChecking no&apos;  cenmbuild@100.76.23.74 &apos;export KUBECONFIG=/home/cenmbuild/cENM/enm31.config &amp;&amp; helm install eric-enm-infra-integration-enm31 --values /local/installation/Misty/Scripts/eric-enm-integration-production-values-1.5.0-4.yaml /local/installation/Misty/Definitions/OtherTemplates/eric-enm-infra-integration-1.9.0-28.tgz -n enm31 --wait --timeout 6h&apos;					   						 				   
+					   &apos;&apos;&apos;
+                       }
+                    }
+                   }
+                   stage(&apos;Install cENM Stateless chart&apos;){
+                    steps{
+                       script{
+					   sh &apos;&apos;&apos;
+					   ssh -o &apos;LogLevel=error&apos; -o &apos;StrictHostKeyChecking no&apos;  cenmbuild@100.76.23.74 &apos;export KUBECONFIG=/home/cenmbuild/cENM/enm31.config &amp;&amp; helm install eric-enm-stateless-integration-enm31 --values /local/installation/Misty/Scripts/eric-enm-integration-production-values-1.5.0-4.yaml /local/installation/Misty/Definitions/OtherTemplates/eric-enm-stateless-integration-1.9.0-27.tgz -n enm31 --wait --timeout 2h&apos;					   						 				   					   
+					   &apos;&apos;&apos;
+                      }
+                    }
+                  }
+                }
+        }		
+		
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

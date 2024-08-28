@@ -1,0 +1,376 @@
+<flow-definition plugin="workflow-job@2.25">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.3.2"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.3.2">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>NAMESPACE</string>
+        <string>KUBE_CRED</string>
+        <string>STORAGE_CLASS</string>
+        <string>NFS_SERVER_IP</string>
+        <string>emailList</string>
+        <string>CM_VIP_ADDRESS</string>
+        <string>version</string>
+        <string>EXPORT_SHARE_DIR</string>
+        <string>FM_VIP_ADDRESS</string>
+        <string>PM_VIP_ADDRESS</string>
+        <string>MODELSERV_LIVENESS_PROBE</string>
+        <string>NFS_STORAGE_CLASS</string>
+        <string>LB_EXTERNAL_PORT</string>
+        <string>ENM_LAUNCHER_HOSTNAME</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>KUBE_CRED</name>
+          <description>Kuberenetes Access Credentails</description>
+          <defaultValue>enm61_configfile</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>NAMESPACE</name>
+          <description>Kubernetes Namespace Name</description>
+          <defaultValue>enm61</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>NFS_STORAGE_CLASS</name>
+          <description>NFS Storage Class Name</description>
+          <defaultValue>nfs-enm61</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>STORAGE_CLASS</name>
+          <description>Default Storage Class Name</description>
+          <defaultValue>erikube-cinder</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>NFS_SERVER_IP</name>
+          <description>NFS Server Ip address</description>
+          <defaultValue>10.210.220.213</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>EXPORT_SHARE_DIR</name>
+          <description>NFS Export Share Dir</description>
+          <defaultValue>/share/ericsson/nfs61</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>ENM_LAUNCHER_HOSTNAME</name>
+          <description>ENM UI Hostname for Ingress</description>
+          <defaultValue>ieatc13a005.athtem.eei.ericsson.se</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>LB_EXTERNAL_PORT</name>
+          <description>External Loabalancer IP address</description>
+          <defaultValue>10.210.220.39</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>FM_VIP_ADDRESS</name>
+          <description>Fm VIP IP address</description>
+          <defaultValue>10.210.220.45</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>CM_VIP_ADDRESS</name>
+          <description>Cm VIP IP address</description>
+          <defaultValue>10.210.220.46</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>PM_VIP_ADDRESS</name>
+          <description>Pm VIP IP address</description>
+          <defaultValue>10.210.220.47</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>MODELSERV_LIVENESS_PROBE</name>
+          <description>modelserv liveness probe</description>
+          <defaultValue>16200</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>emailList</name>
+          <description>Semi colon separated list of Email Recipients</description>
+          <defaultValue>peddinti.tarakesam@tcs.com</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>version</name>
+          <description>Chart version</description>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@65.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.19.2">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@65.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.57.2">
+    <script>def kubectlGetResource(type, NAMESPACE){
+    return sh(script : "${kubectl} get ${type} -n ${NAMESPACE} | grep -v \'NAME\' |  awk -F\' \' \'{print \$1}\'", returnStdout: true).split()
+}
+
+def checkHealthyPods(NAMESPACE) {
+    desiredStatefulset = sh ( script: "${kubectl} -n ${NAMESPACE} get sts    | grep -v 'NAME' | awk -F' ' '{stssum += \$2} END {print stssum}'", returnStdout: true ).trim()
+    echo "${desiredStatefulset}"
+    desiredDeployment  = sh ( script: "${kubectl} -n ${NAMESPACE} get deploy | grep -v 'NAME' | awk -F' ' '{depsum += \$2} END {print depsum}'", returnStdout: true ).trim()
+    echo "${desiredDeployment}"
+    currentHealthyPods = sh ( script: "${kubectl} -n ${NAMESPACE} get pods   | grep -v 'NAME' | grep 'Running' | awk -F' ' '{print \$2}' | awk -F'/' '{podsum += \$1} END {print podsum}'", returnStdout: true ).trim()
+    echo "${currentHealthyPods}"
+    desiredDeploy=desiredDeployment.toInteger()
+    currentHealthy=currentHealthyPods.toInteger()
+    desiredStateful=desiredStatefulset.toInteger()
+    
+    if ( desiredStateful + desiredDeploy &lt;= currentHealthy ) {
+        echo "Desired:Statefulset + Desired:Deployment is lesser than or equal to Current: Running Healthy Pods"
+    } else {
+        echo "Desired:Statefulset + Desired:Deployment is not matching Current: Running Healthy Pods"
+        sh "sleep 60"
+        sh "exit 1"
+    }
+}
+
+
+def smokeTest(NAMESPACE,LB_EXTERNAL_PORT) {
+    response = sh (script: "curl --insecure -X POST -d \"IDToken1=Administrator&amp;IDToken2=TestPassw0rd\" https://${ENM_LAUNCHER_HOSTNAME}/login -H \"Content-Type: application/x-www-form-urlencoded\" -H \"Accept-Encoding: gzip,deflate\" -H \"Accept: */*\" -L -H \'cache-control: no-cache\'", returnStdout: true ).trim()
+    echo response
+    if ( response.contains("Authentication Successful") ){
+       echo "Success! Can login to ENM"
+    } else {
+       echo "Failed! Can\'t login to ENM"
+       sh "exit 1"
+    } 
+}
+
+def updateIntegrationValues(NAMESPACE,NFS_STORAGE_CLASS,STORAGE_CLASS,NFS_SERVER_IP,EXPORT_SHARE_DIR,ENM_LAUNCHER_HOSTNAME,LB_EXTERNAL_PORT,FM_VIP_ADDRESS,CM_VIP_ADDRESS,PM_VIP_ADDRESS,MODELSERV_LIVENESS_PROBE) {
+    try {
+        filename = "${HOME_DIR}/integration/integration-values.yaml"
+        values = readYaml file: filename
+        values.global.persistentVolumeClaim.storageClass = "${STORAGE_CLASS}"
+        values.global.ingress.enmHost = "${ENM_LAUNCHER_HOSTNAME}"
+        values.global.enmProperties.lb_external_port = "${LB_EXTERNAL_PORT}"
+		values.global.enmProperties.fm_vip_address = "${FM_VIP_ADDRESS}"
+		values.global.enmProperties.cm_vip_address = "${CM_VIP_ADDRESS}"
+		values.global.enmProperties.pm_vip_address = "${PM_VIP_ADDRESS}"
+        values.global.nfs.storageClass = "${NFS_STORAGE_CLASS}"
+        values.global.nfsprovisioner.server = "${NFS_SERVER_IP}"
+        values.global.nfsprovisioner.path = "${EXPORT_SHARE_DIR}"
+        values.global.storageClass.name= "${NFS_STORAGE_CLASS}"
+		values.global.modelserv.livenessProbe= "${MODELSERV_LIVENESS_PROBE}"
+        values.global.core.persistentVolume.storageClass = "${STORAGE_CLASS}"
+
+        sh "rm -f ${filename}"
+        writeYaml file: filename, data: values
+    } catch( err ) {
+        echo "$err"
+    }
+}
+
+def emailReport(content, emailList){
+    def DEFAULT_REPLYTO = 'peddinti.tarakesam@tcs.com;EricssonHyderabad.ENMMisty@tcs.com;EricssonHyderabad.ENMDewdrops@tcs.com'
+
+    def subject = "${env.JOB_NAME} - Build #${env.BUILD_NUMBER} - ${currentBuild.currentResult}!"
+
+    try {
+        emailext(body: content, mimeType: 'text/html', from: 'jenkins_monitoring@ericsson.com',
+            replyTo: DEFAULT_REPLYTO, subject: subject,
+            to: "${emailList}", attachLog: true )
+    } catch( err ){
+        echo "$err"
+    }
+}
+
+def reportHeading(status,NAMESPACE,LB_EXTERNAL_PORT){
+    
+    def deployResult
+    def color 
+    def investigation 
+    
+    if(status == 'Success'){
+        deployResult = "Success"
+        color = "#9ACD32"
+        investigation = "NA"
+    } else if(status == 'Failed'){
+        deployResult = "Failed"
+        color = "#DC143C"
+        investigation = "In progress, will be included in a follow up email"
+    } else if(status == 'Aborted'){
+        deployResult = "Aborted"
+        color = "#95A5A6"
+        investigation = "(If applicable), will be included in a follow up email"
+    }
+
+    def report = "Hi All,\n\n &lt;h2&gt;${NAMESPACE} Deployment Result: &lt;span style=\"background-color:${color};\"&gt;${status}&lt;/span&gt;&lt;/h2&gt;"
+    def chartVersion = sh (script : "${helm} list --namespace ${NAMESPACE} | grep enm-integration | awk \'{print \$(NF-2)}\'", returnStdout: true)
+    report += " &lt;ul&gt;&lt;li&gt;&lt;strong&gt;Login URL :&lt;/strong&gt; https://ieatc13a005.athtem.eei.ericsson.se&lt;/li&gt;"
+    report += "&lt;li&gt;&lt;strong&gt;Chart version :&lt;/strong&gt; ${chartVersion}&lt;/li&gt;"
+    // report += "&lt;li&gt;&lt;strong&gt;Please update below line in hosts file (Windows) &#8220;C:\\Windows\\System32\\drivers\\etc\\hosts&#8221; or (Linux) &#8220;/etc/hosts&#8221;&lt;/strong&gt;\n${LB_EXTERNAL_PORT} &amp;nbsp ${NAMESPACE}-phase-0.athtem.eei.ericsson.se&lt;/li&gt;"
+    report += "&lt;li&gt;&lt;strong&gt;Please find the Phase 1 Deploy Job Details:&lt;/strong&gt;  &lt;a href=${BUILD_URL}&gt;${BUILD_URL}&lt;/a&gt;&lt;/li&gt;"
+    report += "&lt;li&gt;&lt;strong&gt;Investigation Results  :  ${investigation}&lt;/strong&gt;&lt;/li&gt;&lt;/ul&gt;"
+
+    report = report.replace("\n","&lt;/br&gt;")
+    return report
+}
+
+def printPods(NAMESPACE){
+    def failedState = sh (script : "${kubectl} -n ${NAMESPACE} get pods | egrep \'NAME|Running\' | egrep \'0/|NAME\'" , returnStdout: true)
+    def initState = sh (script : "${kubectl} -n ${NAMESPACE} get pods | grep -v Running || true", returnStdout: true)
+	def sidecarState= sh (script : "${kubectl} -n ${NAMESPACE} get pods | egrep \'NAME|Running\' | egrep \'1/2|NAME\'" , returnStdout: true)
+    def report = "#kubectl -n ${NAMESPACE} get pods | egrep \'NAME|Running\' | egrep \'0/|NAME\' \n&lt;pre&gt;${failedState}&lt;/pre&gt; \n\n\n #kubectl -n ${NAMESPACE} get pods | grep -v Running \n&lt;pre&gt;${initState}&lt;/pre&gt; \n\n\n #kubectl -n ${NAMESPACE} get pods | egrep \'NAME|Running\' | egrep \'1/2|NAME\' \n&lt;pre&gt;${sidecarState}&lt;/pre&gt;"
+    echo "${report}"
+    
+    report = report.replace("\n","&lt;/br&gt;")
+    report += "&lt;style&gt; pre {display: block;font-family: Lucida Console, Monaco, monospace; white-space: pre;} &lt;/style&gt;";
+
+    return report
+}
+
+pipeline{
+    agent { label 'Cloud-Native' }
+    options {  
+        timeout(time: 6, unit: 'HOURS') 
+    }
+    parameters {
+        string(defaultValue: 'enm61_configfile', description: 'Kuberenetes Access Credentails',  name: 'KUBE_CRED')
+        string(defaultValue: 'enm61', description: 'Kubernetes Namespace Name',  name: 'NAMESPACE')
+        string(defaultValue: 'nfs-enm61', description: 'NFS Storage Class Name',  name: 'NFS_STORAGE_CLASS')
+        string(defaultValue: 'erikube-cinder', description: 'Default Storage Class Name',  name: 'STORAGE_CLASS')
+        string(defaultValue: '10.210.220.213', description: 'NFS Server Ip address',  name: 'NFS_SERVER_IP')
+        string(defaultValue: '/share/ericsson/nfs61', description: 'NFS Export Share Dir',  name: 'EXPORT_SHARE_DIR')
+        string(defaultValue: 'ieatc13a005.athtem.eei.ericsson.se', description: 'ENM UI Hostname for Ingress',  name: 'ENM_LAUNCHER_HOSTNAME')
+        string(defaultValue: '10.210.220.39', description: 'External Loabalancer IP address',  name: 'LB_EXTERNAL_PORT')
+		string(defaultValue: '10.210.220.45', description: 'Fm VIP IP address',  name: 'FM_VIP_ADDRESS')
+		string(defaultValue: '10.210.220.46', description: 'Cm VIP IP address',  name: 'CM_VIP_ADDRESS')
+		string(defaultValue: '10.210.220.47', description: 'Pm VIP IP address',  name: 'PM_VIP_ADDRESS')
+		string(defaultValue: '16200', description: 'modelserv liveness probe',  name: 'MODELSERV_LIVENESS_PROBE')
+        string(defaultValue: 'peddinti.tarakesam@tcs.com', description: 'Semi colon separated list of Email Recipients',  name: 'emailList')
+		string( description: 'Chart version',  name: 'version')
+	}
+
+    environment {
+        kubeConfig = "/home/lciadm100/.kube/${KUBE_CRED}"
+        HOME_DIR = "${WORKSPACE}"
+        kubectl = "kubectl --kubeconfig=${kubeConfig}"
+        helm = "KUBECONFIG=${kubeConfig} helm"
+        https_proxy = "http://www-proxy.lmera.ericsson.se:8080/"
+    }
+
+    stages{
+        stage( 'Connect-K8s' ) {
+            steps {
+                sh 'rm -rf ~/.kube/config'
+                withCredentials([file(credentialsId: KUBE_CRED, variable: 'FILE')]) {
+                    sh 'mkdir -p ~/.kube &amp;&amp; chmod 775 ~/.kube &amp;&amp; cp -v $FILE ~/.kube/${KUBE_CRED} &amp;&amp; chmod 664 ~/.kube/${KUBE_CRED}'
+                }
+            }
+        }
+        stage( 'Pre Build' ) {
+            parallel {
+                stage( 'Helm Delete' ) {
+                    steps{
+                        script{
+                            sh "${helm} delete --purge installation-${NAMESPACE} || true"
+                            def pvcs = kubectlGetResource("pvc",NAMESPACE)
+                            pvcs.each{ pvc -&gt;
+                                sh "${kubectl} delete pvc ${pvc} -n ${NAMESPACE} || true"
+                            }
+							sh "${kubectl} delete jobs installation-${NAMESPACE} -n ${NAMESPACE}|| true"
+                        }
+                    }
+                }
+                stage( 'Checkout' ){
+                    steps{
+                        //cleanWs()
+                        git branch: 'master',
+                        url: 'ssh://lciadm100@gerrit.ericsson.se:29418/OSS/com.ericsson.oss.containerisation/eric-enm-integration.git'
+                        updateIntegrationValues(NAMESPACE,NFS_STORAGE_CLASS,STORAGE_CLASS,NFS_SERVER_IP,EXPORT_SHARE_DIR,ENM_LAUNCHER_HOSTNAME,LB_EXTERNAL_PORT,FM_VIP_ADDRESS,CM_VIP_ADDRESS,PM_VIP_ADDRESS,MODELSERV_LIVENESS_PROBE)
+                    }
+                }
+                stage('Add Helm Repo'){
+                    steps{
+                        sh "${helm} init --client-only"
+						sh "${helm} repo add proj-enm-dev-internal-helm https://arm.epk.ericsson.se/artifactory/proj-enm-dev-internal-helm"
+						sh "${helm} repo update"
+                    }
+                }
+            }
+        }     
+        stage('ENM SOFTWARE'){
+            steps{
+                sh("${helm} upgrade --install --debug installation-${NAMESPACE} --values  ${HOME_DIR}/integration/integration-values.yaml --version ${version} proj-enm-dev-internal-helm/enm-integration --namespace ${NAMESPACE} --wait --timeout 21600")
+            }
+		    post {
+                always {
+                    retry(3) {
+                        script {
+                            smokeTest(NAMESPACE,LB_EXTERNAL_PORT)
+                        }
+                    }
+                    script {
+                        def ingUrl = sh (script: "${kubectl} get ing -n ${NAMESPACE} | grep uiserv | awk \'{ print \$2 }\'",  returnStdout:true)
+                        currentBuild.description = "${NAMESPACE} URL : &lt;a href=\'https://${ingUrl}\'&gt;https://${ingUrl}&lt;/a&gt;&lt;/br&gt;&lt;p&gt;Update your host file with &lt;em&gt;&lt;strong&gt;${LB_EXTERNAL_PORT}&amp;NBSP&amp;NBSP&amp;NBSP&amp;NBSP ${ingUrl}&lt;/em&gt;&lt;/strong&gt;&lt;/p&gt;"
+                    }
+                }
+            }
+        }
+        stage('CheckPods Running'){
+            steps{
+                script{
+                    retry(5){
+                        checkHealthyPods(NAMESPACE)
+                    }
+                }
+            }
+        }
+    }
+    post{
+        failure {
+            script{
+                echo "Failure"
+                def report = reportHeading("Failed",NAMESPACE,LB_EXTERNAL_PORT)
+                report += printPods(NAMESPACE)
+                emailReport(report,emailList)
+            }
+        }
+        aborted{
+            script{
+                echo "Aborted"                
+                def report = reportHeading("Aborted",NAMESPACE,LB_EXTERNAL_PORT)
+                report += printPods(NAMESPACE)
+                emailReport(report,emailList)
+            }
+        }
+        success{
+            script{
+                echo "Success"                
+                def report = reportHeading("Success",NAMESPACE,LB_EXTERNAL_PORT)
+                emailReport(report,emailList)
+            }
+        }
+        always {
+            script{
+                sh("cat ${HOME_DIR}/integration/integration-values.yaml")
+            }
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>true</disabled>
+</flow-definition>

@@ -1,0 +1,183 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>-1</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers>
+    <hudson.triggers.TimerTrigger>
+      <spec>H 10 * * *</spec>
+    </hudson.triggers.TimerTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#page=&quot;$(curl -u zrkahat:KN1245#jb -X GET -w %{http_code} https://confluence-oss.seli.wh.rnd.internal.ericsson.com/display/ECN/Daily+Server+log+on+cENM+C11a003+Server)&quot;
+#sed &quot;0,/Go to start of metadata/d&quot; &lt; $page &gt;&gt; test.html
+#echo &quot;$newpage&quot;
+#echo &quot;$page&quot;
+#&quot;$page&quot; &gt;&gt; Art_Test.html
+
+string=&quot;&lt;style&gt; td, th {  border: 1px solid blue; text-align: left; padding: 8px; &lt;/style&gt;&quot;
+
+#Test Report Page to be udpated. 
+
+curl -u zrkahat:AM1325#sw -X GET https://confluence-oss.seli.wh.rnd.internal.ericsson.com/display/ECN/Daily+Server+log+on+cENM+C11a003+Server &gt; test.html
+#curl -u zmiskul:Bholenath@1 -X GET https://confluence-oss.seli.wh.rnd.internal.ericsson.com/display/ECN/Daily+Server+log+on+cENM+C11a005+Server &gt; test.html
+
+
+#Remove the Confluence Content .
+sed &quot;0,/Go to start of metadata/d&quot; &lt; test.html &gt; newtest.html
+sed -n &apos;/labels-section/q;p&apos; newtest.html &gt; final.html
+
+##########################################
+
+#Formatting the Tables and Coloring the Headers 
+sed -i &apos;s/&lt;table/&lt;table border=1 bordercolor=blue&quot;/g&apos; final.html
+sed -i &apos;s/&lt;th /&lt;th bgcolor=blue &quot;/g&apos; final.html
+sed -i &apos;s/Â/ /g&apos; final.html 
+
+
+cat final.html
+
+
+
+</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers>
+    <hudson.tasks.ArtifactArchiver>
+      <artifacts>final.html</artifacts>
+      <allowEmptyArchive>false</allowEmptyArchive>
+      <onlyIfSuccessful>false</onlyIfSuccessful>
+      <fingerprint>false</fingerprint>
+      <defaultExcludes>true</defaultExcludes>
+      <caseSensitive>true</caseSensitive>
+      <followSymlinks>true</followSymlinks>
+    </hudson.tasks.ArtifactArchiver>
+    <hudson.plugins.emailext.ExtendedEmailPublisher plugin="email-ext@2.87">
+      <recipientList>naveen.kumar.maremanda@ericsson.com,athreyas.karthik@tcs.com,yogyatha.vankelu@tcs.com, yash.chauhan@wipro.com,pradeepa.c29@wipro.com,achyuth.1@tcs.com,varshini.rudramaina2@tcs.com,lorraine.bohan@ericsson.com,ewa.malinowska@ericsson.com,deepak.a.kumar@ericsson.com,andrew.behan@ericsson.com,rajesh.chiluveru@ericsson.com,ravi.shankar.selvaraj@ericsson.com,manjunath.sanjiv.kulkarni@ericsson.com,devendra.d.singh@ericsson.com,deepak.thaman@ericsson.com,christy.gowthaman.v@ericsson.com,lima.george1@wipro.com,tom.a.curran@ericsson.com,rohit.j.jha@ericsson.com,fiachra.hanrahan@ericsson.com,k.avanish@tcs.com,,anthony.mcmahon@ericsson.com</recipientList>
+      <configuredTriggers>
+        <hudson.plugins.emailext.plugins.trigger.SuccessTrigger>
+          <email>
+            <subject>$PROJECT_DEFAULT_SUBJECT</subject>
+            <body>$PROJECT_DEFAULT_CONTENT
+
+</body>
+            <recipientProviders>
+              <hudson.plugins.emailext.plugins.recipients.ListRecipientProvider/>
+            </recipientProviders>
+            <attachmentsPattern></attachmentsPattern>
+            <attachBuildLog>false</attachBuildLog>
+            <compressBuildLog>false</compressBuildLog>
+            <replyTo>$PROJECT_DEFAULT_REPLYTO</replyTo>
+            <contentType>text/html</contentType>
+          </email>
+        </hudson.plugins.emailext.plugins.trigger.SuccessTrigger>
+        <hudson.plugins.emailext.plugins.trigger.FailureTrigger>
+          <email>
+            <subject>$PROJECT_DEFAULT_SUBJECT</subject>
+            <body>$PROJECT_DEFAULT_CONTENT
+$BUILD_LOG</body>
+            <recipientProviders>
+              <hudson.plugins.emailext.plugins.recipients.ListRecipientProvider/>
+            </recipientProviders>
+            <attachmentsPattern></attachmentsPattern>
+            <attachBuildLog>false</attachBuildLog>
+            <compressBuildLog>false</compressBuildLog>
+            <replyTo>$PROJECT_DEFAULT_REPLYTO</replyTo>
+            <contentType>text/html</contentType>
+          </email>
+        </hudson.plugins.emailext.plugins.trigger.FailureTrigger>
+      </configuredTriggers>
+      <contentType>text/html</contentType>
+      <defaultSubject>Test Hotel Daily Report | ENM3 | ${CUSTOM_TIME}</defaultSubject>
+      <defaultContent>&lt;BR&gt;
+&lt;B&gt;
+Hi All,
+&lt;br&gt;
+This is an automated email for Daily Report and status of Test Hotel ENM3&lt;br&gt;
+Do Not reply to this Email ; For any Further details on test hotel please contact
+&lt;a href=&quot;PDLTEAMGAR@pdl.internal.ericsson.com&quot;&gt;Team_Garuda &lt;/a&gt;
+&lt;BR&gt;&lt;BR&gt;
+&lt;hr&gt;
+${FILE,path=&quot;final.html&quot;}
+&lt;hr&gt;</defaultContent>
+      <attachmentsPattern></attachmentsPattern>
+      <presendScript>$DEFAULT_PRESEND_SCRIPT</presendScript>
+      <postsendScript>$DEFAULT_POSTSEND_SCRIPT</postsendScript>
+      <attachBuildLog>false</attachBuildLog>
+      <compressBuildLog>false</compressBuildLog>
+      <replyTo></replyTo>
+      <from>TeamGaruda</from>
+      <saveOutput>false</saveOutput>
+      <disabled>false</disabled>
+    </hudson.plugins.emailext.ExtendedEmailPublisher>
+  </publishers>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.40">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+    <EnvInjectBuildWrapper plugin="envinject@2.4.0">
+      <info>
+        <secureGroovyScript plugin="script-security@1138.v8e727069a_025">
+          <script>TimeZone.setDefault(TimeZone.getTimeZone(&apos;UTC&apos;))
+def now = new Date()
+def env= [CUSTOM_TIME: now.format(&quot;dd-MMM-yyyy &quot;)]
+return env</script>
+          <sandbox>false</sandbox>
+        </secureGroovyScript>
+        <loadFilesFromMaster>false</loadFilesFromMaster>
+      </info>
+    </EnvInjectBuildWrapper>
+  </buildWrappers>
+</project>

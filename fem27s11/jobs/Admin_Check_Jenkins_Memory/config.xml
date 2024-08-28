@@ -1,0 +1,180 @@
+<?xml version="1.1" encoding="UTF-8"?><project>
+  <actions/>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@69.0.3">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>7</daysToKeep>
+        <numToKeep>20</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.23.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@69.0.3">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@69.0.3">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@69.0.3">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty plugin="leastload@1.0.3">
+      <leastLoadDisabled>false</leastLoadDisabled>
+    </org.bstick12.jenkinsci.plugins.leastload.LeastLoadDisabledProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>mailingList</name>
+          <description/>
+          <defaultValue>luca.a.mossa@ericsson.com</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>instance</name>
+          <description/>
+          <defaultValue>Fem 1s11 Jenkins</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.throttleconcurrents.ThrottleJobProperty plugin="throttle-concurrents@1.8.5">
+      <maxConcurrentPerNode>0</maxConcurrentPerNode>
+      <maxConcurrentTotal>0</maxConcurrentTotal>
+      <categories class="java.util.concurrent.CopyOnWriteArrayList"/>
+      <throttleEnabled>false</throttleEnabled>
+      <throttleOption>project</throttleOption>
+      <limitOneJobWithMatchingParams>false</limitOneJobWithMatchingParams>
+      <paramsToUseForLimit/>
+      <configVersion>1</configVersion>
+    </hudson.plugins.throttleconcurrents.ThrottleJobProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@69.0.3">
+      <enabled>false</enabled>
+      <userDomainSuffix/>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+    <de.pellepelster.jenkins.walldisplay.WallDisplayJobProperty plugin="jenkinswalldisplay@0.6.30"/>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>ENM-SLAVE-GE-6.10_1</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>true</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers>
+    <hudson.triggers.TimerTrigger>
+      <spec>H/15 * * * *</spec>
+    </hudson.triggers.TimerTrigger>
+  </triggers>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.plugins.groovy.SystemGroovy plugin="groovy@2.2">
+      <source class="hudson.plugins.groovy.StringSystemScriptSource">
+        <script plugin="script-security@1.73">
+          <script>import net.bull.javamelody.*;
+import net.bull.javamelody.internal.model.*;
+import net.bull.javamelody.internal.common.*;
+import java.lang.management.ManagementFactory;
+import java.lang.management.OperatingSystemMXBean;
+import hudson.AbortException;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Scanner;
+
+OperatingSystemMXBean operatingSystemMXBean = ManagementFactory.getOperatingSystemMXBean();
+
+java = new JavaInformations(Parameters.getServletContext(), true);
+println "\nsessions count:\n    " + java.sessionCount;
+println "\nactive HTTP threads count:\n    " + java.activeThreadCount;
+println "\nthreads count:\n    " + java.threadCount;
+println "\nsystem load average:\n    " + java.systemLoadAverage;
+println "\navailable processors:\n    " + java.availableProcessors;
+println "\nhost:\n    " + java.host;
+println "\nos:\n    " + java.os;
+println "\njava version:\n    " + java.javaVersion;
+println "\njvm version:\n    " + java.jvmVersion;
+println "\npid:\n    " + java.pid;
+println "\nserver info:\n    " + java.serverInfo;
+println "\ncontext path:\n    " + java.contextPath;
+println "\nstart date:\n    " + java.startDate;
+
+memory = new MemoryInformations();
+println "\nused memory:\n    " + Math.round(memory.usedMemory / 1024 / 1024) + " Mb";
+println "\nmax memory:\n    " + Math.round(memory.maxMemory / 1024 / 1024) + " Mb";
+println "\nused perm gen:\n    " + Math.round(memory.usedPermGen / 1024 / 1024) + " Mb";
+println "\nmax perm gen:\n    " + Math.round(memory.maxPermGen / 1024 / 1024) + " Mb";
+println "\nused non heap:\n    " +       Math.round(memory.usedNonHeapMemory / 1024 / 1024) + " Mb";
+println "\nused physical memory:\n    " +       Math.round(memory.usedPhysicalMemorySize / 1024 / 1024) + " Mb";
+println "\nmax physical memory: \n    " +  Math.round(operatingSystemMXBean.getTotalPhysicalMemorySize() / 1024 / 1024) + " Mb";
+println "\nused swap space:\n    " +       Math.round(memory.usedSwapSpaceSize / 1024 / 1024) + " Mb";
+println "\nmax swap space:\n    " +       Math.round(operatingSystemMXBean.getTotalSwapSpaceSize() / 1024 / 1024) + " Mb";
+ 
+int usedMem = Math.round(memory.usedMemory / 1024 / 1024);
+int maxMem = Math.round(memory.maxMemory / 1024 / 1024);
+int maxMemThreshold = Math.round(memory.maxMemory / 1024 / 1024) * 0.9;
+int usedPermGen = Math.round(memory.usedPermGen / 1024 / 1024);
+int maxPermGen = Math.round(memory.maxPermGen / 1024 / 1024);
+int maxPermGenThreshold = Math.round(memory.maxPermGen / 1024 / 1024) * 0.8;
+int usedPhysicalMem = Math.round(memory.usedPhysicalMemorySize / 1024 / 1024);
+long maxPhysicalMem = Math.round(operatingSystemMXBean.getTotalPhysicalMemorySize() / 1024 / 1024);
+
+def bufferSpaceFile = new File('/proc/meminfo').text;
+long freeMem = ((((bufferSpaceFile.readLines().get(1)).replaceAll("[^0-9]", "")).toInteger())/1024);
+long cached = ((((bufferSpaceFile.readLines().get(3)).replaceAll("[^0-9]", "")).toInteger()) /1024);
+long totalCacheSize = freeMem + cached;
+long physicalMemThreshold = maxPhysicalMem * 0.1;
+
+int usedSwapSpace = Math.round(memory.usedSwapSpaceSize / 1024 / 1024);
+long totalSwapSpace = Math.round(operatingSystemMXBean.getTotalSwapSpaceSize() / 1024 / 1024);
+long maxSwapSpaceThreshold = Math.round(operatingSystemMXBean.getTotalSwapSpaceSize() / 1024 / 1024) * 0.8;
+  
+def usedMemWarning = "";
+def usedPermGenWarning = "";
+def usedPhysicalMemWarning = "";
+def usedSwapSpaceWarning = "";
+def jenkinsInstance = java.contextPath;
+String instance = build.buildVariableResolver.resolve("instance");
+String mailingList = build.buildVariableResolver.resolve("mailingList");
+
+if (usedMem &gt; maxMemThreshold){
+usedMemWarning ="\nUsed memory threshold exceeded!\n " + "\nUsed Memory: " +usedMem + "Mb\n" + "Max Memory: "+maxMem + "Mb\n" + "\nThreshold: "+ maxMemThreshold +"Mb\n ";
+}
+
+if (usedPermGen &gt; maxPermGenThreshold){
+usedPermGenWarning ="\nUsed perm gen threshold exceeded!\n " + "\nUsed Perm Gen: " +usedPermGen +" Mb\n" + "Max Perm Gen: "+maxPermGen + "Mb\n" + "\nThreshold: "+ maxPermGenThreshold +"Mb\n ";
+}
+
+if (totalCacheSize &lt; physicalMemThreshold){
+usedPhysicalMemWarning = "\nUsed physical memory threshold exceeded!\n " + "\nUsed Physical Memory: " +usedPhysicalMem +" Mb\n" + "Total Physical Memory: "+maxPhysicalMem + "Mb\n" + "Free Memory: "+freeMem + "Mb\n" + "Cached: "+cached + "Mb\n" + "\nThreshold: "+ physicalMemThreshold +"Mb\n ";
+}
+
+if (usedSwapSpace &gt; maxSwapSpaceThreshold){
+usedSwapSpaceWarning = "\nUsed swap space threshold exceeded!\n " + "\nUsed Swap Space:  " +usedSwapSpace +" Mb\n" + "Total Swap Space: "+totalSwapSpace + "Mb\n" +"\nThreshold: "+ maxSwapSpaceThreshold +"Mb\n ";
+}
+</script>
+          <sandbox>false</sandbox>
+        </script>
+      </source>
+    </hudson.plugins.groovy.SystemGroovy>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

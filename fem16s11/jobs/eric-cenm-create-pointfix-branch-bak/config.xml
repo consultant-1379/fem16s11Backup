@@ -1,0 +1,286 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@2.25">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.3.2"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.3.2">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>CHECKOUT_TAG</string>
+        <string>SLAVE</string>
+        <string>REPO</string>
+        <string>EMAIL</string>
+        <string>CURRENT_SPRINT</string>
+        <string>PUSH_COMMIT</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@69.0.3">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.19.2">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@69.0.3">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>SLAVE</name>
+          <description/>
+          <defaultValue>Cloud-Native-Pointfix</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>REPO</name>
+          <description>Enter the repo. Eg. OSS/com.ericsson.oss.de.containerisation/test-eric-enmsg-kpi-service</description>
+          <defaultValue>OSS/com.ericsson.oss.de.containerisation/test-eric-enmsg-kpi-service</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>CURRENT_SPRINT</name>
+          <description>Enter current sprint number Eg: 21.01</description>
+          <defaultValue/>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>CHECKOUT_TAG</name>
+          <description>This is the reference tag based on which pointfix branch would be created. Use refs/tags/SPRINT_[Current Sprint Number] to pick up the latest release. Eg: refs/tags/SPRINT_20.14.</description>
+          <defaultValue/>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>EMAIL</name>
+          <description/>
+          <defaultValue/>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.BooleanParameterDefinition>
+          <name>PUSH_COMMIT</name>
+          <description/>
+          <defaultValue>false</defaultValue>
+        </hudson.model.BooleanParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.57.2">
+    <script>pipeline {
+    agent { label SLAVE }
+    parameters {
+        string(name: 'SLAVE', defaultValue: "Cloud-Native-Pointfix")
+        string(name: 'REPO', description: 'Enter the repo. Eg. OSS/com.ericsson.oss.de.containerisation/test-eric-enmsg-kpi-service', defaultValue: "OSS/com.ericsson.oss.de.containerisation/test-eric-enmsg-kpi-service")
+        string(name: 'CURRENT_SPRINT', description: 'Enter current sprint number Eg: 21.01')
+		string(name: 'CHECKOUT_TAG', description: 'This is the reference tag based on which pointfix branch would be created. Use refs/tags/SPRINT_[Current Sprint Number] to pick up the latest release. Eg: refs/tags/SPRINT_20.14.')
+        string(name: 'EMAIL', defaultValue: "")
+        booleanParam(name: 'PUSH_COMMIT', defaultValue: false,)
+    }
+    stages {
+
+        stage('Get Latest Sprint Version') {
+         steps {
+                script {
+                    deleteDir()
+                    //def drop = getLatestSprintNumber()
+					env.BRANCH_NAME="point_fix_${params.CURRENT_SPRINT}"
+
+                    //env.BRANCH_NAME="point_fix_${drop}"
+                    //env.BRANCH_NAME="sprint_test_1"
+
+                    echo "Repo Name is: ${params.REPO}"
+                    echo "Branching based on the tag/branch: ${params.CHECKOUT_TAG}"
+                    echo "Branch Name is: ${BRANCH_NAME}"
+
+                }
+            }
+        }
+        stage('Checkout') {
+            steps {
+
+                checkout([$class: 'GitSCM', branches: [[name: "${params.CHECKOUT_TAG}"]], doGenerateSubmoduleConfigurations: false, extensions: [], gitTool: 'Default', submoduleCfg: [], userRemoteConfigs: [[url: "ssh://gerrit.ericsson.se:29418/${params.REPO}"]]])
+            }
+        }
+        stage("Check if branch exists") {
+            steps {
+                script {
+                    env.exists = check_branch("${params.REPO}", "${env.BRANCH_NAME}")
+
+                    echo "exists=${env.exists}"
+                }
+            }
+        }
+        stage("Create Branch") {
+            when { expression { env.exists != "true" } }
+            steps {
+                script {
+                    functionToCreatePointfixBranch("${params.REPO}", "${env.BRANCH_NAME}")
+                }
+            }
+        }
+
+        stage('Check if any updates') {
+            when { expression { env.exists == "true" } }
+            steps {
+                script {
+                    // Switch to the existing branch
+                    sh(returnStatus: true, script: "git checkout ${env.BRANCH_NAME}")
+                    def changed = checkIfVersionPrefixChanged()
+                    echo "${changed}"
+
+                    if(changed == false){
+                        println("*****************************************************************************************************************************************************************************************")
+                        println("Remote branch ${env.BRANCH_NAME} exists but there is no change to VERSION_PREFIX. Hence calling function to create branch, bump patch version and push the changes to the remote repo...")
+                        bumpPatchVersion("${params.REPO}", "${env.BRANCH_NAME}")
+                        env.updated = "TRUE"
+                        println("*****************************************************************************************************************************************************************************************")
+                    } else {
+                        println("******************************************************************************************************")
+                        println("Remote branch ${env.BRANCH_NAME} exists and VERSION_PREFIX has been updated. Hence skipping this repo.")
+                        currentBuild.description = "Branch already created. Skipping this repo"
+                        println("******************************************************************************************************")
+                        env.updated = "FALSE"
+                    }
+
+                }
+            }
+        }
+        stage("Bump the Minor Version") {
+            when { expression { env.exists != "true" } }
+            steps {
+                script {
+                    // Switch to Master
+                    sh(returnStatus: true, script: "git checkout master")
+                    sh(returnStatus: true, script: "git pull")
+                    sh(returnStatus: true, script: "git reset --hard origin/master")
+                    bumpMinorVersion("${params.REPO}", 'HEAD:master')
+                    println("*******************************************************************************************************************************************************")
+                    println("Old Minor Version: ${env.oldMinorVersion}")
+                    println("New Minor Version: ${env.newMinorVersion}")
+                    println("*******************************************************************************************************************************************************")
+                }
+            }
+        }
+
+    }
+    post {
+        failure {
+            mail to: EMAIL,
+                    subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
+                    body: "Failure on ${env.BUILD_URL}"
+        }
+    }
+}
+
+def getLatestSprintNumber() {
+    def versionText  = sh (returnStdout: true, script: 'wget -q -O - --no-check-certificate "https://ci-portal.seli.wh.rnd.internal.ericsson.com//api/product/ENM/latestdrop/"' )
+    def props = readJSON text: versionText
+
+    return props.drop
+}
+
+def checkIfVersionPrefixChanged(){
+    def status = sh (returnStatus: true, script: 'git diff --name-only  origin/master | grep VERSION_PREFIX')
+    return status == 0
+}
+
+def check_branch(repo_check, branch_check){
+    return_value= false
+    branch_exists = sh(returnStatus: true, script: """git ls-remote --exit-code --heads $env.GERRIT_MIRROR/$repo_check $branch_check""")
+
+    if(branch_exists == 0){
+        return_value= true
+    }
+    return return_value
+}
+
+
+def functionToCreatePointfixBranch(repo_check, branch_check) {
+    println("Remote branch $branch_check doesn't exist. Calling function to create branch, bump patch version and push the changes to the remote repo...")
+    sh(returnStatus: true, script: "git checkout -b $branch_check")
+    println("*******************************************************************************************************************************************************")
+    bumpPatchVersion("$repo_check", "$branch_check")
+    println("Pointfix Branch ${env.BRANCH_NAME} created for the repo: ${params.REPO}")
+    println("*******************************************************************************************************************************************************")
+    sh(returnStatus: true, script: "git checkout master")
+    sh(returnStatus: true, script: "git branch -D $branch_check")
+}
+
+def bumpPatchVersion(repo_check, branch_check) {
+
+    env.oldVersion = readFile "VERSION_PREFIX"
+    env.oldVersion = env.oldVersion.trim()
+
+    sh 'docker run --rm -v $PWD/VERSION_PREFIX:/app/VERSION -w /app armdocker.rnd.ericsson.se/proj-enm/bump patch'
+
+    env.newVersion = readFile "VERSION_PREFIX"
+    env.newVersion = env.newVersion.trim()
+    env.IMAGE_VERSION = env.newVersion
+
+    if (env.PUSH_COMMIT == "true") {
+        sh """
+            git add VERSION_PREFIX
+            git commit -m "[ci-skip] Automatic new patch version bumping: $IMAGE_VERSION"
+            git push $env.GERRIT_CENTRAL/$repo_check $branch_check
+        """
+        status = "OK"
+        env.updated = "TRUE"
+        currentBuild.description = "Pointfix Branch Version: " + env.newVersion + "&lt;BR&gt;"
+    } else {
+        status = "OK"
+        currentBuild.description = "Pointfix Branch Version: " + env.newVersion + "&lt;BR&gt;"
+        currentBuild.description += "PUSH_COMMIT set to false, no commit was made."
+        env.updated = "FALSE"
+        echo "PUSH_COMMIT set to false, no commit was made."
+        sh(returnStatus: true, script: "git reset --hard origin/master &gt; /dev/null")
+    }
+}
+
+def bumpMinorVersion(repo_check, branch_check) {
+
+    env.oldMinorVersion = readFile "VERSION_PREFIX"
+    env.oldMinorVersion = env.oldMinorVersion.trim()
+
+    sh 'docker run --rm -v $PWD/VERSION_PREFIX:/app/VERSION -w /app armdocker.rnd.ericsson.se/proj-enm/bump minor'
+    env.newMinorVersion = readFile "VERSION_PREFIX"
+    env.newMinorVersion = env.newMinorVersion.trim()
+
+    env.IMAGE_VERSION = env.newMinorVersion
+
+    if (env.PUSH_COMMIT == "true") {
+        sh """
+            git add VERSION_PREFIX
+            git commit -m "[ci-skip] Automatic new minor version bumping: $IMAGE_VERSION"
+            #git push $env.GERRIT_CENTRAL/$repo_check $branch_check
+            git push origin $branch_check
+        """
+        status = "OK"
+        env.updated = "TRUE"
+        currentBuild.description += "Master Branch Version: " + env.newMinorVersion
+    } else {
+        status = "OK"
+        currentBuild.description += "Master Branch Version: " + env.newMinorVersion
+        env.updated = "FALSE"
+        echo "PUSH_COMMIT set to false, no commit was made."
+        sh(returnStatus: true, script: "git reset --hard origin/master &gt; /dev/null")
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

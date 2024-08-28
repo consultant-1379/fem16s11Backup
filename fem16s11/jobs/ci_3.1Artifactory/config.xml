@@ -1,0 +1,100 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>&lt;b&gt;&lt;font color=&quot;BLUE&quot; size=&quot;2&quot;&gt;&#xd;
+This is a downstream job of &quot;ci_0.1StartFlow&quot; job, but it can also be triggered manually &lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;br&gt;&#xd;
+&lt;br&gt;&#xd;
+&lt;b&gt; The job automatically tests images DOWNLOAD/UPLOAD (and Tag) on Artifactory.  It will ANONYMOUSLY: &lt;br&gt;&#xd;
+&lt;br&gt;&#xd;
+&lt;b&gt; -  pull an existing image from ARMDOCKER env (armdocker.rnd.ericsson.se) &lt;br&gt;&#xd;
+&lt;b&gt; -  tag the pulled image with the &quot;change_we&quot; TAG &lt;br&gt;  &#xd;
+&lt;b&gt; -  push the tagged image to ARMDOCKER env &lt;br&gt;&#xd;
+&lt;b&gt; -  remove (locally and remotely on Artifactory) the images created for test &lt;br&gt;  &#xd;
+&lt;br&gt;  &#xd;
+&lt;br&gt;  &#xd;
+&lt;b&gt;TEAM NAME:&lt;/b&gt; Axis Ops &lt;br&gt;&#xd;
+</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>7</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>fem7s11_mesos_agent_podh</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>true</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#
+# TEST on Artifactory ( Pulls/Tags the existing &apos;postgres&apos; image and Removes only the tagged one )
+#
+#
+docker pull armdocker.rnd.ericsson.se/proj_oss_releases/enm/enm-base:latest
+docker tag  armdocker.rnd.ericsson.se/proj_oss_releases/enm/enm-base armdocker.rnd.ericsson.se/proj_oss_releases/enm/enm-base:change_we
+docker images
+docker push armdocker.rnd.ericsson.se/proj_oss_releases/enm/enm-base:change_we
+#docker rmi armdocker.rnd.ericsson.se/proj_oss_releases/enm/enm-base:change_we
+docker rmi -f $(docker images -q armdocker.rnd.ericsson.se/proj_oss_releases/enm/enm-base:change_we) 
+docker images
+#
+#</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>curl -s -X DELETE https://arm.epk.ericsson.se/artifactory/docker-v2-global-local/proj_oss_releases/enm/enm-base/change_we</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.build__timeout.BuildTimeoutWrapper plugin="build-timeout@1.20">
+      <strategy class="hudson.plugins.build_timeout.impl.AbsoluteTimeOutStrategy">
+        <timeoutMinutes>5</timeoutMinutes>
+      </strategy>
+      <operationList/>
+    </hudson.plugins.build__timeout.BuildTimeoutWrapper>
+    <hudson.plugins.timestamper.TimestamperBuildWrapper plugin="timestamper@1.17"/>
+  </buildWrappers>
+</project>

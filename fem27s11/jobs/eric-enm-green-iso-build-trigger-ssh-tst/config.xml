@@ -1,0 +1,162 @@
+<?xml version="1.1" encoding="UTF-8"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>PRODUCT_SET</string>
+        <string>ENM_ISO_REPO_VERSION</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty>
+      <abortPrevious>false</abortPrevious>
+    </org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>PRODUCT_SET</name>
+          <description>Enter the product set version (e.g. 20.11.52).                      Please ensure to give latest product set version compared to last built product set.</description>
+          <defaultValue>20.13.25</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>ENM_ISO_REPO_VERSION</name>
+          <description>Enter the ISO Repo Version (e.g. ENM_20_13_ERICenm_CXP9027091_1_97_10).</description>
+          <defaultValue>ENM_20_13_ERICenm_CXP9027091_1_97_10</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>SKIP_STAGE</name>
+          <defaultValue>True</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>pipeline {
+    agent { 
+        label 'Docker-POC' 
+        //label 'Cloud-Native'
+    }
+	parameters {
+        string(name: 'PRODUCT_SET', description: 'Enter the product set version (e.g. 20.11.52).\
+                      Please ensure to give latest product set version compared to last built product set.', defaultValue: "20.13.25")
+					  
+		string(name: 'ENM_ISO_REPO_VERSION', description: 'Enter the ISO Repo Version (e.g. ENM_20_13_ERICenm_CXP9027091_1_97_10).', defaultValue: "ENM_20_13_ERICenm_CXP9027091_1_97_10")
+    }
+    stages {
+        stage('Gathering Information - Step 1') {
+            steps {
+                script {
+                    if ("${PRODUCT_SET}" == "") {
+                        echo "Triggered without the PRODUCT_SET. Considering the latest PRODUCT_SET/ISO."
+                        get_product_set()
+                    } else {
+                        echo "Triggered with the PRODUCT_SET: ${PRODUCT_SET}"
+                        env.PRODUCT_SET = "${PRODUCT_SET}"
+                    }
+                }
+                echo env.PRODUCT_SET
+                get_iso_version()
+                echo env.ISO_VERSION
+            }
+        }
+        stage('Create Yum repo - Step 2') {
+            steps {
+				script {
+					env.ENM_ISO_REPO_VERSION = "${ENM_ISO_REPO_VERSION}"
+				}
+				echo env.ENM_ISO_REPO_VERSION
+            }
+        }
+        stage('Set Yum repo to latest - Step 3') {
+            when { expression { env.SKIP_STAGE != 'True' } }
+            steps {
+                retry(3) {
+                    set_to_latest()
+                    echo env.LATEST_YUM_REPO_SETUP
+                }
+            }
+        }
+        stage('Create cENM Product Set - Step 4') {
+            steps {
+                script {
+                    get_last_cn_build_version()
+                }
+            }
+        }
+    }
+}
+
+def get_last_cn_build_version(){
+    echo "Running get last cENM PS build version &amp; bump the build version"
+    env.CENM_PRODUCT_SET = sh(script: 'curl --location --request GET https://ci-portal.seli.wh.rnd.internal.ericsson.com/api/cloudNative/getLinkedCNProductSetVersion/${PRODUCT_SET}', returnStdout: true).trim().replaceAll('"', '')
+    if (env.CENM_PRODUCT_SET == 'False') {
+        sh(script: 'wget -q -O - --no-check-certificate --post-data="" https://ci-portal.seli.wh.rnd.internal.ericsson.com/api/manageCNProductSet/${PRODUCT_SET}/cENM-Build-Images/in_progress/', returnStdout: true).trim()
+    } else {
+        if (env.CENM_PRODUCT_SET.contains("-")){
+            def product_set = env.CENM_PRODUCT_SET.split('-')
+            env.PRODUCT_SET = product_set[0] + "-" + (Integer.parseInt(product_set[1])+1)
+            sh(script: 'wget -q -O - --no-check-certificate --post-data="" https://ci-portal.seli.wh.rnd.internal.ericsson.com/api/manageCNProductSet/${PRODUCT_SET}/cENM-Build-Images/in_progress/', returnStdout: true).trim()
+        } else {
+            env.PRODUCT_SET = env.PRODUCT_SET + "-" + 1
+            sh(script: 'wget -q -O - --no-check-certificate --post-data="" https://ci-portal.seli.wh.rnd.internal.ericsson.com/api/manageCNProductSet/${PRODUCT_SET}/cENM-Build-Images/in_progress/', returnStdout: true).trim()
+        }
+    }
+}
+
+def get_product_set() {
+    echo "Running product set function"
+    env.PRODUCT_SET = sh(script: 'wget -q -O - --no-check-certificate https://ci-portal.seli.wh.rnd.internal.ericsson.com/getLastGoodProductSetVersion/?productSet=ENM', returnStdout: true).trim()
+}
+
+def get_iso_version() {
+    echo "Running iso version function"
+    def iso_version_json = $/eval "wget -q -O - --no-check-certificate 'https://ci-portal.seli.wh.rnd.internal.ericsson.com/getProductSetVersionContents/?productSet=ENM&amp;version=${PRODUCT_SET}&amp;pretty=true' | grep 'ERICenm_CXP9027091' -A4 | grep 'version' | sed -n -e 's/^.*\"version\": //p' | sed 's/\"//g'"/$
+    env.ISO_VERSION = sh(script: "${iso_version_json}", returnStdout: true).trim()
+
+    if (env.ISO_VERSION == "") {
+        error("Invalid Product Set provided. There is no ENM ISO content for the given Product Set Version.")
+    }
+}
+
+
+def set_to_latest() {
+    echo "Setting yum repo to latest"
+    /*env.LATEST_YUM_REPO_SETUP = sh(script: 'wget -q -O - --no-check-certificate --post-data="" https://ci-portal.seli.wh.rnd.internal.ericsson.com/api/createLatestYumRepoPath/product/ENM/yumRepo/${ENM_ISO_REPO_VERSION}/', returnStdout: true).trim()*/
+}
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

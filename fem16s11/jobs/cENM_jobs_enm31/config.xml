@@ -1,0 +1,174 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>&lt;h2 style="color:blue;"&gt;cENM Initial/upgrade/uninstall job for enm31&lt;/h2&gt;</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.security.AuthorizationMatrixProperty>
+      <inheritanceStrategy class="org.jenkinsci.plugins.matrixauth.inheritance.NonInheritingStrategy"/>
+      <permission>USER:com.cloudbees.plugins.credentials.CredentialsProvider.Create:zcxxcar</permission>
+      <permission>USER:com.cloudbees.plugins.credentials.CredentialsProvider.Delete:zcxxcar</permission>
+      <permission>USER:com.cloudbees.plugins.credentials.CredentialsProvider.ManageDomains:zcxxcar</permission>
+      <permission>USER:com.cloudbees.plugins.credentials.CredentialsProvider.Update:zcxxcar</permission>
+      <permission>GROUP:com.cloudbees.plugins.credentials.CredentialsProvider.View:authenticated</permission>
+      <permission>USER:com.cloudbees.plugins.credentials.CredentialsProvider.View:anonymous</permission>
+      <permission>USER:com.cloudbees.plugins.credentials.CredentialsProvider.View:zcxxcar</permission>
+      <permission>USER:com.cloudbees.plugins.credentials.CredentialsProvider.View:zvansra</permission>
+      <permission>USER:hudson.model.Item.Build:zcxxcar</permission>
+      <permission>USER:hudson.model.Item.Cancel:zcxxcar</permission>
+      <permission>USER:hudson.model.Item.Configure:zcxxcar</permission>
+      <permission>GROUP:hudson.model.Item.Delete:authenticated</permission>
+      <permission>USER:hudson.model.Item.Delete:anonymous</permission>
+      <permission>USER:hudson.model.Item.Delete:zcxxcar</permission>
+      <permission>USER:hudson.model.Item.Discover:zcxxcar</permission>
+      <permission>USER:hudson.model.Item.Move:zcxxcar</permission>
+      <permission>USER:hudson.model.Item.Read:zcxxcar</permission>
+      <permission>USER:hudson.model.Item.Read:zvansra</permission>
+      <permission>USER:hudson.model.Item.Workspace:zcxxcar</permission>
+      <permission>GROUP:hudson.model.Run.Delete:authenticated</permission>
+      <permission>USER:hudson.model.Run.Delete:anonymous</permission>
+      <permission>USER:hudson.model.Run.Delete:zcxxcar</permission>
+      <permission>USER:hudson.model.Run.Replay:zcxxcar</permission>
+      <permission>USER:hudson.model.Run.Update:zcxxcar</permission>
+      <permission>USER:hudson.scm.SCM.Tag:zcxxcar</permission>
+    </hudson.security.AuthorizationMatrixProperty>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>30</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>deployment_mechanism</name>
+          <description>This parameter acts as the flow controller to select the deployment mechanism either charts or csar.</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>charts</string>
+              <string>csar</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>environment_name</name>
+          <description>The deployment name to run the job against set to ieatenmc31 i.e. enm31 by default</description>
+          <defaultValue>ieatenmc31</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>stage_area</name>
+          <description>This parameter acts as the flow controller to download charts from internal area or release area</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>ci_internal</string>
+              <string>drop</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>product_set_version</name>
+          <description>Provide clould native product set version</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>drop</name>
+          <description>provide the drop version</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <org.jvnet.jenkins.plugins.nodelabelparameter.LabelParameterDefinition plugin="nodelabelparameter@1.10.3">
+          <name>slave</name>
+          <defaultValue>Jenkins_Jenkin_TAF_TE_Slave_4Node_MISTY_11</defaultValue>
+          <allNodesMatchingLabel>false</allNodesMatchingLabel>
+          <triggerIfResult>allCases</triggerIfResult>
+          <nodeEligibility class="org.jvnet.jenkins.plugins.nodelabelparameter.node.AllNodeEligibility"/>
+        </org.jvnet.jenkins.plugins.nodelabelparameter.LabelParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>TYPE</name>
+          <description>
+&lt;h2 style="color:red;"&gt;Please choose option carefully&lt;/h2&gt;
+&lt;h2 style="color:blue;"&gt;If Backup is used please check if the additional parameters are passed&lt;/h2&gt;
+</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>Jenkins/Jenkinsfile/JenkinsfileInstall</string>
+              <string>Jenkins/Jenkinsfile/JenkinsfileUpgrade</string>
+              <string>Jenkins/Jenkinsfile/JenkinsfileUninstall</string>
+              <string>Jenkins/Jenkinsfile/JenkinsfileBackup</string>
+              <string>Jenkins/Jenkinsfile/JenkinsfileRollback</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>backup_name</name>
+          <defaultValue>Rollback_21.18.38</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>backup_scope</name>
+          <defaultValue>ROLLBACK</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <scm class="hudson.plugins.git.GitSCM" plugin="git@4.10.3">
+      <configVersion>2</configVersion>
+      <userRemoteConfigs>
+        <hudson.plugins.git.UserRemoteConfig>
+          <url>ssh://gerrit.ericsson.se:29418/OSS/com.ericsson.oss.containerisation/eric-enm-integration-pipeline-code</url>
+          <credentialsId>lciadm100_private_key</credentialsId>
+        </hudson.plugins.git.UserRemoteConfig>
+      </userRemoteConfigs>
+      <branches>
+        <hudson.plugins.git.BranchSpec>
+          <name>master</name>
+        </hudson.plugins.git.BranchSpec>
+      </branches>
+      <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+      <gitTool>Default</gitTool>
+      <submoduleCfg class="empty-list"/>
+      <extensions>
+        <hudson.plugins.git.extensions.impl.CleanBeforeCheckout>
+          <deleteUntrackedNestedRepositories>false</deleteUntrackedNestedRepositories>
+        </hudson.plugins.git.extensions.impl.CleanBeforeCheckout>
+      </extensions>
+    </scm>
+    <scriptPath>${TYPE}</scriptPath>
+    <lightweight>true</lightweight>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

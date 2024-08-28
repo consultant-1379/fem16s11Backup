@@ -1,0 +1,103 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>JenkinsJob audit for repositories listed in&lt;br&gt;&#xd;
+&lt;b&gt;projects_service_group&lt;/b&gt;.</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>RHEL6.10_GE_1</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>true</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.plugins.groovy.Groovy plugin="groovy@2.4">
+      <scriptSource class="hudson.plugins.groovy.StringScriptSource">
+        <command>import java.io.File
+import groovy.json.JsonSlurper
+
+def String ci_pipeline_jenkins_config_project = &apos;OSS/com.ericsson.oss.containerisation/enm-containerisation-ci-pipeline&apos; // Pipeline official repository.
+cmd1 = &apos;git archive --remote=ssh://gerrit.ericsson.se:29418/&apos; + ci_pipeline_jenkins_config_project + &apos; HEAD jenkins/projects_service_group&apos;
+
+def cmd3=&apos;tar --extract --to-stdout&apos;
+def proc1 = cmd1.execute() | cmd3.execute()
+
+def std_out1 = new StringBuffer()
+proc1.consumeProcessErrorStream(std_out1)
+def config_file = proc1.text
+
+File project_list = new File(&quot;project_list.txt&quot;)
+
+config_file.eachLine {
+    String repository -&gt;
+        project_name = repository.tokenize(&apos;/&apos;).last()
+  
+  		//project_list.write project_name&quot;\n&quot;
+        project_list &lt;&lt; &quot;$project_name\n&quot;
+     
+}</command>
+      </scriptSource>
+      <groovyName>(Default)</groovyName>
+      <parameters></parameters>
+      <scriptParameters></scriptParameters>
+      <properties></properties>
+      <javaOpts></javaOpts>
+      <classPath></classPath>
+    </hudson.plugins.groovy.Groovy>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+
+while read line; do
+    #diff -w -B /proj/eiffel004_config_fem16s11/eiffel_home/jobs/eric-enm-dps-schemamgt/config.xml /proj/eiffel004_config_fem16s11/eiffel_home/jobs/${line}/config.xml &gt; eric-enm-dps-schemamgt_${line}.cfg
+    diff -w -B /proj/eiffel004_config_fem16s11/eiffel_home/jobs/eric-enm-dps-schemamgt_precommit/config.xml /proj/eiffel004_config_fem16s11/eiffel_home/jobs/${line}_precommit/config.xml &gt; eric-enm-dps-schemamgt_${line}_precommit.cfg    
+
+done &lt; project_list.txt
+
+</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.40">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+  </buildWrappers>
+</project>

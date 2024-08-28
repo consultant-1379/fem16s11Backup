@@ -1,0 +1,121 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>Disabled - will be removed if nobody asks to be updated by 04/10/2019</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>TAF_TE_slave</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>true</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>cat &gt; taf.properties &lt;&lt; EOL
+taf.profiles=maintrack
+host.UiTestGrid.user.root.pass=shroot
+taf_ui.default_OS=LINUX
+host.UiTestGrid.port.ssh=22
+groups=RFA250
+ENMUrl=enm32-phase-0.hoff031.rnd.gic.ericsson.se
+
+host.haproxy_0.instance=enm32-phase-0.hoff031.rnd.gic.ericsson.se
+host.haproxy_0.ip=enm32-phase-0.hoff031.rnd.gic.ericsson.se
+host.haproxy_0.port.https=443
+host.haproxy_0.port.http=80
+
+
+taf_ui.default_browser=FIREFOX
+taf.scenario.debug.enabled=true
+MT_CSV_FILE_URI=https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/sites/tor/enm-maintrack-central-test-datasource/19.04.11/maintrack/csv/nodeToAdd_2K.csv
+host.UiTestGrid.ip=141.137.232.139
+host.UiTestGrid.user.root.type=ADMIN
+host.UiTestGrid.type=SELENIUM_GRID
+host.UiTestGrid.port.http=4444
+EOL
+
+cat taf.properties</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <com.ericsson.oss.axis.BaselineDefinedMessageDispatcher plugin="taf-trigger@1.0.60">
+      <ciArtifacts>
+        <isoProduct>ENM</isoProduct>
+        <isoDrop>19.01</isoDrop>
+        <isoVersion></isoVersion>
+        <jobType>Entry Loop</jobType>
+        <artifactsClassName>com.ericsson.oss.axis.BaselineDefinedMessageDispatcher$ArtifactAsISO$1</artifactsClassName>
+      </ciArtifacts>
+      <schedule>
+        <name>enm_schedule_RFA250_svc_scp.xml</name>
+        <groupId>com.ericsson.cifwk</groupId>
+        <artifactId>enm-schedule-kvm</artifactId>
+        <version>1.9.3</version>
+        <testPropertiesAsString></testPropertiesAsString>
+        <scheduleClassName>com.ericsson.oss.axis.BaselineDefinedMessageDispatcher$ScheduleAsGav$1</scheduleClassName>
+      </schedule>
+      <testwarePropertiesFile>${WORKSPACE}/taf.properties</testwarePropertiesFile>
+      <tunnellingOn>false</tunnellingOn>
+      <breakBuildOnTestsFailure>false</breakBuildOnTestsFailure>
+      <sutClusterId>000</sutClusterId>
+      <citeHostPropertiesFile></citeHostPropertiesFile>
+      <globalTestGroups></globalTestGroups>
+      <tafVersion>2.42.1</tafVersion>
+      <userDefinedGAVs></userDefinedGAVs>
+      <additionalTestProperties>
+        <property name="taf.config.dit.deployment.internal.nodes" value="fmx_1,pmserv_1,nbalarmirp_1.internal"/>
+        <property name="jsch.session.connect.timeout" value="10"/>
+        <property name="drop" value="19.01"/>
+        <property name="taf.config.dit.deployment.name" value="cloud_native_test"/>
+        <property name="smoke.vusers" value="3"/>
+      </additionalTestProperties>
+      <arm>
+        <id></id>
+        <description></description>
+        <httpString>https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/groups/public</httpString>
+        <credentials>
+          <username></username>
+          <password></password>
+        </credentials>
+      </arm>
+      <ciFwkHost>https://cifwk-oss.lmera.ericsson.se/</ciFwkHost>
+      <tafTestExecutorHostname></tafTestExecutorHostname>
+      <tafTestExecutorPort>8080</tafTestExecutorPort>
+    </com.ericsson.oss.axis.BaselineDefinedMessageDispatcher>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

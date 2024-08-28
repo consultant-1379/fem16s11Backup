@@ -1,0 +1,203 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>Artifact_type</name>
+          <description>This parameter acts as the flow controller to select the deployment mechanism either csar or csar-lite.</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>csar</string>
+              <string>csar_lite</string>
+              <string>snapshot_csar_lite</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>use_case</name>
+          <description>Select the appropriate operation to be done.</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>Initial_Install</string>
+              <string>Upgrade</string>
+              <string>Backup</string>
+              <string>Rollback</string>
+              <string>Restore</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>product_set_version</name>
+          <description>Provide clould native product set version</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>deployment_size</name>
+          <description>Select the type of integration values type to be used.</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>small-production</string>
+              <string>extra-large-production</string>
+              <string>single-instance</string>
+              <string>multi-instance</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>orchestration_type</name>
+          <description>Provide the orchestration type with which deployment should be happen</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>helm</string>
+              <string>EVNFM</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>docker_registry_type</name>
+          <description>Select docker registry which is to be used while the deployment time, when orchestration_type is EVNFM is selected. By default other docker registry will be used.</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>other</string>
+              <string>EVNFM</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>snapshot_csar_lite_location</name>
+          <description>Provide the location of the snapshot_csar_lite_location</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>snapshot_integration_key_value_pairs</name>
+          <description>Provide the snapshot integration key value pairs to override</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>backup_name</name>
+          <description>Provide the backup name only when use_case is selected as Backup/Rollback/Restore</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>scope</name>
+          <description>This parameter needs to be passed when use_case is selected as Backup</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>ROLLBACK</string>
+              <string>DEFAULT</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>environment_name</name>
+          <description>The cluster in which the deployment needs to be done</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <org.jvnet.jenkins.plugins.nodelabelparameter.LabelParameterDefinition plugin="nodelabelparameter@1.10.3">
+          <name>slave</name>
+          <description>Provide the slave on which the jenkins job should run</description>
+          <defaultValue/>
+          <allNodesMatchingLabel>false</allNodesMatchingLabel>
+          <triggerIfResult>allCases</triggerIfResult>
+          <nodeEligibility class="org.jvnet.jenkins.plugins.nodelabelparameter.node.AllNodeEligibility"/>
+        </org.jvnet.jenkins.plugins.nodelabelparameter.LabelParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>pipeline{
+    agent {
+            node
+            {
+               label slave
+            }
+        }
+    options {
+        timeout(time: 11, unit: 'HOURS')
+    }
+    stages{
+        stage('Clean Up WorkSpace'){
+            steps{
+                deleteDir()
+            }
+        }
+        stage('Delete, download, extract and load the utility images'){
+            steps{
+                script{
+                    echo "deleting and downloading the utility images"           
+                }
+            }
+
+        }
+        stage('Validation checks'){
+            steps{
+                script{
+                    echo "checking Validations"
+                    sh "docker run --rm -v /home/lciadm100/.ssh:/home/lciadm100/.ssh -v ${WORKSPACE}:${WORKSPACE} pre-post-deployment-utility:1.0.1 python3 validation_checks.py --environment_name ${environment_name} --product_set_version ${product_set_version} --artifact_type ${Artifact_type} --orchestration_type ${orchestration_type} --docker_registry_type ${docker_registry_type} --workspace ${WORKSPACE} --use_case ${use_case}"
+                }
+            }
+        }
+        stage('Download Artifacts'){
+            steps{
+                script{
+                    echo "Downloading Artifacts"
+                    sh "docker run --rm -v /home/lciadm100/.ssh:/home/lciadm100/.ssh -v ${WORKSPACE}:${WORKSPACE} -v ${WORKSPACE}/keyvalues:/home/lciadm100/scripts/keyvalues pre-post-deployment-utility:1.0.1 python3 download.py --product_set_version ${product_set_version} --artifact_type ${Artifact_type} --snapshot_artifact_location ${snapshot_csar_lite_location} --workspace ${WORKSPACE} --deployment_size ${deployment_size}"
+                }
+            }
+        }
+        stage('Populate site values file'){
+            steps{
+                script{
+                    sh "docker run --rm -v /home/lciadm100/.ssh:/home/lciadm100/.ssh -v ${WORKSPACE}:${WORKSPACE} -v ${WORKSPACE}/keyvalues:/home/lciadm100/scripts/keyvalues pre-post-deployment-utility:1.0.1 python3 populate.py --environment_name ${environment_name} --deployment_size ${deployment_size} --artifact_type ${Artifact_type} --snapshot_integration_key_value_pairs ${snapshot_integration_key_value_pairs} --workspace ${WORKSPACE}"
+                }
+            }
+        }
+        stage('Deployment'){
+            steps{
+                script{
+                    echo "deploying"
+                    sh "docker run --rm -v /home/lciadm100/.ssh:/home/lciadm100/.ssh -v ${WORKSPACE}:${WORKSPACE} -v ${WORKSPACE}/keyvalues:/home/lciadm100/opt/ericsson/edp/automation/cenm/playbooks/keyvalues cenm-deployment-utility:1.0.1 python3 select_use_case.py --artifact_type ${Artifact_type} --backup_name ${backup_name} --orchestration_type ${orchestration_type} --scope ${scope} --use_case ${use_case} --deployment_size ${deployment_size} --workspace /home/lciadm100/jenkins/workspace/test_int_pipe_all_in_1"
+                }
+            }
+        }
+    }
+}
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

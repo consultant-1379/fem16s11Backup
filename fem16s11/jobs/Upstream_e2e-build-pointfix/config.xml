@@ -1,0 +1,281 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>Upstream job to be executed before e2e PointFix flow.&lt;br&gt;&#xd;
+The script generates an HTML report to show to the user the required actions&lt;br&gt;&#xd;
+for each repository (Service Groups and Base Images).&lt;br&gt;&#xd;
+&lt;br&gt;&#xd;
+Documentation: &lt;a href=&quot;https://confluence-oss.seli.wh.rnd.internal.ericsson.com/display/cENMCICD/PointFix+backward+compatibility+-+alignment+between+master+and+the+pointfix+branch&quot;&gt;PointFix+backward+compatibility+-+alignment+between+master+and+the+pointfix+branch&lt;/a&gt;.&#xd;
+&#xd;
+</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>POINTFIX_BRANCH</name>
+          <description>Insert PointFix branch here.&lt;br&gt;
+Syntax -&gt; point_fix_XX.YY&lt;br&gt;
+e.g. point_fix_21.02</description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>RHEL6.10_GE_1</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+
+# ############################################################################
+# Upstream script to be executed before e2e PointFix flow.
+# The script generates an HTML report to show to the user the required actions
+# for each repository (Service Groups and Base Images).
+# ############################################################################
+
+COMMIT_MESSAGE=&quot;No Jira: alignment with master branch&quot;
+
+# BACK_COMP_FILES is a space (one) separated variable
+BACK_COMP_FILES=&quot;ruleset2.0.yaml&quot;
+
+ci_pipeline_jenkins_config_project=&quot;OSS/com.ericsson.oss.containerisation/enm-containerisation-ci-pipeline&quot;
+
+git archive --remote=${GERRIT_MIRROR}/${ci_pipeline_jenkins_config_project} HEAD jenkins/projects_service_group | tar --extract --to-stdout &gt;/dev/null 2&gt;&amp;1
+
+if [ $? -eq 0 ]; then
+    projects_service_group=$(git archive --remote=${GERRIT_MIRROR}/${ci_pipeline_jenkins_config_project} HEAD jenkins/projects_service_group | tar --extract --to-stdout)
+else
+    exit 1
+fi
+
+git archive --remote=${GERRIT_MIRROR}/${ci_pipeline_jenkins_config_project} HEAD jenkins/projects_common | tar --extract --to-stdout &gt;/dev/null 2&gt;&amp;1
+
+if [ $? -eq 0 ]; then
+    projects_common=$(git archive --remote=${GERRIT_MIRROR}/${ci_pipeline_jenkins_config_project} HEAD jenkins/projects_common | tar --extract --to-stdout)
+else
+    exit 1
+fi
+
+echo ${projects_service_group} | tr &apos; &apos; &apos;\n&apos; &gt; list_repos.txt
+echo ${projects_common} | tr &apos; &apos; &apos;\n&apos; &gt;&gt; list_repos.txt
+
+read -d &apos;&apos; startHtml &lt;&lt; EOF
+&lt;html&gt;
+&lt;head&gt;
+&lt;style&gt;
+table, th, td {
+    border: 1px solid black;
+    padding: 15px;
+    text-align: center;
+}
+&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;h2&gt;PointFix Review Report - ${POINTFIX_BRANCH}&lt;/h2&gt;
+&lt;table border = &quot;1&quot;&gt;
+&lt;tr&gt;&lt;th&gt;REPO&lt;/th&gt;&lt;th&gt;REVIEW&lt;/th&gt;&lt;th&gt;COMMENTS&lt;/th&gt;&lt;/tr&gt;
+EOF
+
+echo ${startHtml} &gt; report.html
+
+while IFS= read -r REPO
+do
+    PROJECT_NAME=${REPO##*/}
+    GERRIT_MIRROR_HOST=$(echo ${GERRIT_MIRROR} | sed -e &apos;s/ssh:\/\/\(.*\):29418/\1/&apos;)
+    
+    git clone ${GERRIT_MIRROR}/${REPO} &amp;&amp; scp -p -P 29418 ${GERRIT_MIRROR_HOST}:hooks/commit-msg ${PROJECT_NAME}/.git/hooks/  
+
+    cd ${PROJECT_NAME}
+    
+    git checkout master
+    git fetch
+    git checkout ${POINTFIX_BRANCH}
+    
+    # manage not existing POINTFIX_BRANCH
+    if [ $? -eq 1 ]; then
+        echo &quot;${POINTFIX_BRANCH} does not exist for ${REPO}!&quot;
+        bodyHtml=&quot;&lt;tr bgcolor=&quot;#FF6600&quot;&gt;&lt;th&gt;${REPO}&lt;/th&gt;&lt;th&gt;&lt;/th&gt;&lt;th&gt;${POINTFIX_BRANCH} does not exist!&lt;/th&gt;&lt;/tr&gt;&quot;
+        echo &quot;${bodyHtml}&quot; &gt;&gt; ../report.html
+        cd ..
+        continue
+    fi    
+    
+    git fetch
+    git checkout master ${BACK_COMP_FILES}
+
+    # determine if there are uncommitted changes
+    committed_changes=&quot;$(git status --porcelain | wc -l)&quot;
+    if [ ${committed_changes} -eq &quot;0&quot; ]; then
+        echo &quot;${POINTFIX_BRANCH} and master branch are up to date.&quot;
+        bodyHtml=&quot;&lt;tr bgcolor=&quot;#C6EFCE&quot;&gt;&lt;th&gt;${REPO}&lt;/th&gt;&lt;th&gt;&lt;/th&gt;&lt;th&gt;${POINTFIX_BRANCH} and master branch are up to date.&lt;/th&gt;&lt;/tr&gt;&quot;
+        echo &quot;${bodyHtml}&quot; &gt;&gt; ../report.html
+        cd ..
+        continue
+    fi    
+    
+    git commit -m &quot;${COMMIT_MESSAGE}&quot;
+    git remote set-url origin --push ${GERRIT_CENTRAL}/${REPO}
+    
+    git push origin HEAD:refs/for/${POINTFIX_BRANCH} &gt; review_message.txt 2&gt;&amp;1
+    cat review_message.txt
+    
+    REVIEW_DETAILS=$(grep -F &quot;${COMMIT_MESSAGE}&quot; review_message.txt | tr -s &quot; &quot;)
+    REVIEW_LINK=$(cut -d&apos; &apos; -f2 &lt;&lt;&lt;&quot;${REVIEW_DETAILS}&quot;)
+    
+    bodyHtml=&quot;&lt;tr bgcolor=&quot;#FFFF00&quot;&gt;&lt;th&gt;${REPO}&lt;/th&gt;&lt;th&gt;&lt;a href=&quot;${REVIEW_LINK}&quot;&gt;${REVIEW_LINK}&lt;/a&gt;&lt;/th&gt;&lt;th&gt;Please check the attached review&lt;/th&gt;&lt;/tr&gt;&quot;
+    echo &quot;${bodyHtml}&quot; &gt;&gt; ../report.html
+
+    cd ..
+done &lt; &quot;list_repos.txt&quot;
+
+read -d &apos;&apos; endHtml &lt;&lt; EOF
+&lt;/table&gt;
+&lt;/body&gt;&lt;/html&gt;
+EOF
+
+echo ${endHtml} &gt;&gt; report.html
+</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <hudson.tasks.Shell>
+      <command>echo review_date=$(date &quot;+%d-%m-%Y&quot;) &gt; ${WORKSPACE}/workspace/${JOB_NAME}/env.properties
+echo report_url=${BUILD_URL}artifact/report.html &gt;&gt; ${WORKSPACE}/workspace/${JOB_NAME}/env.properties
+echo sprint_number=${POINTFIX_BRANCH##*_} &gt;&gt; ${WORKSPACE}/workspace/${JOB_NAME}/env.properties</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <EnvInjectBuilder plugin="envinject@2.4.0">
+      <info>
+        <propertiesFilePath>${WORKSPACE}/env.properties</propertiesFilePath>
+      </info>
+    </EnvInjectBuilder>
+  </builders>
+  <publishers>
+    <hudson.tasks.ArtifactArchiver>
+      <artifacts>report.html</artifacts>
+      <allowEmptyArchive>false</allowEmptyArchive>
+      <onlyIfSuccessful>false</onlyIfSuccessful>
+      <fingerprint>false</fingerprint>
+      <defaultExcludes>true</defaultExcludes>
+      <caseSensitive>true</caseSensitive>
+      <followSymlinks>true</followSymlinks>
+    </hudson.tasks.ArtifactArchiver>
+    <htmlpublisher.HtmlPublisher plugin="htmlpublisher@1.29">
+      <reportTargets>
+        <htmlpublisher.HtmlPublisherTarget>
+          <reportName>PointFix Review Report</reportName>
+          <reportDir></reportDir>
+          <reportFiles>report.html</reportFiles>
+          <alwaysLinkToLastBuild>false</alwaysLinkToLastBuild>
+          <reportTitles></reportTitles>
+          <keepAll>false</keepAll>
+          <allowMissing>false</allowMissing>
+          <includes>**/*</includes>
+          <escapeUnderscores>true</escapeUnderscores>
+        </htmlpublisher.HtmlPublisherTarget>
+      </reportTargets>
+    </htmlpublisher.HtmlPublisher>
+    <org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher plugin="flexible-publish@0.16.1">
+      <publishers>
+        <org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
+          <condition class="org.jenkins_ci.plugins.run_condition.core.StatusCondition" plugin="run-condition@1.5">
+            <worstResult>
+              <name>SUCCESS</name>
+              <ordinal>0</ordinal>
+              <color>BLUE</color>
+              <completeBuild>true</completeBuild>
+            </worstResult>
+            <bestResult>
+              <name>SUCCESS</name>
+              <ordinal>0</ordinal>
+              <color>BLUE</color>
+              <completeBuild>true</completeBuild>
+            </bestResult>
+          </condition>
+          <publisherList>
+            <com.myyearbook.hudson.plugins.confluence.ConfluencePublisher plugin="confluence-publisher@2.0.6">
+              <siteName>confluence-oss.seli.wh.rnd.internal.ericsson.com</siteName>
+              <spaceName>cENMCICD</spaceName>
+              <pageName>cENM Dropback Delivery Queue sprint ${sprint_number}</pageName>
+              <attachArchivedArtifacts>true</attachArchivedArtifacts>
+              <buildIfUnstable>false</buildIfUnstable>
+              <replaceAttachments>false</replaceAttachments>
+              <parentId>0</parentId>
+              <editors>
+                <com.myyearbook.hudson.plugins.confluence.wiki.editors.BeforeTokenEditor>
+                  <generator class="com.myyearbook.hudson.plugins.confluence.wiki.generators.PlainTextGenerator">
+                    <text>    &lt;tr&gt;
+&lt;td colspan=&quot;1&quot;&gt;n&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;No Jira&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;Review&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;${review_date}&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;Chakras&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;Check the .hmtl report&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;a href=&quot;${report_url}&quot; rel=&quot;nofollow&quot; style=&quot;text-decoration: none;text-align: left;&quot;&gt;report.html&lt;/a&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/a&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+&lt;td colspan=&quot;1&quot;&gt;&lt;/td&gt;
+    &lt;/tr&gt;</text>
+                  </generator>
+                  <markerToken>&lt;/thead&gt;&lt;/table&gt;</markerToken>
+                </com.myyearbook.hudson.plugins.confluence.wiki.editors.BeforeTokenEditor>
+              </editors>
+            </com.myyearbook.hudson.plugins.confluence.ConfluencePublisher>
+          </publisherList>
+          <runner class="org.jenkins_ci.plugins.run_condition.BuildStepRunner$Fail" plugin="run-condition@1.5"/>
+          <executionStrategy class="org.jenkins_ci.plugins.flexible_publish.strategy.FailAtEndExecutionStrategy"/>
+        </org.jenkins__ci.plugins.flexible__publish.ConditionalPublisher>
+      </publishers>
+    </org.jenkins__ci.plugins.flexible__publish.FlexiblePublisher>
+  </publishers>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.40">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+  </buildWrappers>
+</project>

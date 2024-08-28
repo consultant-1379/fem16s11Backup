@@ -1,0 +1,151 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>CHECKOUT_TAG</string>
+        <string>SLAVE</string>
+        <string>CURRENT_SPRINT</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>SLAVE</name>
+          <description>The ENM ISO version (e.g. 1.65.77)</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>CURRENT_SPRINT</name>
+          <description>Tag for GIT tagging the repository after build</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>CHECKOUT_TAG</name>
+          <description>The product set version from ENM build</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>pipeline {
+    agent { node { label 'Cloud-Native' } }
+    options {
+        timestamps()
+    }
+    environment {
+        PIPELINE_LAST_STAGE_STATUS = 'UNKNOWN'
+        CENMBUILD_ARM_TOKEN = credentials('cenmbuild_ARM_token')
+    }
+    parameters {
+        string(name: 'SLAVE', description: 'The ENM ISO version (e.g. 1.65.77)')
+        string(name: 'CURRENT_SPRINT', description: 'Tag for GIT tagging the repository after build')
+        string(name: 'CHECKOUT_TAG', description: 'The product set version from ENM build')
+    }
+    stages {
+        
+        stage('Build sdk-csar-buildmanager') {
+            steps {
+            //     script{
+            //             def build = build(job: "sdk-csar-buildmanager", propagate: true, wait: true, parameters: environment_list)
+            //     }
+            //
+            echo "here it is ${CURRENT_SPRINT}"
+            echo "here it is ${CHECKOUT_TAG}"
+            }
+        }
+    }
+    post {
+        success {
+            mail to: "Thoms.Johnston@ericsson.com",
+                    subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
+                    body: "Failure on ${env.BUILD_URL}"
+        }
+        failure {
+                script {
+                        failedStage = env.STAGE_NAME
+                }
+            }
+    }
+}
+def build_environment_list(){
+    env.getEnvironment().each { key, value -&gt;
+        if ("${key}".startsWith("ERIC_")){
+            echo "Adding new parameter to build_environment_list - ${key} "
+            echo "${key}=${value}"
+            environment_list &lt;&lt; [$class:'StringParameterValue', name:"${key}", value:String.valueOf("${value}")]
+        } else if ("${key}".startsWith("IMAGE_")){
+            echo "${key}=${value}"
+            environment_list &lt;&lt; [$class:'StringParameterValue', name:"${key}", value:String.valueOf("${value}")]
+        }
+        
+    }
+    //build(job: "sync-build-trigger", propagate: true, wait: true, parameters: environment_list)
+}
+
+def init_requirements() {
+    outString = 'dependencies:\r\n'
+    writeFile file: 'requirements.yaml', text: outString
+}
+
+def build_requirements_file(){
+    env.getEnvironment().each { key, value -&gt;
+        if (key.startsWith("ERIC_ENM") || key.startsWith("ERIC_PM")){
+            if (key.endsWith("_REPOSITORY_TAG")){
+                return
+            }
+            else{
+                key=key.replace("_IMAGE_TAG","")
+                env.repoKey = '${'+key+'_REPOSITORY_TAG}'
+                repository=sh(returnStdout: true, script: "echo $repoKey").trim()
+            if (repository == ""){
+                repoString = '  repository: https://arm.epk.ericsson.se/artifactory/proj-enm-helm/'
+            } else {
+                repoString = '  repository: ' + repository
+            }
+                key = key.replace("_POINTFIX","")
+                key=key.toLowerCase().replace("_","-")
+                nameString = '- name: '+ key
+                versionString = '  version: ' + value
+            }
+        readContent = readFile 'requirements.yaml'
+        outString = readContent + nameString + "\r\n" + repoString + "\r\n" + versionString + "\r\n"
+        writeFile file: 'requirements.yaml', text: outString
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

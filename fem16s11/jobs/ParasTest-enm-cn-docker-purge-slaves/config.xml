@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?><flow-definition plugin="workflow-job@2.25">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.3.2"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.3.2">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@69.0.3">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.19.2">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@69.0.3">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.57.2">
+    <script>pipeline {
+    agent { node { label 'enm_cn_ci_control_node' } }
+    stages {
+        stage('Checkout enm-containerisation-ci-pipeline git repository') {
+            steps {
+                dir('enm-containerisation-ci-pipeline') {
+                    git branch: 'master', url: "${env.GERRIT_MIRROR}/OSS/com.ericsson.oss.containerisation/enm-containerisation-ci-pipeline"
+                    sh 'chmod 0400 ansible/credentials/id_rsa_openstack'
+                }
+            }
+        }
+        stage('Inject Openstack openrc file') {
+            steps {
+                withCredentials([file(credentialsId: 'DE_CHAKRAS_C13AF11', variable: 'DE_CHAKRAS_C13AF11')]) {
+                    sh "mkdir -p .openstack"
+                    sh "install -m 0400 ${DE_CHAKRAS_C13AF11} .openstack/DE_CHAKRAS_C13AF11-openrc-v3.sh"
+                }
+            }
+        }
+        stage('Get list of all OpenStack Instances belonging to DE_CHAKRAS_C13AF11 tenancy') {
+            steps {
+                sh '''
+                    source .openstack/DE_CHAKRAS_C13AF11-openrc-v3.sh &amp;&gt;/dev/null
+                    openstack server list
+                '''
+            }
+        }
+        stage('Get the IPs of all OpenStack Jenkins slaves Instances') {
+            steps {
+                sh '''
+                    source .openstack/DE_CHAKRAS_C13AF11-openrc-v3.sh &amp;&gt;/dev/null
+                    openstack server list --name "^enm_cn_ci_openstack*" --status ACTIVE --column Networks --format value &gt; enm-containerisation-ci-pipeline/ansible/openstack_jenkins_slaves_ips
+                    sed -i.bak 's/,.*$//' enm-containerisation-ci-pipeline/ansible/openstack_jenkins_slaves_ips
+                    sed -i 's/^.*P9-OpStk-13-Ext-Floating-2=//g' enm-containerisation-ci-pipeline/ansible/openstack_jenkins_slaves_ips
+                    sed -i 's/^.*P9-OpStk-13-Ext-Floating-4=//g' enm-containerisation-ci-pipeline/ansible/openstack_jenkins_slaves_ips
+					sed -i 's/^.*P9-OpStk-13-Ext-Floating-5=//g' enm-containerisation-ci-pipeline/ansible/openstack_jenkins_slaves_ips
+                    cat enm-containerisation-ci-pipeline/ansible/openstack_jenkins_slaves_ips
+                '''
+            }
+        }
+        stage('Populate inventory/host') {
+            steps {
+                dir('enm-containerisation-ci-pipeline/ansible') {
+                    sh '''
+                        echo "[openstack_jenkins_slaves]" &gt; inventory/hosts
+                        for i in `cat openstack_jenkins_slaves_ips`; do echo "$i ansible_ssh_private_key_file=credentials/id_rsa_openstack" &gt;&gt; inventory/hosts; done
+                        cat inventory/hosts
+                    '''
+                }
+            }
+        }
+        stage('List Docker images before purge') {
+            steps {
+                dir('enm-containerisation-ci-pipeline/ansible') {
+                    sh 'ansible openstack_jenkins_slaves -u centos -b -a "docker images"'
+                }
+            }
+        }
+        stage('Purge Docker images') {
+            steps {
+                dir('enm-containerisation-ci-pipeline/ansible') {
+                    sh 'ansible openstack_jenkins_slaves -u centos -b -a "docker system prune -af"'
+                }
+            }
+        }
+        stage('List Docker images after purge') {
+            steps {
+                dir('enm-containerisation-ci-pipeline/ansible') {
+                    sh 'ansible openstack_jenkins_slaves -u centos -b -a "docker images"'
+                }
+            }
+        }
+    }
+}
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

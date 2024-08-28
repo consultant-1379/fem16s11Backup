@@ -1,0 +1,127 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions/>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.security.AuthorizationMatrixProperty>
+      <inheritanceStrategy class="org.jenkinsci.plugins.matrixauth.inheritance.InheritParentStrategy"/>
+      <permission>USER:com.cloudbees.plugins.credentials.CredentialsProvider.Create:zkadpra</permission>
+      <permission>USER:com.cloudbees.plugins.credentials.CredentialsProvider.Delete:zkadpra</permission>
+      <permission>USER:com.cloudbees.plugins.credentials.CredentialsProvider.ManageDomains:zkadpra</permission>
+      <permission>USER:com.cloudbees.plugins.credentials.CredentialsProvider.Update:zkadpra</permission>
+      <permission>USER:com.cloudbees.plugins.credentials.CredentialsProvider.View:zkadpra</permission>
+      <permission>USER:hudson.model.Item.Build:zkadpra</permission>
+      <permission>USER:hudson.model.Item.Cancel:zkadpra</permission>
+      <permission>USER:hudson.model.Item.Configure:zkadpra</permission>
+      <permission>USER:hudson.model.Item.Delete:zkadpra</permission>
+      <permission>USER:hudson.model.Item.Discover:zkadpra</permission>
+      <permission>USER:hudson.model.Item.Move:zkadpra</permission>
+      <permission>USER:hudson.model.Item.Read:zkadpra</permission>
+      <permission>USER:hudson.model.Item.Workspace:zkadpra</permission>
+      <permission>USER:hudson.model.Run.Delete:zkadpra</permission>
+      <permission>USER:hudson.model.Run.Update:zkadpra</permission>
+      <permission>USER:hudson.scm.SCM.Tag:zkadpra</permission>
+    </hudson.security.AuthorizationMatrixProperty>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>200</daysToKeep>
+        <numToKeep>20</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>Primary Site</name>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>Secondary Site</name>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>deployPackage</name>
+          <description>&lt;p&gt;Upgrade the &lt;b&gt;ERICgeoreplication_CXP9035707&lt;/b&gt; with &lt;b&gt;SNAPSHOT&lt;/b&gt; version using&lt;br&gt;
+ERICgeoreplication_CXP9035707::SNAPSHOT_RPM_LINK&lt;br&gt;
+&lt;br&gt;
+  Upgrade the &lt;b&gt;ERICgeoreplication_CXP9035707&lt;/b&gt; rpm with a &lt;b&gt;PARTICULAR&lt;/b&gt; version using&lt;br&gt;
+ERICgeoreplication_CXP9035707::VERSION&lt;br&gt;
+&lt;br&gt;
+  Upgrade the &lt;b&gt;ERICgeoreplication_CXP9035707&lt;/b&gt; rpm with &lt;b&gt;LATEST&lt;/b&gt; version using&lt;br&gt;
+  ERICgeoreplication_CXP9035707::Latest&lt;br&gt;&lt;/p&gt;</description>
+          <defaultValue>ERICgeoreplication_CXP9035707::Latest</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    
+    <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+      <triggers>
+        <hudson.triggers.TimerTrigger>
+          <spec>0 1 * * *</spec>
+        </hudson.triggers.TimerTrigger>
+      </triggers>
+    </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>#!update the gateway details to Slave
+mkdir -p /home/lciadm100/jenkins/workspace/Geo_Red_Export/Export_setup/
+touch /home/lciadm100/jenkins/workspace/Geo_Red_Export/Export_setup/deployment
+cd /home/lciadm100/jenkins/workspace/Geo_Red_Export/Export_setup/
+
+cat &lt;&lt;EOF&gt;&gt;deployment
+echo "214.6.129.149 xkumade xkumade enm6639"
+EOF
+
+mv /home/lciadm100/.ssh/known_hosts /home/lciadm100/.ssh/known_hosts_bkp
+sshpass -p 'shroot'  ssh -t -o StrictHostKeyChecking=no root@atvts3036.athtem.eei.ericsson.se ssh -o StrictHostKeyChecking=no root@ms-1 'cat /etc/enm-version'
+
+
+#Get the latest rpm from CIFWK , If the VAPP is getting changed , update the new VAPP details in below  atvts3126. 
+
+mkdir GEO_RED
+cd GEO_RED
+buid_Id=`wget -q -O - --no-check-certificate https://ci-portal.seli.wh.rnd.internal.ericsson.com/dmt/getLatestPackageObj/?package=ERICgeoreplication_CXP9035707`
+rpm_version_latest=`echo $buid_Id | awk -F: '{print $1}'`
+wget "https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/repositories/releases/com/ericsson/oss/itpf/georeplication/ERICgeoreplication_CXP9035707/$rpm_version_latest/ERICgeoreplication_CXP9035707-$rpm_version_latest.rpm"
+pwd
+
+#Trasfer the RPM to Primary ENM atvts3155.athtem.eei.ericsson.se
+sshpass -p "12shroot" scp -o StrictHostKeyChecking=no -P 2242 ERICgeoreplication_CXP9035707-$rpm_version_latest.rpm root@atvts3155.athtem.eei.ericsson.se:/var/www/html/ENM_scripting_rhel7/
+sshpass -p 'shroot'  ssh -t -o StrictHostKeyChecking=no root@atvts3155.athtem.eei.ericsson.se ssh -o StrictHostKeyChecking=no ms-1 'createrepo --update /var/www/html/ENM_scripting_rhel7/'
+sshpass -p '12shroot'  ssh -oPort=2242 -t root@atvts3155.athtem.eei.ericsson.se ' ssh -o StrictHostKeyChecking=no -i /root/.ssh/vm_private_key cloud-user@svc-3-scripting "sudo yum clean all; sudo yum update -y ERICgeoreplication_CXP9035707"'
+
+#Transfer the RPM to Secondary ENM  atvts3036.athtem.eei.ericsson.se
+sshpass -p "12shroot" scp -o StrictHostKeyChecking=no -P 2242 ERICgeoreplication_CXP9035707-$rpm_version_latest.rpm root@atvts3036.athtem.eei.ericsson.se:/var/www/html/ENM_scripting_rhel7/
+sshpass -p 'shroot'  ssh -t -o StrictHostKeyChecking=no root@atvts3036.athtem.eei.ericsson.se ssh -o StrictHostKeyChecking=no ms-1 'createrepo --update /var/www/html/ENM_scripting_rhel7/'
+sshpass -p '12shroot'  ssh -oPort=2242 -t root@atvts3036.athtem.eei.ericsson.se ' ssh -o StrictHostKeyChecking=no -i /root/.ssh/vm_private_key cloud-user@svc-3-scripting "sudo yum clean all; sudo yum update -y ERICgeoreplication_CXP9035707"'
+
+echo $?
+mv /home/lciadm100/.ssh/known_hosts_bkp /home/lciadm100/.ssh/known_hosts</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

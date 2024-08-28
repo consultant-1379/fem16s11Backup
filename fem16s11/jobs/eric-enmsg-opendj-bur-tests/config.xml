@@ -1,0 +1,194 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>NAMESPACE</string>
+        <string>BRA_IMAGE_SUB_PATH</string>
+        <string>BRA_IMAGE_TAG</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>ENM Cloud Native Build pipeline eric-enmsg-opendj-bur-tests</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.security.AuthorizationMatrixProperty>
+      <inheritanceStrategy class="org.jenkinsci.plugins.matrixauth.inheritance.InheritParentStrategy"/>
+      <permission>GROUP:hudson.model.Item.Build:authenticated</permission>
+      <permission>USER:hudson.model.Item.Build:anonymous</permission>
+      <permission>USER:hudson.model.Item.Build:EALEDAC</permission>
+      <permission>USER:hudson.model.Item.Build:EANDFAS</permission>
+      <permission>USER:hudson.model.Item.Build:EDAVIGA</permission>
+      <permission>USER:hudson.model.Item.Build:EFABGIO</permission>
+      <permission>USER:hudson.model.Item.Build:ELUCGEM</permission>
+      <permission>USER:hudson.model.Item.Build:EMARCAP</permission>
+      <permission>USER:hudson.model.Item.Build:ESILPAN</permission>
+      <permission>USER:hudson.model.Item.Build:EVALGAR</permission>
+      <permission>GROUP:hudson.model.Item.Cancel:authenticated</permission>
+      <permission>USER:hudson.model.Item.Cancel:anonymous</permission>
+      <permission>USER:hudson.model.Item.Cancel:EALEDAC</permission>
+      <permission>USER:hudson.model.Item.Cancel:EANDFAS</permission>
+      <permission>USER:hudson.model.Item.Cancel:EDAVIGA</permission>
+      <permission>USER:hudson.model.Item.Cancel:EFABGIO</permission>
+      <permission>USER:hudson.model.Item.Cancel:ELUCGEM</permission>
+      <permission>USER:hudson.model.Item.Cancel:EMARCAP</permission>
+      <permission>USER:hudson.model.Item.Cancel:ESILPAN</permission>
+      <permission>USER:hudson.model.Item.Cancel:EVALGAR</permission>
+      <permission>GROUP:hudson.model.Item.Configure:authenticated</permission>
+      <permission>USER:hudson.model.Item.Configure:anonymous</permission>
+      <permission>USER:hudson.model.Item.Configure:EALEDAC</permission>
+      <permission>USER:hudson.model.Item.Configure:EANDFAS</permission>
+      <permission>USER:hudson.model.Item.Configure:EDAVIGA</permission>
+      <permission>USER:hudson.model.Item.Configure:EFABGIO</permission>
+      <permission>USER:hudson.model.Item.Configure:ELUCGEM</permission>
+      <permission>USER:hudson.model.Item.Configure:EMARCAP</permission>
+      <permission>USER:hudson.model.Item.Configure:ESILPAN</permission>
+      <permission>USER:hudson.model.Item.Configure:EVALGAR</permission>
+      <permission>GROUP:hudson.model.Item.Read:authenticated</permission>
+      <permission>USER:hudson.model.Item.Read:anonymous</permission>
+      <permission>USER:hudson.model.Item.Read:EALEDAC</permission>
+      <permission>USER:hudson.model.Item.Read:EANDFAS</permission>
+      <permission>USER:hudson.model.Item.Read:EDAVIGA</permission>
+      <permission>USER:hudson.model.Item.Read:EFABGIO</permission>
+      <permission>USER:hudson.model.Item.Read:ELUCGEM</permission>
+      <permission>USER:hudson.model.Item.Read:EMARCAP</permission>
+      <permission>USER:hudson.model.Item.Read:ESILPAN</permission>
+      <permission>USER:hudson.model.Item.Read:EVALGAR</permission>
+      <permission>GROUP:hudson.model.Item.Workspace:authenticated</permission>
+      <permission>USER:hudson.model.Item.Workspace:anonymous</permission>
+      <permission>USER:hudson.model.Item.Workspace:EALEDAC</permission>
+      <permission>USER:hudson.model.Item.Workspace:EANDFAS</permission>
+      <permission>USER:hudson.model.Item.Workspace:EDAVIGA</permission>
+      <permission>USER:hudson.model.Item.Workspace:EFABGIO</permission>
+      <permission>USER:hudson.model.Item.Workspace:ELUCGEM</permission>
+      <permission>USER:hudson.model.Item.Workspace:EMARCAP</permission>
+      <permission>USER:hudson.model.Item.Workspace:ESILPAN</permission>
+      <permission>USER:hudson.model.Item.Workspace:EVALGAR</permission>
+      <permission>GROUP:hudson.model.Run.Delete:authenticated</permission>
+      <permission>USER:hudson.model.Run.Delete:anonymous</permission>
+      <permission>USER:hudson.model.Run.Delete:EALEDAC</permission>
+      <permission>USER:hudson.model.Run.Delete:EANDFAS</permission>
+      <permission>USER:hudson.model.Run.Delete:EDAVIGA</permission>
+      <permission>USER:hudson.model.Run.Delete:EFABGIO</permission>
+      <permission>USER:hudson.model.Run.Delete:ELUCGEM</permission>
+      <permission>USER:hudson.model.Run.Delete:EMARCAP</permission>
+      <permission>USER:hudson.model.Run.Delete:ESILPAN</permission>
+      <permission>USER:hudson.model.Run.Delete:EVALGAR</permission>
+      <permission>USER:hudson.model.Run.Replay:EFABGIO</permission>
+      <permission>USER:hudson.model.Run.Replay:EVALGAR</permission>
+      <permission>GROUP:hudson.model.Run.Update:authenticated</permission>
+      <permission>USER:hudson.model.Run.Update:anonymous</permission>
+      <permission>USER:hudson.model.Run.Update:EALEDAC</permission>
+      <permission>USER:hudson.model.Run.Update:EANDFAS</permission>
+      <permission>USER:hudson.model.Run.Update:EDAVIGA</permission>
+      <permission>USER:hudson.model.Run.Update:EFABGIO</permission>
+      <permission>USER:hudson.model.Run.Update:ELUCGEM</permission>
+      <permission>USER:hudson.model.Run.Update:EMARCAP</permission>
+      <permission>USER:hudson.model.Run.Update:ESILPAN</permission>
+      <permission>USER:hudson.model.Run.Update:EVALGAR</permission>
+      <permission>GROUP:hudson.scm.SCM.Tag:authenticated</permission>
+      <permission>USER:hudson.scm.SCM.Tag:anonymous</permission>
+      <permission>USER:hudson.scm.SCM.Tag:EALEDAC</permission>
+      <permission>USER:hudson.scm.SCM.Tag:EANDFAS</permission>
+      <permission>USER:hudson.scm.SCM.Tag:EDAVIGA</permission>
+      <permission>USER:hudson.scm.SCM.Tag:EFABGIO</permission>
+      <permission>USER:hudson.scm.SCM.Tag:ELUCGEM</permission>
+      <permission>USER:hudson.scm.SCM.Tag:EMARCAP</permission>
+      <permission>USER:hudson.scm.SCM.Tag:ESILPAN</permission>
+      <permission>USER:hudson.scm.SCM.Tag:EVALGAR</permission>
+    </hudson.security.AuthorizationMatrixProperty>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>30</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty>
+      <abortPrevious>false</abortPrevious>
+    </org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>NAMESPACE</name>
+          <description>K8s cluster namespace to use for the integration tests (e.g. opendj-ns)</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>BRA_IMAGE_TAG</name>
+          <description>Backup-Restore-Agent image tag</description>
+          <defaultValue>2.0.23-2</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>BRA_IMAGE_SUB_PATH</name>
+          <description>Backup-Restore-Agent image sub-path</description>
+          <defaultValue>proj-enm</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    
+    <org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+      <triggers/>
+    </org.jenkinsci.plugins.workflow.job.properties.PipelineTriggersJobProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <scm class="hudson.plugins.git.GitSCM" plugin="git@4.10.3">
+      <configVersion>2</configVersion>
+      <userRemoteConfigs>
+        <hudson.plugins.git.UserRemoteConfig>
+          <url>ssh://lciadm100@gerritmirror-ha.lmera.ericsson.se:29418/OSS/com.ericsson.oss.containerisation/eric-enmsg-opendj</url>
+          <credentialsId>lciadm100_private_key</credentialsId>
+        </hudson.plugins.git.UserRemoteConfig>
+      </userRemoteConfigs>
+      <branches>
+        <hudson.plugins.git.BranchSpec>
+          <name>dBurAuto</name>
+        </hudson.plugins.git.BranchSpec>
+      </branches>
+      <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+      <gitTool>Default</gitTool>
+      <submoduleCfg class="empty-list"/>
+      <extensions>
+        <hudson.plugins.git.extensions.impl.SubmoduleOption>
+          <disableSubmodules>false</disableSubmodules>
+          <recursiveSubmodules>true</recursiveSubmodules>
+          <trackingSubmodules>true</trackingSubmodules>
+          <reference/>
+          <parentCredentials>true</parentCredentials>
+          <shallow>false</shallow>
+        </hudson.plugins.git.extensions.impl.SubmoduleOption>
+      </extensions>
+    </scm>
+    <scriptPath>JenkinsfileITests</scriptPath>
+    <lightweight>true</lightweight>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

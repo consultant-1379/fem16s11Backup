@@ -1,0 +1,102 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!-- Installed from eiffel repo -->
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@70.0.5">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@70.0.5">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@70.0.5">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@70.0.5">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@70.0.5">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <authToken>EIFFELOPTEST</authToken>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <com.ericsson.duraci.rule.buildstep.RuleBuildStep plugin="eiffel-core@70.0.5">
+      <bindingKey></bindingKey>
+      <timeout>60</timeout>
+      <defaultTimeout>60</defaultTimeout>
+      <temporalResolution>1000</temporalResolution>
+      <failOnTimeout>true</failOnTimeout>
+      <ruleSnippets>
+        <com.ericsson.duraci.rule.snippet.TextSnippetForRuleBuildStep>
+          <rules>import java.text.SimpleDateFormat;
+
+rule &quot;Simple rule&quot;
+    when
+    then
+        // Create an artifactSuffix for use in ARTIFACTSUFFIX
+        EventId myId = new EventId();
+        String as = myId.toString();
+        log.info(&quot;ARTIFACTSUFFIX: &quot; + as);
+        env.put(&quot;ARTIFACTSUFFIX&quot;, as);
+
+        // Create a timestamp for use in FLOWCONTEXT
+        Date now = new Date();
+        SimpleDateFormat timestamp = new SimpleDateFormat(&quot;yyyy-MM-dd_HH:mm:SS&quot;);
+        String ts = timestamp.format(now);
+        log.info(&quot;FLOWCONTEXT_TIMESTAMP: &quot; + ts);
+        env.put(&quot;FLOWCONTEXT_TIMESTAMP&quot;, ts);
+
+        buildStep.stop();
+end</rules>
+        </com.ericsson.duraci.rule.snippet.TextSnippetForRuleBuildStep>
+      </ruleSnippets>
+      <parsedLogLevel>INFO</parsedLogLevel>
+      <jarFilePaths>
+        <jarFilePaths></jarFilePaths>
+      </jarFilePaths>
+    </com.ericsson.duraci.rule.buildstep.RuleBuildStep>
+    <com.ericsson.duraci.messaging.EiffelMessageDispatcherBuildStep plugin="eiffel-core@70.0.5">
+      <baselineId></baselineId>
+      <flowContext>Service-Readiness/Glue/EiffelOpTest/$FLOWCONTEXT_TIMESTAMP/$BUILD_NUMBER</flowContext>
+      <optionalParameters>
+        <list>
+          <com.ericsson.duraci.messaging.events.params.OptionalParameter>
+            <key>ARTIFACTSUFFIX</key>
+            <value>${ARTIFACTSUFFIX}</value>
+          </com.ericsson.duraci.messaging.events.params.OptionalParameter>
+        </list>
+      </optionalParameters>
+      <eiffelEventType class="com.ericsson.duraci.messaging.events.EiffelConfidenceLevelModifiedEventType">
+        <confidenceLevels>
+          <map>
+            <entry>
+              <string>COMPILED_0</string>
+              <string>SUCCESS</string>
+            </entry>
+          </map>
+        </confidenceLevels>
+        <gav class="com.ericsson.duraci.messaging.events.params.ArtifactGavWrapper">
+          <groupId>eiffelop_test_group_0</groupId>
+          <artifactId>eiffelop_test_artifact_fem27s11_0_${ARTIFACTSUFFIX}</artifactId>
+          <version>0.$BUILD_NUMBER</version>
+        </gav>
+        <confidenceLevelAsString>COMPILED_0: SUCCESS</confidenceLevelAsString>
+      </eiffelEventType>
+      <inputEventIdAsString></inputEventIdAsString>
+    </com.ericsson.duraci.messaging.EiffelMessageDispatcherBuildStep>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>

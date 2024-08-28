@@ -1,0 +1,119 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>What this job enables you to do?&#xd;
+&lt;br&gt; This job allows you to run CI Jenkins jobs on your own vApps.&#xd;
+</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>UNDEFINED</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>72</daysToKeep>
+        <numToKeep>-1</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>nodeIP</name>
+          <description>This is the Gateway IP Address or Hosname of your installed vApp that you want to run the Jenkins job on.
+&lt;br&gt;
+E.G 10.45.X.X OR atvtsX.athtem.eei.ericsson.se</description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>nodeName</name>
+          <description></description>
+          <defaultValue></defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.plugins.groovy.SystemGroovy plugin="groovy@2.4">
+      <source class="hudson.plugins.groovy.StringSystemScriptSource">
+        <script plugin="script-security@1138.v8e727069a_025">
+          <script>import hudson.model.*
+import hudson.util.*
+
+// get current thread / Executor
+//build.setDisplayName(hardcoded_param_value)
+def thr = Thread.currentThread()
+// get current build
+def build = thr?.executable
+
+def hardcoded_param = &quot;nodeName&quot;
+def resolver = build.buildVariableResolver
+def hardcoded_param_value = resolver.resolve(hardcoded_param)
+  
+</script>
+          <sandbox>false</sandbox>
+        </script>
+      </source>
+    </hudson.plugins.groovy.SystemGroovy>
+    <hudson.tasks.Shell>
+      <command>export JAVA_HOME=/proj/ciexadm200/tools/jdk/8/jdk1.8.0_172
+# echo $JAVA_HOME # Debug option
+export PATH=$PATH:$JAVA_HOME/bin
+# echo $PATH #Debug option
+
+echo &quot;&lt;?xml version=&quot;\&quot;&quot;1.0&quot;\&quot;&quot; encoding=&quot;\&quot;&quot;UTF-8&quot;\&quot;&quot;?&gt; &lt;slave&gt;   &lt;name&gt;$nodeName&lt;/name&gt;   &lt;description&gt;$nodeName&lt;/description&gt;   &lt;remoteFS&gt;/home/lciadm100/jenkins&lt;/remoteFS&gt;   &lt;numExecutors&gt;1&lt;/numExecutors&gt;   &lt;mode&gt;EXCLUSIVE&lt;/mode&gt;   &lt;retentionStrategy class=&quot;\&quot;&quot;hudson.slaves.RetentionStrategy\$Always&quot;\&quot;&quot;/&gt;   &lt;launcher class=&quot;\&quot;&quot;hudson.plugins.sshslaves.SSHLauncher&quot;\&quot;&quot; plugin=&quot;\&quot;&quot;ssh-slaves@1.6&quot;\&quot;&quot;&gt;     &lt;host&gt;$nodeIP&lt;/host&gt;     &lt;port&gt;22&lt;/port&gt;   &lt;credentialsId&gt;d8d950b0-dd91-489e-8023-a5d1422c38a4&lt;/credentialsId&gt;   &lt;/launcher&gt;   &lt;label&gt;$nodeName&lt;/label&gt;   &lt;nodeProperties/&gt;   &lt;userId&gt;Anonymous&lt;/userId&gt; &lt;/slave&gt;&quot;  &gt; tmp.xml
+java -jar /proj/ciexadm200/tools/jcli/jenkins-cli.jar -noCertificateCheck -s https://fem16s11-eiffel004.eiffel.gic.ericsson.se:8443/jenkins/ -user enmadm100 -ssh create-node &lt; tmp.xml
+rm -rf tmp.xml
+
+
+ echo &quot;NOTE: to run a jenkins job on this node you should change the &quot;Restrict where this project can be run&quot; setting in your jenkins job config to $nodeName&quot;</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.40">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+  </buildWrappers>
+</project>

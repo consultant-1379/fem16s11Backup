@@ -1,0 +1,248 @@
+<flow-definition plugin="workflow-job@2.25">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.3.2"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.3.2">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>NAMESPACE</string>
+        <string>MONITORING_CHART_VERSION</string>
+        <string>KUBE_CRED</string>
+        <string>emailList</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description/>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>MONITORING_CHART_VERSION</name>
+          <description>Monitoring chart Version</description>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>KUBE_CRED</name>
+          <description>Kuberenetes Access Credentails</description>
+          <defaultValue>hoff_kube_config_enm101</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>NAMESPACE</name>
+          <description>Kubernetes Namespace Name</description>
+          <defaultValue>enm101</defaultValue>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>emailList</name>
+          <description>Semi colon separated list of Email Recipients</description>
+          <defaultValue>EricssonHyderabad.ENMDewdrops@tcs.com</defaultValue>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.3">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@65.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@1.19.2">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@65.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.29">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.57.2">
+    <script>
+def kubectlGetResource(type, NAMESPACE){
+    return sh(script : "${kubectl} get ${type} -n ${NAMESPACE} | grep -v \'NAME\' |  awk -F\' \' \'{print \$1}\' | grep prometheus", returnStdout: true).split()
+}
+
+
+def updateIntegrationValues(DDP_PASSWORD,DDP_ACCOUNT,DDPSITE,STORAGE_CLASS){
+     try {
+	    filename = "${HOME_DIR}/eric-enm-monitoring-integration-values-1.0.1.yaml"
+		values = readYaml file: filename
+		values."prometheus-operator".prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.storageClassName = "${STORAGE_CLASS}"
+		values."eric-enm-monitoring-master".monitoring.autoUpload.ddpsite = "${DDPSITE}"
+		values."eric-enm-monitoring-master".monitoring.autoUpload.account = "${DDP_ACCOUNT}"
+		values."eric-enm-monitoring-master".monitoring.autoUpload.password = "${DDP_PASSWORD}"
+		values."prometheus-operator".prometheusOperator.enabled = "false"
+
+        sh "rm -f ${filename}"
+        writeYaml file: filename, data: values
+    } catch( err ) {
+        echo "$err"
+    }
+}
+
+def emailReport(content, emailList){
+    def DEFAULT_REPLYTO = 'a.mahindrakar-external@tcs.com'
+
+    def subject = "${env.JOB_NAME} - Build #${env.BUILD_NUMBER} - ${currentBuild.currentResult}!"
+
+    try {
+        emailext(body: content, mimeType: 'text/html', from: 'jenkins_monitoring@ericsson.com',
+            replyTo: DEFAULT_REPLYTO, subject: subject,
+            to: "${emailList}" )
+    } catch( err ){
+        echo "$err"
+    }
+}
+
+def reportHeading(status,NAMESPACE){
+    
+    def deployResult
+    def color 
+    def investigation 
+    
+    if(status == 'Success'){
+        deployResult = "Success"
+        color = "#9ACD32"
+        investigation = "NA"
+    } else if(status == 'Failed'){
+        deployResult = "Failed"
+        color = "#DC143C"
+        investigation = "In progress, will be included in a follow up email"
+    } else if(status == 'Aborted'){
+        deployResult = "Aborted"
+        color = "#95A5A6"
+        investigation = "(If applicable), will be included in a follow up email"
+    }
+
+    def report = "Hi All,\n\n &lt;h2&gt;${NAMESPACE} Deployment Result: &lt;span style=\"background-color:${color};\"&gt;${status}&lt;/span&gt;&lt;/h2&gt;"
+	def MonitoringchartVersion = sh (script : "${helm} list -n ${NAMESPACE} | grep  Monitoring-${NAMESPACE} | awk \'{print \$(NF-2)}\'", returnStdout: true)
+	report += "&lt;li&gt;&lt;strong&gt;Monitoring Chart version :&lt;/strong&gt; ${MonitoringchartVersion}&lt;/li&gt;"
+    report += "&lt;li&gt;&lt;strong&gt;Please find the Phase 1 Deploy Job Details:&lt;/strong&gt;  &lt;a href=${BUILD_URL}&gt;${BUILD_URL}&lt;/a&gt;&lt;/li&gt;"
+    report += "&lt;li&gt;&lt;strong&gt;Investigation Results  :  ${investigation}&lt;/strong&gt;&lt;/li&gt;&lt;/ul&gt;"
+
+    report = report.replace("\n","&lt;/br&gt;")
+    return report
+}
+
+def printPods(NAMESPACE){
+    def failedState = sh (script : "${kubectl} -n ${NAMESPACE} get pods | egrep \'NAME|Running\' | egrep \'0/|NAME\'" , returnStdout: true)
+    def initState = sh (script : "${kubectl} -n ${NAMESPACE} get pods | grep -v Running || true", returnStdout: true)
+	def sidecarState= sh (script : "${kubectl} -n ${NAMESPACE} get pods | egrep \'NAME|Running\' | egrep \'1/2|NAME\'" , returnStdout: true)
+    def report = "#kubectl -n ${NAMESPACE} get pods | egrep \'NAME|Running\' | egrep \'0/|NAME\' \n&lt;pre&gt;${failedState}&lt;/pre&gt; \n\n\n #kubectl -n ${NAMESPACE} get pods | grep -v Running \n&lt;pre&gt;${initState}&lt;/pre&gt; \n\n\n #kubectl -n ${NAMESPACE} get pods | egrep \'NAME|Running\' | egrep \'1/2|NAME\' \n&lt;pre&gt;${sidecarState}&lt;/pre&gt;"
+    echo "${report}"
+    
+    report = report.replace("\n","&lt;/br&gt;")
+    report += "&lt;style&gt; pre {display: block;font-family: Lucida Console, Monaco, monospace; white-space: pre;} &lt;/style&gt;";
+
+    return report
+}
+
+pipeline{
+    agent { label 'Cloud-Native-Template-version-002' }
+    options {  
+        timeout(time: 1, unit: 'HOURS') 
+    }
+    parameters {
+        string(description: 'Monitoring chart Version',  name: 'MONITORING_CHART_VERSION')
+ 	    string(defaultValue: 'hoff_kube_config_enm101', description: 'Kuberenetes Access Credentails',  name: 'KUBE_CRED')
+        string(defaultValue: 'enm101', description: 'Kubernetes Namespace Name',  name: 'NAMESPACE')
+		string(defaultValue: 'EricssonHyderabad.ENMDewdrops@tcs.com', description: 'Semi colon separated list of Email Recipients',  name: 'emailList')
+	}
+
+    environment {
+        kubeConfig = "/home/lciadm100/.kube/${KUBE_CRED}"
+        HOME_DIR = "${WORKSPACE}"
+        kubectl = "kubectl --kubeconfig=${kubeConfig}"
+        helm = "KUBECONFIG=${kubeConfig} helm3"
+        https_proxy = "http://www-proxy.lmera.ericsson.se:8080/"
+    }
+
+    stages{
+        stage( 'Connect-K8s' ) {
+            steps {
+                sh 'rm -rf ~/.kube/config'
+                withCredentials([file(credentialsId: KUBE_CRED, variable: 'FILE')]) {
+                    sh 'mkdir -p ~/.kube &amp;&amp; chmod 775 ~/.kube &amp;&amp; cp -v $FILE ~/.kube/${KUBE_CRED} &amp;&amp; chmod 664 ~/.kube/${KUBE_CRED}'
+                }
+            }
+        }
+        stage( 'Helm Chart Clean' ) {
+            steps {
+                   script{
+							sh "${helm} uninstall monitoring-${NAMESPACE} -n ${NAMESPACE} || true"
+                }
+            }
+        }
+		stage( 'PVC Delete' ) {
+               steps{
+                      sh "${kubectl} delete pvc prometheus-eric-enm-prometheus-db-prometheus-eric-enm-prometheus-0 -n ${NAMESPACE} || true"		
+               }
+        }
+        stage( 'Delete CRD' ) {
+               steps{
+                      sh "${kubectl} delete crd alertmanagers.monitoring.coreos.com podmonitors.monitoring.coreos.com prometheuses.monitoring.coreos.com prometheusrules.monitoring.coreos.com servicemonitors.monitoring.coreos.com || true"
+                      sh "${kubectl} delete svc eric-enm-kubelet -n ${NAMESPACE} || true"				  
+               }
+        }
+	    stage('Monitoring-integration chart version'){
+                steps{
+                    withCredentials([string(credentialsId: 'lciadm100', variable: 'HELM_REPO_TOKEN')]) {
+                     sh 'curl -u ${GIT_COMMITTER_NAME}:${HELM_REPO_TOKEN} https://arm.epk.ericsson.se/artifactory/proj-enm-dev-internal-helm/eric-enm-monitoring-integration/eric-enm-monitoring-integration-${MONITORING_CHART_VERSION}.tgz -o eric-enm-monitoring-integration-${MONITORING_CHART_VERSION}.tgz'
+                     }					 
+            }
+        }
+         stage('Monitoring integration value '){
+            steps{
+                  script {
+                     sh "wget https://arm.epk.ericsson.se/artifactory/proj-enm-dev-internal-helm/eric-enm-monitoring-integration-values/eric-enm-monitoring-integration-values.yaml"				 
+                 } 
+            }
+        }		
+		stage('Install cENM Monitoring chart'){
+                steps{
+                   sh("${helm} install  monitoring-${NAMESPACE} --values eric-enm-monitoring-integration-values.yaml  eric-enm-monitoring-integration-${MONITORING_CHART_VERSION}.tgz -n ${NAMESPACE} --wait --timeout 1h")
+                }	
+        }
+    }
+    post{
+        failure {
+            script{
+                echo "Failure"
+                def report = reportHeading("Failed",NAMESPACE)
+                report += printPods(NAMESPACE)
+                emailReport(report,emailList)
+            }
+        }
+        aborted{
+            script{
+                echo "Aborted"                
+                def report = reportHeading("Aborted",NAMESPACE)
+                report += printPods(NAMESPACE)
+                emailReport(report,emailList)
+            }
+        }
+        success{
+            script{
+                echo "Success"                
+                def report = reportHeading("Success",NAMESPACE)
+                emailReport(report,emailList)
+            }
+        }
+        always {
+            script{
+                sh("cat ${HOME_DIR}/eric-enm-monitoring-integration-values.yaml")
+                archiveArtifacts "eric-enm-monitoring-integration-values.yaml"
+                deleteDir()
+            }
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>true</disabled>
+</flow-definition>

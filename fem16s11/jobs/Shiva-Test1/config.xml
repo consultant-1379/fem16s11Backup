@@ -1,0 +1,170 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>Testing to run job on multiple slaves</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>
+
+//A map of String -&gt; Closure that will be run in parallel
+def parallelActions = [:]
+
+//parallelActions['CENM_RHEL7_GE_e2e_40'] = newAgentAction('CENM_RHEL7_GE_e2e_40')
+/*
+parallelActions['11112021-1'] = newAgentAction('enm_cn_ci_openstack-11112021-1')
+parallelActions['11112021-2'] = newAgentAction('enm_cn_ci_openstack-11112021-2')
+parallelActions['11112021-3'] = newAgentAction('enm_cn_ci_openstack-11112021-3')
+parallelActions['11112021-4'] = newAgentAction('enm_cn_ci_openstack-11112021-4')
+parallelActions['11112021-5'] = newAgentAction('enm_cn_ci_openstack-11112021-5')
+parallelActions['11112021-6'] = newAgentAction('enm_cn_ci_openstack-11112021-6')
+parallelActions['11112021-7'] = newAgentAction('enm_cn_ci_openstack-11112021-7')
+parallelActions['11112021-8'] = newAgentAction('enm_cn_ci_openstack-11112021-8')
+parallelActions['11112021-9'] = newAgentAction('enm_cn_ci_openstack-11112021-9')
+parallelActions['11112021-10'] = newAgentAction('enm_cn_ci_openstack-11112021-10')
+parallelActions['11112021-11'] = newAgentAction('enm_cn_ci_openstack-11112021-11')
+parallelActions['11112021-12'] = newAgentAction('enm_cn_ci_openstack-11112021-12')
+parallelActions['11112021-13'] = newAgentAction('enm_cn_ci_openstack-11112021-13')
+parallelActions['11112021-14'] = newAgentAction('enm_cn_ci_openstack-11112021-14')
+parallelActions['11112021-15'] = newAgentAction('enm_cn_ci_openstack-11112021-15')
+parallelActions['11112021-16'] = newAgentAction('enm_cn_ci_openstack-11112021-16')
+parallelActions['11112021-17'] = newAgentAction('enm_cn_ci_openstack-11112021-17')
+parallelActions['11112021-18'] = newAgentAction('enm_cn_ci_openstack-11112021-18')
+parallelActions['11112021-19'] = newAgentAction('enm_cn_ci_openstack-11112021-19')
+parallelActions['11112021-20'] = newAgentAction('enm_cn_ci_openstack-11112021-20')
+parallelActions['11112021-21'] = newAgentAction('enm_cn_ci_openstack-11112021-21')
+parallelActions['11112021-22'] = newAgentAction('enm_cn_ci_openstack-11112021-22')
+parallelActions['11112021-23'] = newAgentAction('enm_cn_ci_openstack-11112021-23')
+parallelActions['11112021-24'] = newAgentAction('enm_cn_ci_openstack-11112021-24')
+parallelActions['11112021-25'] = newAgentAction('enm_cn_ci_openstack-11112021-25')
+parallelActions['11112021-26'] = newAgentAction('enm_cn_ci_openstack-11112021-26') 
+*/
+/*
+parallelActions['16102020-1'] = newAgentAction('enm_cn_ci_openstack-16102020-1')
+parallelActions['16102020-2'] = newAgentAction('enm_cn_ci_openstack-16102020-2')
+parallelActions['16102020-3'] = newAgentAction('enm_cn_ci_openstack-16102020-3')
+parallelActions['16102020-4'] = newAgentAction('enm_cn_ci_openstack-16102020-4')
+parallelActions['16102020-5'] = newAgentAction('enm_cn_ci_openstack-16102020-5')
+parallelActions['16102020-6'] = newAgentAction('enm_cn_ci_openstack-16102020-6')
+parallelActions['16102020-7'] = newAgentAction('enm_cn_ci_openstack-16102020-7')
+parallelActions['16102020-8'] = newAgentAction('enm_cn_ci_openstack-16102020-8')
+parallelActions['16102020-9'] = newAgentAction('enm_cn_ci_openstack-16102020-9')
+parallelActions['16102020-10'] = newAgentAction('enm_cn_ci_openstack-16102020-10')
+parallelActions['16102020-11'] = newAgentAction('enm_cn_ci_openstack-16102020-11')
+parallelActions['16102020-12'] = newAgentAction('enm_cn_ci_openstack-16102020-12')
+parallelActions['16102020-13'] = newAgentAction('enm_cn_ci_openstack-16102020-13')
+parallelActions['16102020-14'] = newAgentAction('enm_cn_ci_openstack-16102020-14')
+parallelActions['16102020-15'] = newAgentAction('enm_cn_ci_openstack-16102020-15')
+parallelActions['16102020-16'] = newAgentAction('enm_cn_ci_openstack-16102020-16')
+parallelActions['16102020-17'] = newAgentAction('enm_cn_ci_openstack-16102020-17')
+parallelActions['16102020-18'] = newAgentAction('enm_cn_ci_openstack-16102020-18')
+parallelActions['16102020-19'] = newAgentAction('enm_cn_ci_openstack-16102020-19')
+parallelActions['16102020-20'] = newAgentAction('enm_cn_ci_openstack-16102020-20')
+parallelActions['16102020-21'] = newAgentAction('enm_cn_ci_openstack-16102020-21')
+parallelActions['16102020-22'] = newAgentAction('enm_cn_ci_openstack-16102020-22')
+parallelActions['16102020-23'] = newAgentAction('enm_cn_ci_openstack-16102020-23')
+parallelActions['16102020-24'] = newAgentAction('enm_cn_ci_openstack-16102020-24')
+*/
+
+
+//PointFix Slaves
+parallelActions['08022021-1'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-1')
+parallelActions['08022021-2'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-2')
+parallelActions['08022021-3'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-3')
+parallelActions['08022021-4'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-4')
+parallelActions['08022021-5'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-5')
+parallelActions['08022021-6'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-6')
+parallelActions['08022021-9'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-9')
+parallelActions['08022021-11'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-11')
+parallelActions['08022021-12'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-12')
+parallelActions['08022021-13'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-13')
+parallelActions['08022021-14'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-14')
+parallelActions['08022021-15'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-15')
+parallelActions['08022021-16'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-16')
+parallelActions['08022021-17'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-17')
+parallelActions['08022021-18'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-18')
+parallelActions['08022021-19'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-19')
+parallelActions['08022021-20'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-20')
+parallelActions['08022021-21'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-21')
+parallelActions['08022021-22'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-22')
+parallelActions['08022021-23'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-23')
+parallelActions['08022021-24'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-24')
+
+/*
+parallelActions['08022021-7'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-7')
+parallelActions['08022021-8'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-8')
+parallelActions['08022021-10'] = newAgentAction('enm_cn_pf_ci_openstack-08022021-10')
+*/
+
+stage ('running parallel actions') {
+   parallel parallelActions
+}
+
+//Function builds common behavior and returns a closure (a function as an object)
+def newAgentAction(agentLabel) {
+  return { -&gt;
+      node (agentLabel) {
+        echo "exectuting on ${agentLabel}"
+        //sh 'sudo yum install docker-ce-3:20.10.9-3.el7.x86_64 docker-ce-cli-20.10.9-3.el7.x86_64 containerd.io -y'
+        //sh 'sudo systemctl restart docker'
+        //echo "Server:"
+        //sh 'docker version --format {{.Server.Version}}'
+        //echo "Client:"
+        //sh 'docker version --format {{.Client.Version}}'
+        sh 'docker version'
+        /*
+        //GraphDB_N4J_PCR
+        if (fileExists( '/home/lciadm100/jenkins/workspace/GraphDB_N4J_PCR/?/.m2/repository/log4j')) {
+            echo 'Yes - GraphDB_N4J_PCR'
+            sh 'cd .. &amp;&amp;  cd GraphDB_N4J_PCR/?/.m2/repository &amp;&amp; rm -fr log4j'
+        } else {
+            echo 'No - GraphDB_N4J_PCR'
+        }
+        //GraphDB_N4J_Release
+        if (fileExists( '/home/lciadm100/jenkins/workspace/GraphDB_N4J_Release/?/.m2/repository/log4j')) {
+            echo 'Yes - GraphDB_N4J_Release'
+            sh 'cd .. &amp;&amp;  cd GraphDB_N4J_Release/?/.m2/repository &amp;&amp; rm -fr log4j'
+        } else {
+            echo 'No - GraphDB_N4J_Release'
+        }
+        */
+      }
+  }
+}
+
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>true</disabled>
+</flow-definition>

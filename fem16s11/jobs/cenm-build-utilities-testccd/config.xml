@@ -1,0 +1,175 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>HELM_VERSION</string>
+        <string>KUBE_VERSION</string>
+        <string>version</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>version</name>
+          <description>Provide the eccd version for which the image to be created (e.g. 2.15.0)</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>HELM_VERSION</name>
+          <description>Provide the Helm version used in the mentioned eccd version (e.g. v3.4.0)</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>KUBE_VERSION</name>
+          <description>Provide the Kubernetes version used in the mentioned eccd version (e.g. v1.19.3)</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>#!/usr/bin/env groovy
+
+/* IMPORTANT:
+ *
+ * In order to make this pipeline work, the following configuration on Jenkins is required:
+ * - slave with a specific label (see pipeline.agent.label below)
+ * - credentials plugin should be installed and have the secrets with the following names:
+ *   + lciadm100credentials (token to access Artifactory)
+ */
+def defaultBobImage = &apos;armdocker.rnd.ericsson.se/sandbox/adp-staging/adp-cicd/bob.2.0:1.5.0-1&apos;
+def bob = new BobCommand()
+         .bobImage(defaultBobImage)
+         .envVars([ISO_VERSION: &apos;${ISO_VERSION}&apos;,version: &apos;${version}&apos;,HELM_VERSION: &apos;${HELM_VERSION}&apos;,KUBE_VERSION: &apos;${KUBE_VERSION}&apos; ])
+         .needDockerSocket(true)
+         .toString()
+
+def GIT_COMMITTER_NAME = &apos;lciadm100&apos;
+def GIT_COMMITTER_EMAIL = &apos;lciadm100@ericsson.com&apos;
+def failedStage = &apos;&apos;
+pipeline {
+    agent {
+        label &apos;INT_Cloud_Native&apos;
+    }
+    parameters {
+        string(name: &apos;version&apos;, description: &apos;Provide the eccd version for which the image to be created (e.g. 2.15.0)&apos;)
+        string(name: &apos;HELM_VERSION&apos;, description: &apos;Provide the Helm version used in the mentioned eccd version (e.g. v3.4.0)&apos;)
+        string(name: &apos;KUBE_VERSION&apos;, description: &apos;Provide the Kubernetes version used in the mentioned eccd version (e.g. v1.19.3)&apos;)
+    }
+    stages {
+        stage(&apos;Inject Credential Files&apos;) {
+            steps {
+                withCredentials([file(credentialsId: &apos;lciadm100-docker-auth&apos;, variable: &apos;dockerConfig&apos;)]) {
+                    sh &quot;install -m 600 ${dockerConfig} ${HOME}/.docker/config.json&quot;
+                }
+            }
+        }
+        stage(&apos;Checkout Cloud-Native SG Git Repository&apos;) {
+            steps {
+                git branch: &apos;dTORF-499532&apos;,
+                        url: &apos;ssh://lciadm100@gerrit.ericsson.se:29418/OSS/com.ericsson.oss.containerisation/enm-containerisation-artifacts.git&apos;
+            }
+        }
+        stage(&apos;Generate new version&apos;) {
+            steps {
+                sh &quot;${bob} -r utilities/cenm-build-utilities/ruleset2.0.yaml generate-new-version&quot;
+            }
+        }
+        stage(&apos;Build Image&apos;) {
+            steps {
+                sh &quot;${bob} -r utilities/cenm-build-utilities/ruleset2.0.yaml build-image-ccd&quot;
+            }
+            post {
+                failure {
+                    script {
+                        failedStage = env.STAGE_NAME
+                        sh &quot;${bob} -r utilities/cenm-build-utilities/ruleset2.0.yaml remove-image-ccd&quot;
+                    }
+                }
+            }
+        }
+        stage(&apos;Publish Images to Artifactory&apos;) {
+            steps {
+                sh &quot;${bob} -r utilities/cenm-build-utilities/ruleset2.0.yaml push-image-with-ccd-tag&quot;
+            }
+            post {
+                always {
+                    sh &quot;${bob} -r utilities/cenm-build-utilities/ruleset2.0.yaml  remove-image-ccd&quot;
+                }
+            }
+        }
+   }
+}
+
+// More about @Builder: http://mrhaki.blogspot.com/2014/05/groovy-goodness-use-builder-ast.html
+import groovy.transform.builder.Builder
+import groovy.transform.builder.SimpleStrategy
+
+@Builder(builderStrategy = SimpleStrategy, prefix = &apos;&apos;)
+class BobCommand {
+    def bobImage = &apos;bob.2.0:latest&apos;
+    def envVars = [:]
+    def needDockerSocket = false
+
+    String toString() {
+        def env = envVars
+                .collect({ entry -&gt; &quot;-e ${entry.key}=\&quot;${entry.value}\&quot;&quot; })
+                .join(&apos; &apos;)
+
+        def cmd = &quot;&quot;&quot;\
+            |docker run
+            |--init
+            |--rm
+            |--workdir \${PWD}
+            |--user \$(id -u):\$(id -g)
+            |-v \${PWD}:\${PWD}
+            |-v /etc/group:/etc/group:ro
+            |-v /etc/passwd:/etc/passwd:ro
+            |-v \${HOME}/.m2:\${HOME}/.m2
+            |-v \${HOME}/.docker:\${HOME}/.docker
+            |${needDockerSocket ? &apos;-v /var/run/docker.sock:/var/run/docker.sock&apos; : &apos;&apos;}
+            |${env}
+            |\$(for group in \$(id -G); do printf &apos; --group-add %s&apos; &quot;\$group&quot;; done)
+            |${bobImage}
+            |&quot;&quot;&quot;
+        return cmd
+                .stripMargin()           // remove indentation
+                .replace(&apos;\n&apos;, &apos; &apos;)      // join lines
+                .replaceAll(/[ ]+/, &apos; &apos;) // replace multiple spaces by one
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

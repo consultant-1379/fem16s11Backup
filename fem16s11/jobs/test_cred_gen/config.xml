@@ -1,0 +1,133 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?><flow-definition plugin="workflow-job@1145.v7f2433caa07f">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.9.3"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.9.3">
+      <jobProperties>
+        <string>jenkins.model.BuildDiscarderProperty</string>
+      </jobProperties>
+      <triggers/>
+      <parameters/>
+      <options>
+        <string>skipDefaultCheckout</string>
+      </options>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>&#13;
+&#13;
+&#13;
+</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.jira.JiraProjectProperty plugin="jira@3.7"/>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs/>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>-1</daysToKeep>
+        <numToKeep>40</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>40</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty>
+      <abortPrevious>false</abortPrevious>
+    </org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>CSAR_PACKAGE_VERSION</name>
+          <description>CSAR version fetched by Spinnaker pipeline</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2660.vb_c0412dc4e6d">
+    <script>@Library('ci-cn-pipeline-lib') _
+defaultBobImage = 'armdocker.rnd.ericsson.se/sandbox/adp-staging/adp-cicd/bob.2.0:1.5.2-0'
+
+env.bob = new BobCommand()
+.bobImage(defaultBobImage)
+.needDockerSocket(true)
+.toString()
+
+pipeline {
+    agent {
+        node {
+            label 'Jenkins_Jenkin_TAF_TE_Slave_4Node_MISTY_26'
+        }
+    }
+    options {
+        skipDefaultCheckout true
+        timestamps()
+        timeout(time: 900, unit: 'MINUTES')
+        buildDiscarder(logRotator(numToKeepStr: '40', artifactNumToKeepStr: '40'))
+    }
+    stages {
+        stage('Checkout OSS VA Git Repository') {
+            steps {
+                script {
+                    git changelog: true, poll: false, url: '${GERRIT_MIRROR}/OSS/ENM-Parent/SQ-Gate/com.ericsson.va/oss_va'
+                }
+            }
+        }
+        stage('Init') {
+            steps {
+                script {
+                    env.CSAR_REPO_URI =  "https://arm902-eiffel004.athtem.eei.ericsson.se:8443/nexus/content/repositories/releases//cENM/csar/enm-installation-package/"+CSAR_PACKAGE_VERSION+"/enm-installation-package-"+CSAR_PACKAGE_VERSION+".csar"
+                    println( "CSAR_REPO_URI + the CSAR Version --&gt; "+CSAR_REPO_URI)
+
+                    echo 'Inject ADP CBO Age tool credentials file'
+                    withCredentials([file(credentialsId: "cbos_repo_credentials" , variable: 'repocredentials')]) {
+                        writeFile file: 'credentials.yaml', text: readFile(repocredentials)
+                    }
+
+                    sh 'cp cENM/ruleset/ruleset2.0.yaml .'
+                    sh 'cp cENM/cbos/jsonToCSVConverter.py .'
+                }
+            }
+        }
+    }
+    post {
+        always {
+            script {
+                echo "done"
+            }
+        }
+        success {
+            script {
+                echo "Placeholder for the Post Success"
+            }
+        }
+        failure {
+            script {
+                echo "Something went wrong...\nPlease check Helm Chart/CSAR URL or Helm Repo credentials."
+            }
+        }
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <quietPeriod>10</quietPeriod>
+  <disabled>false</disabled>
+</flow-definition>

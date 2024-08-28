@@ -1,0 +1,235 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>This is a old job . Please use the new job &lt;a href=&quot;https://fem16s11-eiffel004.eiffel.gic.ericsson.se:8443/jenkins/job/ccdpb3-enm31_Update_trust_profile/&quot;&gt; ccdpb3-enm31_Update_trust_profile &lt;/a&gt;</description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <jenkins.model.BuildDiscarderProperty>
+      <strategy class="hudson.tasks.LogRotator">
+        <daysToKeep>20</daysToKeep>
+        <numToKeep>20</numToKeep>
+        <artifactDaysToKeep>-1</artifactDaysToKeep>
+        <artifactNumToKeep>-1</artifactNumToKeep>
+      </strategy>
+    </jenkins.model.BuildDiscarderProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>clusterId</name>
+          <description>Deployment name of CN Cloud Deployment to be installed</description>
+          <defaultValue>ieatenmc31</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>drop</name>
+          <description></description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>simdep_release</name>
+          <description>Simdep release no. 
+Example: 1.5.216</description>
+          <defaultValue>1.5.568</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>deployment_type</name>
+          <description></description>
+          <defaultValue>Cloud</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>MT_utils_version</name>
+          <description>This is the version of the scripts available in Nexus&lt;br&gt;
+The version used will be printed in the console output&lt;br&gt;
+&lt;a href=&quot;https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/repositories/releases/com/ericsson/mtg/utils/&quot;&gt;Nexus Link&lt;/a&gt; </description>
+          <defaultValue>RELEASE</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.scm.NullSCM"/>
+  <assignedNode>CSAR_Slave_4Node_Thunderbird</assignedNode>
+  <canRoam>false</canRoam>
+  <disabled>true</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>true</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/sh
+
+function check_version_a_newer_than_version_b() {
+    test &quot;$(printf &apos;%s\n&apos; &quot;$@&quot; | sort -V | head -n 1)&quot; != &quot;${1}&quot;;
+}
+
+if check_version_a_newer_than_version_b &quot;${simdep_release}&quot; &quot;1.5.425&quot;; then
+	curl -o ERICTAFenmnisimdep_CXP9031884.jar https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/groups/public/com/ericsson/ci/simnet/ERICTAFenmnisimdep_CXP9031884/${simdep_release}/ERICTAFenmnisimdep_CXP9031884-${simdep_release}.jar
+	mkdir -p ERICTAFenmnisimdep_CXP9031884/src/main/resources;
+	unzip ERICTAFenmnisimdep_CXP9031884.jar -d ERICTAFenmnisimdep_CXP9031884/src/main/resources
+	chmod -R 755 ./*
+  	sh $WORKSPACE/ERICTAFenmnisimdep_CXP9031884/src/main/resources/scripts/simdep/ext/jenkins/updateTrustONENM.sh $clusterId $drop $simdep_release $deployment_type
+else
+# Downloading MT Util Scripts
+    echo &quot;Retrieving Scripts from Nexus&quot;
+    tarFileName=&quot;utils_${MT_utils_version}.tar.gz&quot;
+    echo &quot;Downloading file - ${tarFileName} - to the workspace&quot;
+    curl -s --noproxy \* -L &quot;https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/service/local/artifact/maven/redirect?r=releases&amp;g=com.ericsson.mtg&amp;a=utils&amp;p=tar.gz&amp;v=${MT_utils_version}&quot; -o ${tarFileName}
+    tar -zxf ${tarFileName}
+    
+    curl -O https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/repositories/releases/com/ericsson/ci/simnet/ERICTAFenmnisimdep_CXP9031884/$simdep_release/ERICTAFenmnisimdep_CXP9031884-$simdep_release.jar
+    #curl -O https://arm1s11-eiffel004.eiffel.gic.ericsson.se:8443/nexus/content/repositories/snapshots/com/ericsson/ci/simnet/ERICTAFenmnisimdep_CXP9031884/1.5.276-SNAPSHOT/ERICTAFenmnisimdep_CXP9031884-1.5.276-20171227.085347-2.jar
+    mkdir -p ERICTAFenmnisimdep_CXP9031884/src/main/resources;
+    unzip ERICTAFenmnisimdep_CXP9031884-$simdep_release.jar -d ERICTAFenmnisimdep_CXP9031884/src/main/resources
+    chmod -R 755 ./*
+    sed -i &apos;s/\r//&apos; `find ./ERICTAFenmnisimdep_CXP9031884/src/main/resources/scripts/simdep/ext/jenkins -print | egrep -i &apos;sh|pl|txt&apos;`
+    DROP_temp=`echo &quot;${drop//.}&quot;`
+default=1801
+if [ $DROP_temp -le $default ]
+##########################################################
+# For Drops less than 18.01
+##########################################################
+then
+	if [[ $deployment_type == &quot;Cloud&quot; ]]; then
+    	##########################################################
+        # For Cloud tenancies
+		# Get Workload VM IP, so that it can be used by all build steps
+		##########################################################
+
+		wlvm_ip=$(python MTELoopScripts/etc/pylibs/retrieve_maintrack_openstack_deployment_details.py -c ${clusterId} --workload_vm_ip --print_to_screen)
+		echo &quot;Workload VM IP=${wlvm_ip}&quot;
+
+	elif [[ $deployment_type == &quot;Physical&quot; ]]; then
+    	##########################################################
+        # For Physical environments
+		# Get Workload VM IP, so that it can be used by all build steps
+		##########################################################
+        
+		wlvm_ip=$(python -c &quot;from MTELoopScripts.etc.pylibs import retrieve_dmt_information; print retrieve_dmt_information.search_for_workload_vm_ip(${clusterId})&quot;)
+		echo &quot;wlvm_ip=${wlvm_ip}&quot;	
+		fi
+
+	echo &quot;INFO: Setting Up Passwordless SSH between Jenkins Slave and WLVM&quot;
+	python MTELoopScripts/etc/ssh_operator.py -c -i &quot;${wlvm_ip}&quot; -u root -p 12shroot
+
+	##########################################################
+	# Update Trust Profile
+	##########################################################
+
+	echo &quot;INFO: Running PKI command via the cli App &quot;
+	cd ERICTAFenmnisimdep_CXP9031884/src/main/resources/scripts/simdep/ext/jenkins/
+	scp -rp -o StrictHostKeyChecking=no  updateTrustProfile.sh root@${wlvm_ip}:/var/tmp/
+
+ssh -o UserKnownHostsFile=/dev/null -o CheckHostIP=no -o StrictHostKeyChecking=no root@${wlvm_ip} /bin/bash&lt;&lt;EOF
+/opt/ericsson/enmutils/bin/cli_app &apos;pkiadm pfm -l -type trust&apos;;
+chmod 777 /var/tmp/updateTrustProfile.sh; /var/tmp/updateTrustProfile.sh;
+EOF
+/usr/bin/expect  &lt;&lt;EOF1
+spawn scp -rp -o StrictHostKeyChecking=no root@${wlvm_ip}:$TRUST_PROFILE_LOG $WORKSPACE
+expect {
+    -re assword: {send &quot;shroot\r&quot;;exp_continue}
+}
+    sleep 5
+EOF1
+    
+    
+	OUTPUT=$(grep &quot;sucessfully updated&quot; ${WORKSPACE}/trustProfile.log)
+	if [ ! -z &quot;$OUTPUT&quot; -a &quot;$OUTPUT&quot;!=&quot; &quot; ]; then
+	    echo &quot;Trust Profile is successfully updated&quot;
+	else
+	    echo &quot;Trust Profile is not successfully updated&quot;
+   		exit 1
+	fi
+
+
+	if [[ $deployment_type == &quot;Physical&quot; &amp;&amp; $DROP_temp -ge 1713 ]]; then
+    	##########################################################
+        # For Physical environments with Drop greater than or equal to 17.13
+		##########################################################
+        export Drop=$drop
+        ./nodesCleanUp.sh $clusterId $Drop $deployment_type
+		echo &quot;INFO: Waiting for credm Job to run. Sleeping for 27 minutes&quot;
+		sleep 27m
+     else
+    	echo &quot;INFO: Waiting for credm Job to run. Sleeping for 30 minutes&quot;
+		sleep 30m
+     fi
+else
+	if [[ $deployment_type == &quot;Cloud&quot; ]]; then
+    	##########################################################
+        # For Openstack tenancies with drop greater then 18.01
+		##########################################################
+    	curl -O &quot;https://arm901-eiffel004.athtem.eei.ericsson.se:8443/nexus/content/repositories/nss-releases/com/ericsson/nss/scripts/jq/1.0.1/jq-1.0.1.tar&quot; ; tar -xvf jq-1.0.1.tar ; chmod +x ./jq
+    	sed_id=`curl -s &quot;http://atvdit.athtem.eei.ericsson.se/api/deployments/?q=name=$clusterId&quot; | ./jq &apos;.[].enm.sed_id&apos; | sed &apos;s/\&quot;//g&apos;`
+   		ClusterName=`curl -s &quot;http://atvdit.athtem.eei.ericsson.se/api/documents/$sed_id&quot; | ./jq &apos;.content.parameters.httpd_fqdn&apos; | sed &apos;s/\&quot;//g&apos; | awk -F. &apos;{print $1}&apos;`
+    elif [[ $deployment_type == &quot;Physical&quot; ]]; then
+    	##########################################################
+        # For Physical environments with Drop greater than 18.01
+		##########################################################
+    	ClusterName=$clusterId
+    fi
+	ERICTAFenmnisimdep_CXP9031884/src/main/resources/scripts/simdep/ext/jenkins/setupUpdateTrustProfile.sh $ClusterName $deployment_type
+	ERICTAFenmnisimdep_CXP9031884/src/main/resources/scripts/simdep/ext/jenkins/nodesCleanUp.sh $clusterId $drop $deployment_type
+
+	sleep 20m
+fi        
+
+
+fi</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+  </builders>
+  <publishers/>
+  <buildWrappers>
+    <hudson.plugins.ws__cleanup.PreBuildCleanup plugin="ws-cleanup@0.40">
+      <deleteDirs>false</deleteDirs>
+      <cleanupParameter></cleanupParameter>
+      <externalDelete></externalDelete>
+      <disableDeferredWipeout>false</disableDeferredWipeout>
+    </hudson.plugins.ws__cleanup.PreBuildCleanup>
+    <hudson.plugins.timestamper.TimestamperBuildWrapper plugin="timestamper@1.17"/>
+    <EnvInjectBuildWrapper plugin="envinject@2.4.0">
+      <info>
+        <propertiesContent>TRUST_PROFILE_LOG=&quot;/var/tmp/trustProfile.log&quot;</propertiesContent>
+        <secureGroovyScript plugin="script-security@1138.v8e727069a_025">
+          <script></script>
+          <sandbox>true</sandbox>
+        </secureGroovyScript>
+        <loadFilesFromMaster>false</loadFilesFromMaster>
+      </info>
+    </EnvInjectBuildWrapper>
+  </buildWrappers>
+</project>

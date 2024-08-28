@@ -1,0 +1,378 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description></description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.plugins.buildblocker.BuildBlockerProperty plugin="build-blocker-plugin@1.7.8">
+      <useBuildBlocker>false</useBuildBlocker>
+      <blockLevel>GLOBAL</blockLevel>
+      <scanQueueFor>DISABLED</scanQueueFor>
+      <blockingJobs></blockingJobs>
+    </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty plugin="eiffel-core@75.0.1">
+      <scriptEnabled>false</scriptEnabled>
+    </com.ericsson.duraci.messaging.ImplicitMessagingContributorProperty>
+    <com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty plugin="build-failure-analyzer@2.2.0">
+      <doNotScan>false</doNotScan>
+    </com.sonyericsson.jenkins.plugins.bfa.model.ScannerJobProperty>
+    <com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty plugin="eiffel-core@75.0.1">
+      <sequentialLinkingEnabled>false</sequentialLinkingEnabled>
+    </com.ericsson.duraci.messaging.SequentialSemanticEiffelMessageLinkingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelConfigurationNotificationMessagingJobProperty>
+    <com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty plugin="eiffel-core@75.0.1">
+      <messagingEnabled>false</messagingEnabled>
+      <jobFinishedDisabled>false</jobFinishedDisabled>
+    </com.ericsson.duraci.messaging.ImplicitEiffelMessagingJobProperty>
+    <com.sonyericsson.rebuild.RebuildSettings plugin="rebuild@1.33">
+      <autoRebuild>false</autoRebuild>
+      <rebuildDisabled>false</rebuildDisabled>
+    </com.sonyericsson.rebuild.RebuildSettings>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.StringParameterDefinition>
+          <name>BRANCH</name>
+          <description>Pointfix branch on which you wanted to run e2e pointfix.</description>
+          <defaultValue></defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+    <com.ericsson.duraci.messaging.UserDomainSuffixJobProperty plugin="eiffel-core@75.0.1">
+      <enabled>false</enabled>
+      <userDomainSuffix></userDomainSuffix>
+    </com.ericsson.duraci.messaging.UserDomainSuffixJobProperty>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@4.10.3">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>ssh://gerritmirror-ha.lmera.ericsson.se:29418/OSS/com.ericsson.oss.containerisation/enm-containerisation-ci-pipeline</url>
+        <credentialsId>34f6017c-d71b-4e72-9f80-26a8576e1beb</credentialsId>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>${BRANCH}</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <submoduleCfg class="list"/>
+    <extensions/>
+  </scm>
+  <canRoam>false</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <jdk>(System)</jdk>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <hudson.tasks.Shell>
+      <command>#!/bin/bash
+#git clone ${GERRIT_CENTRAL}/OSS/com.ericsson.oss.containerisation/enm-containerisation-ci-pipeline . 
+#should be needed after merging with master
+#git checkout -b Andrey_Lytvynov_branch origin/Andrey_Lytvynov_branch</command>
+      <configuredLocalRules/>
+    </hudson.tasks.Shell>
+    <javaposse.jobdsl.plugin.ExecuteDslScripts plugin="job-dsl@1.78.3">
+      <scriptText>import jenkins.*
+import jenkins.model.*
+
+sgList = generateSgListFunction()
+baseimagesos = generateBaseImages(&apos;jenkins/projects_base_images_os&apos;)
+baseimages = generateBaseImages(&apos;jenkins/projects_base_images&apos;)
+morebaseimages = generateBaseImages(&apos;jenkins/projects_more_base_images&apos;)
+
+def generateSgListFunction() {
+    def list_of_projects = []
+    String projectsFile = readFileFromWorkspace(&apos;jenkins/projects_service_group&apos;)
+    projectsFile.eachLine { String project_name -&gt;
+        project_name = project_name.split(&quot;/&quot;).last()
+        // Technical Debt exclude element manager from e2e build
+
+        if (project_name == &quot;eric-enmsg-element-manager&quot;) {}
+        else {
+            list_of_projects &lt;&lt; &quot;\&quot;&quot; + project_name + &quot;\&quot;&quot;
+        }
+    }
+    return list_of_projects
+}
+
+def generateBaseImages(project_file) {
+    def list_of_baseimages = []
+    String projectsFile = readFileFromWorkspace(project_file)
+    projectsFile.eachLine { String project_name -&gt;
+        project_name = project_name.split(&quot;/&quot;).last()
+        list_of_baseimages &lt;&lt; &quot;\&quot;&quot; + project_name + &quot;\&quot;&quot;
+    }
+    return list_of_baseimages
+}
+
+createPipelineE2EBuildJob()
+
+def createPipelineE2EBuildJob() {
+    eric_enm_e2e_build_job_state = Jenkins.instance.getItem(&apos;eric-enm-e2e-build-pointfix&apos;).isBuildable()
+    String e2e_steps = &quot;&quot;&quot;SG_PROJECT_LIST = ${sgList}
+BASEIMAGESOS_PROJECT_LIST = ${baseimagesos}
+BASEIMAGES_PROJECT_LIST = ${baseimages}
+MOREBASEIMAGES_PROJECT_LIST = ${morebaseimages}
+pipeline {
+    agent { node { label &apos;Cloud-Native-Pointfix&apos; } }
+    options {
+        timestamps()
+    }
+    environment {
+        PIPELINE_LAST_STAGE_STATUS = &apos;UNKNOWN&apos;
+    }
+    parameters {
+        string(name: &apos;product_set_version&apos;, description: &apos;Enter the product set version (e.g. 20.11.52).Please ensure to give latest product set version compared to last built product set.&apos;, defaultValue: &quot;&quot;)
+        string(name: &apos;BRANCH&apos;, description: &apos;Enter the GIT Branch (e.g. master).&apos;, defaultValue: &quot;&quot;)
+    }
+    stages {
+        stage (&apos;Removing Docker Images&apos;) {
+            steps {
+                script {
+                    build(job: &quot;enm-cn-docker-purge-slaves-3B&quot;, propagate: true, wait: true)
+                    build(job: &quot;enm-cn-docker-purge-slaves-5A&quot;, propagate: true, wait: true)
+                }
+            }
+        }
+        stage (&apos;Initialization of ENM Versions&apos;) {
+            steps {
+                script {
+                    def productSet = &quot;&quot;
+                    def branch = &quot;&quot;
+
+                    // For nightly build this parameters would be empty
+                    if (params.product_set_version) {
+                        productSet = params.product_set_version.trim()
+                    }
+                    // Check if product set version is given
+                    if (productSet != &quot;&quot;) {
+                        env.PRODUCT_SET = productSet
+                        echo &quot;Triggered manually with the PRODUCT_SET: \${productSet}&quot;
+                        currentBuild.description = &quot;Triggered Mode: &lt;b&gt;Manual&lt;/b&gt;&lt;br/&gt;&quot;
+                    } else {
+                        echo &quot;Triggered automatically.&quot;
+                        currentBuild.description = &quot;Triggered Mode: &lt;b&gt;Auto&lt;/b&gt;&lt;br/&gt;&quot;
+                    }
+                    // Call eric-enm-green-iso-build-trigger with PRODUCT_SET parameter
+                    def b = build(job: &quot;eric-enm-green-iso-build-trigger&quot;, parameters: [[\$class:&apos;StringParameterValue&apos;, name:&apos;PRODUCT_SET&apos;, value:String.valueOf(&quot;\${productSet}&quot;)]], propagate: true, wait: true)
+                    env.ISO_VERSION = &quot;\$b.buildVariables.ISO_VERSION&quot;
+                    echo &quot;ISO VERSION: \$ISO_VERSION&quot;
+                    env.PRODUCT_SET = &quot;\$b.buildVariables.PRODUCT_SET&quot;
+                    echo &quot;PRODUCT SET VERSION: \$PRODUCT_SET&quot;
+                    env.ENM_ISO_REPO_VERSION = &quot;\$b.buildVariables.ENM_ISO_REPO_VERSION&quot;
+                    echo &quot;ENM_ISO_REPO_VERSION: \$ENM_ISO_REPO_VERSION&quot;
+                    echo &quot;BRANCH: \$BRANCH&quot;
+
+                    // Update the Build Description
+                    currentBuild.description += &quot;Product Set Version: \$PRODUCT_SET&lt;br/&gt;&quot;
+                    currentBuild.description += &quot;ISO Version: \$ISO_VERSION&lt;br/&gt;&quot;
+                    currentBuild.description += &quot;Yum Repo Setup: \$ENM_ISO_REPO_VERSION&lt;br/&gt;&quot;
+                    currentBuild.description += &quot;GIT Branch: \$BRANCH&lt;br/&gt;&quot;
+
+                    environment_list = [[\$class:&apos;StringParameterValue&apos;, name:&quot;ISO_VERSION&quot;, value:String.valueOf(&quot;\${ISO_VERSION}&quot;)],
+                                        [\$class:&apos;StringParameterValue&apos;, name:&quot;ENM_ISO_REPO_VERSION&quot;, value:String.valueOf(&quot;\${ENM_ISO_REPO_VERSION}&quot;)],
+                                        [\$class:&apos;StringParameterValue&apos;, name:&quot;BRANCH&quot;, value:String.valueOf(&quot;\${BRANCH}&quot;)]]
+                    echo &quot;\$environment_list&quot;
+                }
+            }
+        }
+        stage (&apos;Building OS Base Images&apos;) {
+            steps{
+                script{
+                    def builds = [:]
+                    for (def proj in BASEIMAGESOS_PROJECT_LIST) {
+                        def baseimagesos_build = &quot;\${proj}&quot;
+                        builds[&quot;\${baseimagesos_build}&quot;] = {
+                            stage(&quot;Build \${baseimagesos_build}&quot;){
+                                retry(3) {
+                                    def image_tag_name = (baseimagesos_build.replaceAll(&quot;-&quot;, &quot;_&quot;) + &quot;_IMAGE_TAG&quot;).toUpperCase()
+                                    println &quot;\${baseimagesos_build}-pointfix&quot;
+                                    //env.&quot;\$image_tag_name&quot; = &quot;\$build.buildVariables.IMAGE_TAG&quot;
+                                    //echo &quot;IMAGE TAG: \$image_tag_name&quot;
+                                }
+                            }
+                        }
+                    }
+                    //parallel builds
+                    //echo sh(script: &apos;env&apos;, returnStdout:true)
+                }
+            }
+        }
+        /*
+        stage (&apos;SYNC 1: OS Base Images&apos;) {
+            steps {
+                echo &quot;All OS Base Images up to this point built successfully&quot;
+                sleep(5)
+                script {
+                    build_environment_list()
+                }
+            }
+        }
+        stage (&apos;Building Base Images&apos;) {
+            steps{
+                script{
+                    def builds = [:]
+                    for (def proj in BASEIMAGES_PROJECT_LIST) {
+                        def baseimages_build = &quot;\${proj}&quot;
+                        builds[&quot;\${baseimages_build}&quot;] = {
+                            stage(&quot;Build \${baseimages_build}&quot;){
+                                retry(3) {
+                                    def image_tag_name = (baseimages_build.replaceAll(&quot;-&quot;, &quot;_&quot;) + &quot;_IMAGE_TAG&quot;).toUpperCase()
+                                    def build = build(job: &quot;\${baseimages_build}-pointfix&quot;, propagate: true, wait: true, parameters: environment_list)
+                                    env.&quot;\$image_tag_name&quot; = &quot;\$build.buildVariables.IMAGE_TAG&quot;
+                                    echo &quot;IMAGE TAG: \$image_tag_name&quot;
+                                }
+                            }
+                        }
+                    }
+                    parallel builds
+                    echo sh(script: &apos;env&apos;, returnStdout:true)
+                }
+            }
+        }
+        stage (&apos;SYNC 2: BaseImages&apos;) {
+            steps {
+                echo &quot;All Base Images up to this point built successfully&quot;
+                sleep(5)
+                script {
+                    build_environment_list()
+                }
+            }
+        }
+        stage (&apos;Building more Base Images&apos;) {
+            steps{
+                script{
+                    def builds = [:]
+                    for (def proj in MOREBASEIMAGES_PROJECT_LIST) {
+                        def morebaseimages_build = &quot;\${proj}&quot;
+                        builds[&quot;\${morebaseimages_build}&quot;] = {
+                            stage(&quot;Build \${morebaseimages_build}&quot;){
+                                retry(3) {
+                                    def image_tag_name = (morebaseimages_build.replaceAll(&quot;-&quot;, &quot;_&quot;) + &quot;_IMAGE_TAG&quot;).toUpperCase()
+                                    def build = build(job: &quot;\${morebaseimages_build-pointfix}&quot;, propagate: true, wait: true, parameters: environment_list)
+                                    env.&quot;\$image_tag_name&quot; = &quot;\$build.buildVariables.IMAGE_TAG&quot;
+                                    echo &quot;IMAGE TAG: \$image_tag_name&quot;
+                                }
+                            }
+                        }
+                    }
+                    parallel builds
+                    echo sh(script: &apos;env&apos;, returnStdout:true)
+                }
+            }
+        }
+        stage (&apos;SYNC 3: More BaseImages&apos;) {
+            steps {
+                echo &quot;All Base Images built successfully&quot;
+                sleep(5)
+                script {
+                    build_environment_list()
+                }
+            }
+        }
+        stage(&apos;Building Service Groups Images and Helm Charts&apos;) {
+            steps{
+                script{
+                    def builds = [:]
+                    for (def proj in SG_PROJECT_LIST) {
+                        def service_group_build = &quot;\${proj}&quot;+&apos;-pointfix&apos;
+                        builds[&quot;\${service_group_build}&quot;] = {
+                            stage(&quot;Build \${service_group_build}&quot;){
+                                retry(3) {
+                                    def image_tag_name = (service_group_build.replaceAll(&quot;-&quot;, &quot;_&quot;) + &quot;_IMAGE_TAG&quot;).toUpperCase()
+                                    def build = build(job: &quot;\${service_group_build}&quot;, propagate: true, wait: true, parameters: environment_list)
+                                    env.&quot;\$image_tag_name&quot; = &quot;\$build.buildVariables.IMAGE_TAG&quot;
+                                    echo &quot;IMAGE TAG: \$image_tag_name&quot;
+                                }
+                            }
+                        }
+                    }
+                    parallel builds
+                    echo sh(script: &apos;env&apos;, returnStdout:true)
+                }
+            }
+        }
+        stage (&apos;SYNC 4: Service Groups Images and Helms Charts&apos;) {
+            steps {
+                echo &quot;All Service Groups Images and Helms charts built successfully&quot;
+                sleep(5)
+                script {
+                    build_environment_list()
+                }
+            }
+        }
+        stage (&apos;Trigger Integration Build&apos;) {
+            steps {
+                script {
+                    sh &apos;echo &quot;ISO_VERSION=\$ISO_VERSION&quot; &gt; artifact.properties&apos;
+                    sh &apos;echo &quot;PRODUCT_SET=\$PRODUCT_SET&quot; &gt;&gt; artifact.properties&apos;
+                    sh &apos;echo &quot;BRANCH=\$BRANCH&quot; &gt;&gt; artifact.properties&apos;
+                    archiveArtifacts &apos;artifact.properties&apos;
+                }
+                sleep(5)
+            }
+        }*/
+    }
+    /*
+    post {
+        success {
+            script {
+                sh(script: &apos;wget -q -O - --no-check-certificate --post-data=&quot;&quot; https://ci-portal.seli.wh.rnd.internal.ericsson.com/api/manageCNProductSet/\${PRODUCT_SET}/cENM-Build-Images/passed/&apos;, returnStdout: true).trim()
+                currentBuild.rawBuild.@result = hudson.model.Result.SUCCESS
+            }
+        }
+        failure {
+            script {
+                sh(script: &apos;wget -q -O - --no-check-certificate --post-data=&quot;&quot; https://ci-portal.seli.wh.rnd.internal.ericsson.com/api/manageCNProductSet/\${PRODUCT_SET}/cENM-Build-Images/failed/&apos;, returnStdout: true).trim()
+                currentBuild.rawBuild.@result = hudson.model.Result.FAILURE
+            }
+        }
+    }*/
+}
+&quot;&quot;&quot;
+    pipelineJob(&apos;eric-enm-e2e-build-pointfix_efabman&apos;) {
+        description (&apos;ENM Cloud Native Build pipeline eric-enm-e2e-build-pointfix - autogenerated using JobDSL - all manual changes will be overwritten!&apos; +
+                &apos;&lt;p&gt;&lt;h2 style=&quot;color:red&quot;&gt;Ensure to give the product set version higher than the last nightly/manually built product set.&lt;/h2&gt;&lt;/p&gt;&apos; +
+                &apos;&lt;h2&gt;Documentation&lt;/h2&gt;&apos; +
+                &apos;&lt;ul&gt;&apos; +
+                &apos;  &lt;li&gt;&lt;a style=&quot;font-size: 16px&quot; href=&quot;https://confluence-oss.seli.wh.rnd.internal.ericsson.com/display/CI/User+Guide+-+build+cENM+SG+pipeline+based+on+particular+ENM+Product+Set+version&quot; target=&quot;_blank&quot; rel=&quot;noopener noreferrer&quot;&gt;User Guide&lt;/a&gt;&lt;/li&gt;&apos; +
+                &apos;&lt;/ul&gt;&apos;)
+        concurrentBuild(allowConcurrentBuild = false)
+        parameters {
+           stringParam(&quot;product_set_version&quot;, &quot;&quot;, &quot;Enter the product set version (e.g. 20.11.52).Please ensure to give latest product set version compared to last built product set.&quot;)
+           stringParam(&apos;BRANCH&apos;)
+        }
+        definition {
+            cps {
+                sandbox()
+                script(e2e_steps)
+                if (eric_enm_e2e_build_job_state)
+                    disabled(false)
+                else
+                    disabled(true)
+            }
+        }
+    }
+}</scriptText>
+      <usingScriptText>true</usingScriptText>
+      <sandbox>false</sandbox>
+      <ignoreExisting>false</ignoreExisting>
+      <ignoreMissingFiles>false</ignoreMissingFiles>
+      <failOnMissingPlugin>false</failOnMissingPlugin>
+      <failOnSeedCollision>false</failOnSeedCollision>
+      <unstableOnDeprecation>false</unstableOnDeprecation>
+      <removedJobAction>DELETE</removedJobAction>
+      <removedViewAction>DELETE</removedViewAction>
+      <removedConfigFilesAction>IGNORE</removedConfigFilesAction>
+      <lookupStrategy>JENKINS_ROOT</lookupStrategy>
+    </javaposse.jobdsl.plugin.ExecuteDslScripts>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>
